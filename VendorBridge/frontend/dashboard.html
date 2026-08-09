@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | VendorBridge ERP</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="js/appearance.js"></script>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav>
+        <div class="logo">
+            <h2><a href="index.html">VendorBridge</a></h2>
+        </div>
+        <ul>
+            <li><a href="vendor.html">Vendors</a></li>
+            <li><a href="rfq.html">RFQs</a></li>
+            <li><a href="quotations.html">Quotations</a></li>
+            <li><a href="approval.html">Approvals</a></li>
+            <li><a href="purchase-order.html">Purchase Orders</a></li>
+            <li><a href="invoice.html">Invoices</a></li>
+            <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i> Theme</a></li>
+            <li><a href="login.html" onclick="localStorage.removeItem('user')">Logout</a></li>
+        </ul>
+    </nav>
+
+    <!-- Header -->
+    <section class="dashboard-header">
+        <h1>Procurement Dashboard</h1>
+        <p>Monitor real-time procurement metrics and workflows.</p>
+    </section>
+
+    <!-- Analytics Cards -->
+    <section class="dashboard-cards">
+        <div class="stat-card">
+            <h2 id="totalVendors">0</h2>
+            <p>Total Vendors</p>
+        </div>
+        <div class="stat-card">
+            <h2 id="activeRfqs">0</h2>
+            <p>Active RFQs</p>
+        </div>
+        <div class="stat-card">
+            <h2 id="pendingApprovals">0</h2>
+            <p>Pending Approvals</p>
+        </div>
+        <div class="stat-card">
+            <h2 id="invoicesGenerated">0</h2>
+            <p>Invoices Generated</p>
+        </div>
+    </section>
+
+    <!-- Quick Actions -->
+    <section class="quick-actions">
+        <h2>Quick Actions</h2>
+        <div class="action-buttons">
+            <a href="rfq.html"><button>Create RFQ</button></a>
+            <a href="vendor.html"><button>Add Vendor</button></a>    
+            <a href="quotations.html"><button>Compare Quotes</button></a>
+            <a href="invoice.html"><button>Generate Invoice</button></a>
+        </div>
+    </section>
+
+    <!-- Recent RFQs -->
+    <section class="recent-section">
+        <h2>Recent RFQs</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>RFQ ID</th>
+                    <th>Title</th>
+                    <th>Quantity</th>
+                    <th>Deadline</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="recentRfqTable">
+                <tr><td colspan="5">Loading recent RFQs...</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Recent Purchase Orders -->
+    <section class="recent-section">
+        <h2>Recent Purchase Orders</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>PO Number</th>
+                    <th>Vendor</th>
+                    <th>Total Amount</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="recentPoTable">
+                <tr><td colspan="4">Loading recent purchase orders...</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Notifications -->
+    <section class="notifications">
+        <h2>System Notifications</h2>
+        <ul>
+            <li>RFQ001 received a new quotation from ABC Suppliers.</li>
+            <li>PO-2026-001 has been approved by Manager.</li>
+            <li>Invoice INV-2026-001 generated successfully.</li>
+            <li>Manager approval pending for laptop procurement.</li>
+        </ul>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2026 VendorBridge ERP. All Rights Reserved.</p>
+    </footer>
+
+    <script src="js/api.js"></script>
+    <script>
+        async function loadDashboard() {
+            try {
+                const data = await API.getDashboard();
+                
+                document.getElementById('totalVendors').innerText = data.stats.totalVendors || 0;
+                document.getElementById('activeRfqs').innerText = data.stats.activeRfqs || 0;
+                document.getElementById('pendingApprovals').innerText = data.stats.pendingApprovals || 0;
+                document.getElementById('invoicesGenerated').innerText = data.stats.invoicesGenerated || 0;
+
+                const rfqTable = document.getElementById('recentRfqTable');
+                if (data.recentRfqs && data.recentRfqs.length > 0) {
+                    rfqTable.innerHTML = data.recentRfqs.map(r => `
+                        <tr>
+                            <td>RFQ#${r.id}</td>
+                            <td>${r.title}</td>
+                            <td>${r.quantity}</td>
+                            <td>${r.deadline ? r.deadline.split('T')[0] : 'N/A'}</td>
+                            <td><span class="badge badge-${r.status}">${r.status}</span></td>
+                        </tr>
+                    `).join('');
+                } else {
+                    rfqTable.innerHTML = '<tr><td colspan="5">No active RFQs found.</td></tr>';
+                }
+
+                const poTable = document.getElementById('recentPoTable');
+                if (data.recentPos && data.recentPos.length > 0) {
+                    poTable.innerHTML = data.recentPos.map(p => `
+                        <tr>
+                            <td>${p.po_number}</td>
+                            <td>${p.vendor_name}</td>
+                            <td>₹${parseFloat(p.total_amount).toLocaleString()}</td>
+                            <td><span class="badge badge-${p.status}">${p.status}</span></td>
+                        </tr>
+                    `).join('');
+                } else {
+                    poTable.innerHTML = '<tr><td colspan="4">No purchase orders found.</td></tr>';
+                }
+            } catch (err) {
+                console.error('Failed to load dashboard:', err);
+            }
+        }
+
+        window.onload = loadDashboard;
+    </script>
+</body>
+</html>

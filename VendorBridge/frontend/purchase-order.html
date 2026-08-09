@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Orders | VendorBridge ERP</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="js/appearance.js"></script>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav>
+        <div class="logo">
+            <h2><a href="index.html">VendorBridge</a></h2>
+        </div>
+        <ul>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="vendor.html">Vendors</a></li>
+            <li><a href="rfq.html">RFQs</a></li>
+            <li><a href="quotations.html">Quotations</a></li>
+            <li><a href="approval.html">Approvals</a></li>
+            <li><a href="invoice.html">Invoices</a></li>
+            <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i> Theme</a></li>
+            <li><a href="login.html" onclick="localStorage.removeItem('user')">Logout</a></li>
+        </ul>
+    </nav>
+
+    <!-- Header -->
+    <section class="page-header">
+        <h1>Purchase Order Management</h1>
+        <p>Generate, issue, and track official purchase orders.</p>
+    </section>
+
+    <div style="padding: 0 8%;">
+        <div id="alertBox" class="alert-box"></div>
+    </div>
+
+    <!-- Stats -->
+    <section class="po-stats">
+        <div class="stat-card">
+            <h3 id="statTotalPo">0</h3>
+            <p>Total Purchase Orders</p>
+        </div>
+        <div class="stat-card">
+            <h3 id="statPendingPo">0</h3>
+            <p>Pending Orders</p>
+        </div>
+        <div class="stat-card">
+            <h3 id="statApprovedPo">0</h3>
+            <p>Approved Orders</p>
+        </div>
+    </section>
+
+    <!-- Create PO Form -->
+    <section class="po-section">
+        <h2>Generate Purchase Order</h2>
+        <form id="poForm" style="margin-bottom: 20px;">
+            <input type="text" id="vendor_name" placeholder="Vendor Name (e.g. ABC Suppliers)" required>
+            <input type="text" id="rfq_ref" placeholder="RFQ Reference (e.g. RFQ001)" required>
+            <input type="number" id="total_amount" placeholder="Total Amount (₹)" required>
+            <button type="submit">Issue Purchase Order</button>
+        </form>
+    </section>
+
+    <!-- Purchase Order List -->
+    <section class="po-table-section">
+        <h2>Official Purchase Orders</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>PO Number</th>
+                    <th>Vendor</th>
+                    <th>RFQ Ref</th>
+                    <th>Date</th>
+                    <th>Total Amount</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="poTable">
+                <tr><td colspan="7">Loading purchase orders...</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2026 VendorBridge ERP. All Rights Reserved.</p>
+    </footer>
+
+    <script src="js/api.js"></script>
+    <script>
+        async function loadPOs() {
+            try {
+                const pos = await API.getPOs();
+                renderPOs(pos);
+            } catch (err) {
+                showAlert('Error loading purchase orders', 'danger');
+            }
+        }
+
+        function renderPOs(pos) {
+            const table = document.getElementById("poTable");
+            if (!pos || pos.length === 0) {
+                table.innerHTML = '<tr><td colspan="7">No purchase orders found.</td></tr>';
+                return;
+            }
+
+            document.getElementById("statTotalPo").innerText = pos.length;
+            document.getElementById("statPendingPo").innerText = pos.filter(p => p.status === 'pending').length;
+            document.getElementById("statApprovedPo").innerText = pos.filter(p => p.status === 'approved' || p.status === 'completed').length;
+
+            table.innerHTML = pos.map(p => `
+                <tr>
+                    <td><strong>${p.po_number}</strong></td>
+                    <td>${p.vendor_name}</td>
+                    <td>${p.rfq_ref || 'N/A'}</td>
+                    <td>${p.created_at ? p.created_at.split('T')[0] : 'Today'}</td>
+                    <td>₹${parseFloat(p.total_amount).toLocaleString()}</td>
+                    <td><span class="badge badge-${p.status}">${p.status}</span></td>
+                    <td>
+                        <button onclick="window.print()" style="padding: 4px 10px; font-size: 0.8rem;">Print</button>
+                        <a href="invoice.html" class="btn-primary" style="padding: 4px 10px; font-size: 0.8rem;">Invoice</a>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        document.getElementById("poForm").addEventListener("submit", async function(e) {
+            e.preventDefault();
+            const poData = {
+                vendor_name: document.getElementById("vendor_name").value,
+                rfq_ref: document.getElementById("rfq_ref").value,
+                total_amount: parseFloat(document.getElementById("total_amount").value),
+                status: 'approved'
+            };
+
+            try {
+                await API.createPO(poData);
+                showAlert('Purchase Order issued successfully!', 'success');
+                document.getElementById("poForm").reset();
+                loadPOs();
+            } catch (err) {
+                showAlert(err.message || 'Failed to issue Purchase Order', 'danger');
+            }
+        });
+
+        window.onload = loadPOs;
+    </script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Management | VendorBridge ERP</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="js/appearance.js"></script>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav>
+        <div class="logo">
+            <h2><a href="index.html">VendorBridge</a></h2>
+        </div>
+        <ul>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="vendor.html">Vendors</a></li>
+            <li><a href="rfq.html">RFQs</a></li>
+            <li><a href="quotations.html">Quotations</a></li>
+            <li><a href="approval.html">Approvals</a></li>
+            <li><a href="purchase-order.html">Purchase Orders</a></li>
+            <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i> Theme</a></li>
+            <li><a href="login.html" onclick="localStorage.removeItem('user')">Logout</a></li>
+        </ul>
+    </nav>
+
+    <!-- Header -->
+    <section class="page-header">
+        <h1>Invoice Management</h1>
+        <p>Generate, calculate GST, and track vendor invoices.</p>
+    </section>
+
+    <!-- Invoice Section -->
+    <section class="vendor-section">
+        <div id="alertBox" class="alert-box"></div>
+
+        <!-- Create Invoice Form -->
+        <div class="vendor-form-card">
+            <h3>Create Invoice</h3>
+            <form id="invoiceForm">
+                <div class="input-group">
+                    <label>Vendor Name</label>
+                    <input type="text" id="vendor" placeholder="ABC Suppliers" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Product / Item Description</label>
+                    <input type="text" id="product" placeholder="Laptops / Office Supplies" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Quantity</label>
+                    <input type="number" id="qty" placeholder="10" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Unit Price (₹)</label>
+                    <input type="number" id="price" placeholder="50000" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Subtotal (₹)</label>
+                    <input type="number" id="subtotal" readonly>
+                </div>
+
+                <div class="input-group">
+                    <label>GST (18%) (₹)</label>
+                    <input type="number" id="tax" readonly>
+                </div>
+
+                <div class="input-group">
+                    <label>Grand Total Amount (₹)</label>
+                    <input type="number" id="total" readonly>
+                </div>
+
+                <button type="submit" class="login-btn">Generate Invoice</button>
+            </form>
+        </div>
+
+        <!-- Invoice List -->
+        <div class="vendor-list-card">
+            <h3>Generated Invoices</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Invoice No</th>
+                        <th>Vendor</th>
+                        <th>Product</th>
+                        <th>Qty</th>
+                        <th>Subtotal</th>
+                        <th>GST (18%)</th>
+                        <th>Total Amount</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="invoiceTable">
+                    <tr><td colspan="9">Loading invoices...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2026 VendorBridge ERP. All Rights Reserved.</p>
+    </footer>
+
+    <script src="js/api.js"></script>
+    <script>
+        const form = document.getElementById("invoiceForm");
+        const table = document.getElementById("invoiceTable");
+
+        const qtyInput = document.getElementById("qty");
+        const priceInput = document.getElementById("price");
+        const subtotalInput = document.getElementById("subtotal");
+        const taxInput = document.getElementById("tax");
+        const totalInput = document.getElementById("total");
+
+        function calculateAmounts() {
+            const qty = parseFloat(qtyInput.value) || 0;
+            const price = parseFloat(priceInput.value) || 0;
+            const subtotal = qty * price;
+            const tax = subtotal * 0.18;
+            const total = subtotal + tax;
+
+            subtotalInput.value = subtotal.toFixed(2);
+            taxInput.value = tax.toFixed(2);
+            totalInput.value = total.toFixed(2);
+        }
+
+        qtyInput.addEventListener("input", calculateAmounts);
+        priceInput.addEventListener("input", calculateAmounts);
+
+        async function loadInvoices() {
+            try {
+                const invoices = await API.getInvoices();
+                renderInvoiceTable(invoices);
+            } catch (err) {
+                showAlert('Failed to load invoices', 'danger');
+            }
+        }
+
+        function renderInvoiceTable(invoices) {
+            if (!invoices || invoices.length === 0) {
+                table.innerHTML = '<tr><td colspan="9">No invoices generated yet.</td></tr>';
+                return;
+            }
+            table.innerHTML = invoices.map(inv => `
+                <tr>
+                    <td><strong>${inv.invoice_number || 'INV#' + inv.id}</strong></td>
+                    <td>${inv.vendor_name || 'N/A'}</td>
+                    <td>${inv.product}</td>
+                    <td>${inv.quantity}</td>
+                    <td>₹${parseFloat(inv.subtotal || 0).toLocaleString()}</td>
+                    <td>₹${parseFloat(inv.tax || 0).toLocaleString()}</td>
+                    <td><strong>₹${parseFloat(inv.total_amount || 0).toLocaleString()}</strong></td>
+                    <td><span class="badge badge-${inv.status}">${inv.status}</span></td>
+                    <td><button onclick="window.print()" style="padding: 4px 10px; font-size: 0.8rem;">Print</button></td>
+                </tr>
+            `).join('');
+        }
+
+        form.addEventListener("submit", async function(e) {
+            e.preventDefault();
+            const invoiceData = {
+                vendor_name: document.getElementById("vendor").value,
+                product: document.getElementById("product").value,
+                quantity: parseInt(qtyInput.value, 10),
+                unit_price: parseFloat(priceInput.value)
+            };
+
+            try {
+                await API.createInvoice(invoiceData);
+                showAlert('Invoice generated successfully!', 'success');
+                form.reset();
+                subtotalInput.value = "";
+                taxInput.value = "";
+                totalInput.value = "";
+                loadInvoices();
+            } catch (err) {
+                showAlert(err.message || 'Error generating invoice', 'danger');
+            }
+        });
+
+        window.onload = loadInvoices;
+    </script>
+</body>
+</html>

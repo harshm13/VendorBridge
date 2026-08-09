@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Approval Workflow | VendorBridge ERP</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="js/appearance.js"></script>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav>
+        <div class="logo">
+            <h2><a href="index.html">VendorBridge</a></h2>
+        </div>
+        <ul>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="vendor.html">Vendors</a></li>
+            <li><a href="rfq.html">RFQs</a></li>
+            <li><a href="quotations.html">Quotations</a></li>
+            <li><a href="purchase-order.html">Purchase Orders</a></li>
+            <li><a href="invoice.html">Invoices</a></li>
+            <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i> Theme</a></li>
+            <li><a href="login.html" onclick="localStorage.removeItem('user')">Logout</a></li>
+        </ul>
+    </nav>
+
+    <!-- Header -->
+    <section class="page-header">
+        <h1>Approval Workflow</h1>
+        <p>Review pending procurement proposals and manage manager approvals.</p>
+    </section>
+
+    <div style="padding: 0 8%;">
+        <div id="alertBox" class="alert-box"></div>
+    </div>
+
+    <!-- Statistics -->
+    <section class="approval-stats">
+        <div class="stat-card">
+            <h3 id="pendingCount">0</h3>
+            <p>Pending Approvals</p>
+        </div>
+        <div class="stat-card">
+            <h3 id="approvedCount">0</h3>
+            <p>Approved Requests</p>
+        </div>
+        <div class="stat-card">
+            <h3 id="rejectedCount">0</h3>
+            <p>Rejected Requests</p>
+        </div>
+    </section>
+
+    <!-- Approval Requests Table -->
+    <section class="approval-table-section">
+        <h2>Procurement Approval Requests</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Approval ID</th>
+                    <th>RFQ Ref</th>
+                    <th>Vendor Name</th>
+                    <th>Amount (₹)</th>
+                    <th>Remarks</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="approvalTable">
+                <tr><td colspan="7">Loading approvals...</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Timeline -->
+    <section class="timeline-section">
+        <h2>Procurement Lifecycle Timeline</h2>
+        <ul>
+            <li>RFQ Created by Procurement Officer</li>
+            <li>Vendor Submits Quotation proposal</li>
+            <li>Procurement Team Compares Quotations</li>
+            <li>Manager Decision (Approve / Reject)</li>
+            <li>Automatic Purchase Order & Invoice Generation upon approval</li>
+        </ul>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2026 VendorBridge ERP. All Rights Reserved.</p>
+    </footer>
+
+    <script src="js/api.js"></script>
+    <script>
+        async function loadApprovals() {
+            try {
+                const approvals = await API.getApprovals();
+                renderApprovals(approvals);
+            } catch (err) {
+                showAlert('Error loading approvals', 'danger');
+            }
+        }
+
+        function renderApprovals(approvals) {
+            const table = document.getElementById("approvalTable");
+            if (!approvals || approvals.length === 0) {
+                table.innerHTML = '<tr><td colspan="7">No approval requests found.</td></tr>';
+                return;
+            }
+
+            let pending = approvals.filter(a => a.status === 'pending').length;
+            let approved = approvals.filter(a => a.status === 'approved').length;
+            let rejected = approvals.filter(a => a.status === 'rejected').length;
+
+            document.getElementById("pendingCount").innerText = pending;
+            document.getElementById("approvedCount").innerText = approved;
+            document.getElementById("rejectedCount").innerText = rejected;
+
+            table.innerHTML = approvals.map(a => `
+                <tr>
+                    <td><strong>APP#${a.id}</strong></td>
+                    <td>${a.rfq_title || 'N/A'}</td>
+                    <td>${a.vendor_name}</td>
+                    <td>₹${parseFloat(a.amount).toLocaleString()}</td>
+                    <td>${a.remarks || 'None'}</td>
+                    <td><span class="badge badge-${a.status}">${a.status}</span></td>
+                    <td>
+                        ${a.status === 'pending' ? `
+                            <button class="btn-approve" onclick="handleDecision(${a.id}, 'approved')" style="padding: 5px 10px; font-size: 0.85rem;">Approve</button>
+                            <button class="btn-reject" onclick="handleDecision(${a.id}, 'rejected')" style="padding: 5px 10px; font-size: 0.85rem;">Reject</button>
+                        ` : '<span style="color: #666; font-size: 0.85rem;">Completed</span>'}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function handleDecision(id, status) {
+            const remarks = prompt(`Enter remarks for ${status.toUpperCase()} decision (optional):`, `Manager ${status}`);
+            if (remarks === null) return;
+
+            try {
+                await API.updateApproval(id, status, remarks);
+                showAlert(`Request APP#${id} ${status} successfully!${status === 'approved' ? ' Purchase Order created automatically.' : ''}`, 'success');
+                loadApprovals();
+            } catch (err) {
+                showAlert(err.message || 'Action failed', 'danger');
+            }
+        }
+
+        window.onload = loadApprovals;
+    </script>
+</body>
+</html>

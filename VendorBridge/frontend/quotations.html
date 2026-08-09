@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quotation Management | VendorBridge ERP</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="js/appearance.js"></script>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav>
+        <div class="logo">
+            <h2><a href="index.html">VendorBridge</a></h2>
+        </div>
+        <ul>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="vendor.html">Vendors</a></li>
+            <li><a href="rfq.html">RFQs</a></li>
+            <li><a href="approval.html">Approvals</a></li>
+            <li><a href="purchase-order.html">Purchase Orders</a></li>
+            <li><a href="invoice.html">Invoices</a></li>
+            <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i> Theme</a></li>
+            <li><a href="login.html" onclick="localStorage.removeItem('user')">Logout</a></li>
+        </ul>
+    </nav>
+
+    <!-- Header -->
+    <section class="page-header">
+        <h1>Quotation Management</h1>
+        <p>Submit vendor quotations and compare offers side-by-side.</p>
+    </section>
+
+    <div style="padding: 0 8%;">
+        <div id="alertBox" class="alert-box"></div>
+    </div>
+
+    <!-- Quotation Submission Form -->
+    <section class="quotation-form-section">
+        <h2>Submit Quotation</h2>
+        <form id="quoteForm" class="quotation-form">
+            <input type="text" id="vendor_name" placeholder="Vendor Company Name" required>
+            <select id="rfq_id" required>
+                <option value="">Select RFQ</option>
+            </select>
+            <input type="number" id="amount" placeholder="Quoted Total Amount (₹)" required>
+            <input type="number" id="delivery_days" placeholder="Delivery Time (Days)" required>
+            <textarea id="notes" rows="3" placeholder="Additional Notes / Warranty / Terms"></textarea>
+            <button type="submit">Submit Quotation</button>
+        </form>
+    </section>
+
+    <!-- Comparison Table -->
+    <section class="comparison-section">
+        <h2>Quotation Comparison</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>RFQ Reference</th>
+                    <th>Vendor Name</th>
+                    <th>Price (₹)</th>
+                    <th>Delivery (Days)</th>
+                    <th>Notes</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="quoteTable">
+                <tr><td colspan="6">Loading quotations...</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2026 VendorBridge ERP. All Rights Reserved.</p>
+    </footer>
+
+    <script src="js/api.js"></script>
+    <script>
+        async function initPage() {
+            try {
+                const rfqs = await API.getRFQs();
+                const rfqSelect = document.getElementById("rfq_id");
+                rfqSelect.innerHTML = '<option value="">Select RFQ</option>' + 
+                    rfqs.map(r => `<option value="${r.id}">RFQ#${r.id} - ${r.title}</option>`).join('');
+
+                loadQuotations();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadQuotations() {
+            try {
+                const quotes = await API.getQuotations();
+                const table = document.getElementById("quoteTable");
+                if (!quotes || quotes.length === 0) {
+                    table.innerHTML = '<tr><td colspan="6">No quotations submitted yet.</td></tr>';
+                    return;
+                }
+                table.innerHTML = quotes.map(q => `
+                    <tr>
+                        <td><strong>${q.rfq_title || 'RFQ#' + q.rfq_id}</strong></td>
+                        <td>${q.vendor_name}</td>
+                        <td>₹${parseFloat(q.amount).toLocaleString()}</td>
+                        <td>${q.delivery_days} Days</td>
+                        <td>${q.notes || 'N/A'}</td>
+                        <td><span class="badge badge-${q.status}">${q.status}</span></td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                showAlert('Error loading quotations', 'danger');
+            }
+        }
+
+        document.getElementById("quoteForm").addEventListener("submit", async function(e) {
+            e.preventDefault();
+            const quoteData = {
+                rfq_id: parseInt(document.getElementById("rfq_id").value, 10),
+                vendor_name: document.getElementById("vendor_name").value,
+                amount: parseFloat(document.getElementById("amount").value),
+                delivery_days: parseInt(document.getElementById("delivery_days").value, 10),
+                notes: document.getElementById("notes").value
+            };
+
+            try {
+                await API.createQuotation(quoteData);
+                showAlert('Quotation submitted successfully! Approval request sent to Manager.', 'success');
+                document.getElementById("quoteForm").reset();
+                loadQuotations();
+            } catch (err) {
+                showAlert(err.message || 'Failed to submit quotation', 'danger');
+            }
+        });
+
+        window.onload = initPage;
+    </script>
+</body>
+</html>

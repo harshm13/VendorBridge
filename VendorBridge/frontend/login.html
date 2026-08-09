@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | VendorBridge ERP</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="js/appearance.js"></script>
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>VendorBridge</h1>
+                <p>Procurement & Vendor Management ERP</p>
+            </div>
+
+            <div id="alertBox" class="alert-box"></div>
+
+            <form id="loginForm">
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <input type="email" id="email" placeholder="Enter your email" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Select Role</label>
+                    <select id="role" required>
+                        <option value="">Choose Role</option>
+                        <option value="admin">Admin</option>
+                        <option value="manager">Manager / Approver</option>
+                        <option value="procurement_officer">Procurement Officer</option>
+                        <option value="vendor">Vendor</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="login-btn">Login</button>
+            </form>
+
+            <div class="divider">
+                <span>OR</span>
+            </div>
+
+            <button type="button" class="signup-btn" onclick="window.location.href='newaccount.html'">
+                Create New Account
+            </button>
+
+            <div class="footer-links">
+                <a href="index.html">← Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
+
+            try {
+                const res = await API.login(email, password, role);
+                localStorage.setItem('user', JSON.stringify(res.user));
+                showAlert('Login successful! Redirecting...', 'success');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1000);
+            } catch (err) {
+                showAlert(err.message || 'Login failed. Please check your credentials.', 'danger');
+            }
+        });
+    </script>
+</body>
+</html>

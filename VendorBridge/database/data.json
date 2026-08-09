@@ -1,0 +1,306 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Admin User",
+      "email": "admin@vendorbridge.com",
+      "password": "admin123",
+      "role": "admin",
+      "created_at": "2026-08-05T19:00:00Z"
+    },
+    {
+      "id": 2,
+      "name": "Manager Approver",
+      "email": "manager@vendorbridge.com",
+      "password": "manager123",
+      "role": "manager",
+      "created_at": "2026-08-05T19:00:00Z"
+    },
+    {
+      "id": 3,
+      "name": "Procurement Officer",
+      "email": "procurement@vendorbridge.com",
+      "password": "procurement123",
+      "role": "procurement_officer",
+      "created_at": "2026-08-05T19:00:00Z"
+    },
+    {
+      "id": 4,
+      "name": "ABC Vendor",
+      "email": "abc@suppliers.com",
+      "password": "vendor123",
+      "role": "vendor",
+      "created_at": "2026-08-05T19:00:00Z"
+    },
+    {
+      "id": 5,
+      "name": "Test Manager",
+      "email": "newmanager@vendorbridge.com",
+      "password": "pass123",
+      "role": "manager",
+      "created_at": "2026-08-05T20:36:33.454Z"
+    }
+  ],
+  "vendors": [
+    {
+      "id": 5,
+      "company_name": "Apex Solutions Pvt Ltd",
+      "contact_person": "Apex Solutions",
+      "email": "contact@apexsolutions.com",
+      "phone": "+91 9123456789",
+      "gst_number": "27APEXS1234F1Z9",
+      "address": "Tech Park, Hyderabad",
+      "status": "active",
+      "created_at": "2026-08-05T20:36:33.521Z"
+    },
+    {
+      "id": 4,
+      "company_name": "ABC 123 LTD",
+      "contact_person": "Navin gupta",
+      "email": "hm1223456345@gmail.com",
+      "phone": "+91 9876543215",
+      "gst_number": "37APEXS1234F1Z9",
+      "address": "Navragpura",
+      "status": "active",
+      "created_at": "2026-08-05T20:36:08.169Z"
+    },
+    {
+      "id": 1,
+      "user_id": 4,
+      "company_name": "ABC Suppliers",
+      "contact_person": "John Doe",
+      "email": "abc@suppliers.com",
+      "phone": "+91 9876543210",
+      "gst_number": "29ABCDE1234F1Z5",
+      "address": "123 Industrial Estate, Mumbai",
+      "status": "active",
+      "created_at": "2026-08-05T19:00:00Z"
+    },
+    {
+      "id": 2,
+      "user_id": null,
+      "company_name": "Tech Industries",
+      "contact_person": "Sarah Smith",
+      "email": "contact@techind.com",
+      "phone": "+91 9812345678",
+      "gst_number": "27TECH9876G1Z2",
+      "address": "456 Tech Park, Bengaluru",
+      "status": "active",
+      "created_at": "2026-08-05T19:00:00Z"
+    },
+    {
+      "id": 3,
+      "user_id": null,
+      "company_name": "Office Essentials",
+      "contact_person": "Mike Johnson",
+      "email": "info@officeessentials.com",
+      "phone": "+91 9988776655",
+      "gst_number": "07OFFIC4321H1Z9",
+      "address": "789 Commercial Zone, Delhi",
+      "status": "active",
+      "created_at": "2026-08-05T19:00:00Z"
+    }
+  ],
+  "rfqs": [
+    {
+      "id": 4,
+      "title": "Server Hardware Infrastructure",
+      "description": "Enterprise rack servers with 128GB RAM",
+      "quantity": 10,
+      "deadline": "2026-09-15",
+      "created_by": 1,
+      "status": "open",
+      "created_at": "2026-08-05T20:36:33.554Z"
+    },
+    {
+      "id": 1,
+      "title": "Laptop Procurement",
+      "description": "High performance laptops for development team",
+      "quantity": 50,
+      "deadline": "2026-08-20",
+      "created_by": 3,
+      "status": "open",
+      "created_at": "2026-08-05T19:00:00Z"
+    },
+    {
+      "id": 2,
+      "title": "Office Furniture",
+      "description": "Ergonomic chairs and executive desks",
+      "quantity": 100,
+      "deadline": "2026-08-25",
+      "created_by": 3,
+      "status": "open",
+      "created_at": "2026-08-05T19:00:00Z"
+    },
+    {
+      "id": 3,
+      "title": "Printer Supplies",
+      "description": "LaserJet toner cartridges and heavy duty paper",
+      "quantity": 30,
+      "deadline": "2026-08-18",
+      "created_by": 3,
+      "status": "closed",
+      "created_at": "2026-08-05T19:00:00Z"
+    }
+  ],
+  "quotations": [
+    {
+      "id": 4,
+      "rfq_id": 4,
+      "vendor_id": null,
+      "vendor_name": "Apex Solutions Pvt Ltd",
+      "amount": 750000,
+      "delivery_days": 5,
+      "notes": "Includes 3 years enterprise SLA and support",
+      "status": "submitted",
+      "created_at": "2026-08-05T20:36:33.643Z"
+    },
+    {
+      "id": 1,
+      "rfq_id": 1,
+      "vendor_id": 1,
+      "vendor_name": "ABC Suppliers",
+      "amount": 480000,
+      "delivery_days": 7,
+      "notes": "Includes 3 years warranty and free delivery",
+      "status": "approved",
+      "created_at": "2026-08-05T19:00:00Z"
+    },
+    {
+      "id": 2,
+      "rfq_id": 1,
+      "vendor_id": 2,
+      "vendor_name": "Tech Industries",
+      "amount": 510000,
+      "delivery_days": 5,
+      "notes": "Includes fast shipping and setup",
+      "status": "submitted",
+      "created_at": "2026-08-05T19:00:00Z"
+    },
+    {
+      "id": 3,
+      "rfq_id": 1,
+      "vendor_id": 3,
+      "vendor_name": "Office Essentials",
+      "amount": 465000,
+      "delivery_days": 10,
+      "notes": "Standard warranty",
+      "status": "submitted",
+      "created_at": "2026-08-05T19:00:00Z"
+    }
+  ],
+  "approvals": [
+    {
+      "id": 2,
+      "quotation_id": 4,
+      "rfq_title": "RFQ#4",
+      "vendor_name": "Apex Solutions Pvt Ltd",
+      "amount": 750000,
+      "status": "approved",
+      "remarks": "Approved by Senior Manager",
+      "created_at": "2026-08-05T20:36:33.643Z",
+      "approved_by": 1
+    },
+    {
+      "id": 1,
+      "quotation_id": 1,
+      "rfq_title": "RFQ001 - Laptop Procurement",
+      "vendor_name": "ABC Suppliers",
+      "amount": 480000,
+      "approved_by": 1,
+      "status": "approved",
+      "remarks": "",
+      "created_at": "2026-08-05T19:00:00Z"
+    }
+  ],
+  "purchase_orders": [
+    {
+      "id": 6,
+      "po_number": "PO-2026-001",
+      "quotation_id": 1,
+      "vendor_name": "ABC Suppliers",
+      "rfq_ref": "RFQ001 - Laptop Procurement",
+      "total_amount": 480000,
+      "created_at": "2026-08-05T20:37:15.237Z"
+    },
+    {
+      "id": 5,
+      "po_number": "PO-2026-001",
+      "quotation_id": 1,
+      "vendor_name": "ABC Suppliers",
+      "rfq_ref": "RFQ001 - Laptop Procurement",
+      "total_amount": 480000,
+      "status": "approved",
+      "created_at": "2026-08-05T20:37:15.159Z"
+    },
+    {
+      "id": 4,
+      "po_number": "PO-2026-002",
+      "quotation_id": 4,
+      "vendor_name": "Apex Solutions Pvt Ltd",
+      "rfq_ref": "RFQ#4",
+      "total_amount": 750000,
+      "created_at": "2026-08-05T20:36:33.852Z"
+    },
+    {
+      "id": 3,
+      "po_number": "PO-2026-002",
+      "quotation_id": 4,
+      "vendor_name": "Apex Solutions Pvt Ltd",
+      "rfq_ref": "RFQ#4",
+      "total_amount": 750000,
+      "status": "approved",
+      "created_at": "2026-08-05T20:36:33.821Z"
+    },
+    {
+      "id": 1,
+      "po_number": "PO-2026-001",
+      "quotation_id": 1,
+      "vendor_name": "ABC Suppliers",
+      "rfq_ref": "RFQ001",
+      "total_amount": 480000,
+      "status": "approved",
+      "created_at": "2026-08-05T19:00:00Z"
+    },
+    {
+      "id": 2,
+      "po_number": "PO-2026-002",
+      "quotation_id": 2,
+      "vendor_name": "Tech Industries",
+      "rfq_ref": "RFQ002",
+      "total_amount": 510000,
+      "status": "pending",
+      "created_at": "2026-08-05T19:00:00Z"
+    }
+  ],
+  "invoices": [
+    {
+      "id": 2,
+      "invoice_number": "INV-2026-6856",
+      "purchase_order_id": null,
+      "vendor_name": "Apex Solutions Pvt Ltd",
+      "product": "Rack Servers 128GB",
+      "quantity": 10,
+      "unit_price": 75000,
+      "subtotal": 750000,
+      "tax": 135000,
+      "total_amount": 885000,
+      "status": "generated",
+      "created_at": "2026-08-05T20:36:33.976Z"
+    },
+    {
+      "id": 1,
+      "invoice_number": "INV-2026-001",
+      "purchase_order_id": 1,
+      "vendor_name": "ABC Suppliers",
+      "product": "Development Laptops",
+      "quantity": 50,
+      "unit_price": 9600,
+      "subtotal": 480000,
+      "tax": 86400,
+      "total_amount": 566400,
+      "status": "generated",
+      "created_at": "2026-08-05T19:00:00Z"
+    }
+  ]
+}
