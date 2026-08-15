@@ -68,11 +68,12 @@
 
             try {
                 const res = await API.login(email, password, role);
-                localStorage.setItem('user', JSON.stringify(res.user));
+                Auth.setUser(res.user);
+                Auth.setToken(res.token);
                 showAlert('Login successful! Redirecting...', 'success');
                 setTimeout(() => {
                     window.location.href = 'dashboard.html';
-                }, 1000);
+                }, 800);
             } catch (err) {
                 showAlert(err.message || 'Login failed. Please check your credentials.', 'danger');
             }

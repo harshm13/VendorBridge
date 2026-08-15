@@ -23,7 +23,7 @@
             <li><a href="approval.html">Approvals</a></li>
             <li><a href="invoice.html">Invoices</a></li>
             <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i> Theme</a></li>
-            <li><a href="login.html" onclick="localStorage.removeItem('user')">Logout</a></li>
+            <li><a href="#" onclick="Auth.logout(); return false;">Logout</a></li>
         </ul>
     </nav>
 
@@ -93,6 +93,7 @@
     <script src="js/api.js"></script>
     <script>
         async function loadPOs() {
+            if (!Auth.requireAuth()) return;
             try {
                 const pos = await API.getPOs();
                 renderPOs(pos);
@@ -112,7 +113,9 @@
             document.getElementById("statPendingPo").innerText = pos.filter(p => p.status === 'pending').length;
             document.getElementById("statApprovedPo").innerText = pos.filter(p => p.status === 'approved' || p.status === 'completed').length;
 
-            table.innerHTML = pos.map(p => `
+            table.innerHTML = pos.map(p => {
+                const invUrl = `invoice.html?vendor=${encodeURIComponent(p.vendor_name)}&product=${encodeURIComponent(p.rfq_ref || 'Purchase Order Items')}&po=${encodeURIComponent(p.po_number)}&amount=${p.total_amount}`;
+                return `
                 <tr>
                     <td><strong>${p.po_number}</strong></td>
                     <td>${p.vendor_name}</td>
@@ -122,10 +125,11 @@
                     <td><span class="badge badge-${p.status}">${p.status}</span></td>
                     <td>
                         <button onclick="window.print()" style="padding: 4px 10px; font-size: 0.8rem;">Print</button>
-                        <a href="invoice.html" class="btn-primary" style="padding: 4px 10px; font-size: 0.8rem;">Invoice</a>
+                        <a href="${invUrl}" class="btn-primary" style="padding: 4px 10px; font-size: 0.8rem;">Invoice</a>
                     </td>
                 </tr>
-            `).join('');
+            `;
+            }).join('');
         }
 
         document.getElementById("poForm").addEventListener("submit", async function(e) {

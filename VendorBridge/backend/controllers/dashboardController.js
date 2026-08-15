@@ -4,7 +4,7 @@ const Approval = require('../models/approvalModel');
 const Invoice = require('../models/invoiceModel');
 const PurchaseOrder = require('../models/poModel');
 
-exports.getDashboardStats = async (req, res) => {
+exports.getDashboardStats = async (req, res, next) => {
     try {
         const totalVendors = await Vendor.count();
         const activeRfqs = await RFQ.countActive();
@@ -15,6 +15,7 @@ exports.getDashboardStats = async (req, res) => {
         const recentPos = (await PurchaseOrder.getAll()).slice(0, 5);
 
         res.status(200).json({
+            success: true,
             stats: {
                 totalVendors,
                 activeRfqs,
@@ -25,7 +26,6 @@ exports.getDashboardStats = async (req, res) => {
             recentPos
         });
     } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
-        res.status(500).json({ message: 'Server error fetching dashboard stats' });
+        next(error);
     }
 };

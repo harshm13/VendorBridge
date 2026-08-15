@@ -16,7 +16,11 @@ const Invoice = {
         const subtotal = qty * price;
         const tax = subtotal * 0.18;
         const total_amount = subtotal + tax;
-        const invoice_number = `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+        
+        const year = new Date().getFullYear();
+        const [[{ maxId }]] = await db.query('SELECT MAX(id) as maxId FROM invoices');
+        const nextId = (maxId || 0) + 1;
+        const invoice_number = `INV-${year}-${String(nextId).padStart(6, '0')}`;
 
         const [result] = await db.query(
             `INSERT INTO invoices (invoice_number, purchase_order_id, vendor_name, product, quantity, unit_price, subtotal, tax, total_amount, status) 

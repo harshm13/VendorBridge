@@ -23,7 +23,7 @@
             <li><a href="purchase-order.html">Purchase Orders</a></li>
             <li><a href="invoice.html">Invoices</a></li>
             <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i> Theme</a></li>
-            <li><a href="login.html" onclick="localStorage.removeItem('user')">Logout</a></li>
+            <li><a href="#" onclick="Auth.logout(); return false;">Logout</a></li>
         </ul>
     </nav>
 
@@ -94,6 +94,7 @@
     <script src="js/api.js"></script>
     <script>
         async function loadApprovals() {
+            if (!Auth.requireAuth()) return;
             try {
                 const approvals = await API.getApprovals();
                 renderApprovals(approvals);

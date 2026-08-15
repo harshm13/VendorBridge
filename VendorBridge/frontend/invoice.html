@@ -23,7 +23,7 @@
             <li><a href="approval.html">Approvals</a></li>
             <li><a href="purchase-order.html">Purchase Orders</a></li>
             <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i> Theme</a></li>
-            <li><a href="login.html" onclick="localStorage.removeItem('user')">Logout</a></li>
+            <li><a href="#" onclick="Auth.logout(); return false;">Logout</a></li>
         </ul>
     </nav>
 
@@ -136,6 +136,7 @@
         priceInput.addEventListener("input", calculateAmounts);
 
         async function loadInvoices() {
+            if (!Auth.requireAuth()) return;
             try {
                 const invoices = await API.getInvoices();
                 renderInvoiceTable(invoices);
@@ -186,7 +187,28 @@
             }
         });
 
-        window.onload = loadInvoices;
+        window.onload = function() {
+            if (!Auth.requireAuth()) return;
+
+            // Check URL parameters for PO auto-fill
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('vendor')) {
+                document.getElementById('vendor').value = params.get('vendor');
+            }
+            if (params.has('product')) {
+                document.getElementById('product').value = params.get('product');
+            }
+            if (params.has('amount')) {
+                const amt = parseFloat(params.get('amount'));
+                if (!isNaN(amt) && amt > 0) {
+                    document.getElementById('qty').value = 1;
+                    document.getElementById('price').value = amt;
+                    calculateAmounts();
+                }
+            }
+
+            loadInvoices();
+        };
     </script>
 </body>
 </html>

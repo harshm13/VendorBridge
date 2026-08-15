@@ -1296,3 +1296,77 @@ footer {
         right: -100vw;
     }
 }
+
+/* ==========================================================================
+   NAVBAR USER PROFILE BADGE & THEME CONTRAST FIXES
+   ========================================================================== */
+
+.user-nav-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 6px 14px;
+    border-radius: var(--radius-pill);
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.user-nav-badge i {
+    font-size: 1.1rem;
+    color: #818cf8;
+}
+
+.user-nav-role-tag {
+    background: var(--primary);
+    color: #ffffff;
+    font-size: 0.68rem;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* Input & Card Fixes for Dark / Midnight Themes */
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="email"],
+[data-theme="dark"] input[type="password"],
+[data-theme="dark"] input[type="number"],
+[data-theme="dark"] input[type="date"],
+[data-theme="dark"] select,
+[data-theme="dark"] textarea,
+[data-theme="midnight"] input[type="text"],
+[data-theme="midnight"] input[type="email"],
+[data-theme="midnight"] input[type="password"],
+[data-theme="midnight"] input[type="number"],
+[data-theme="midnight"] input[type="date"],
+[data-theme="midnight"] select,
+[data-theme="midnight"] textarea {
+    background-color: #1a2336;
+    color: #f8fafc;
+    border-color: #2d3b55;
+}
+
+[data-theme="dark"] select option,
+[data-theme="midnight"] select option {
+    background-color: #151c2c;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] ::placeholder,
+[data-theme="midnight"] ::placeholder {
+    color: #64748b;
+}
+
+[data-theme="emerald"] select option {
+    background-color: #ffffff;
+    color: #064e3b;
+}
+
+[data-theme="amber"] select option {
+    background-color: #ffffff;
+    color: #451a03;
+}
+

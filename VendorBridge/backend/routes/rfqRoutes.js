@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const rfqController = require('../controllers/rfqController');
+const { authenticateToken, requireRole } = require('../middleware/auth');
 
-router.get('/', rfqController.getRFQs);
-router.post('/', rfqController.createRFQ);
+router.get('/', authenticateToken, rfqController.getRFQs);
+router.post('/', authenticateToken, requireRole(['admin', 'procurement_officer']), rfqController.createRFQ);
 
 module.exports = router;

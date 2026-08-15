@@ -3,7 +3,7 @@ const http = require('http');
 const API_HOST = '127.0.0.1';
 const API_PORT = 5000;
 
-function makeRequest(path, method = 'GET', data = null) {
+function makeRequest(path, method = 'GET', data = null, token = null) {
     return new Promise((resolve, reject) => {
         const options = {
             hostname: API_HOST,
@@ -14,6 +14,10 @@ function makeRequest(path, method = 'GET', data = null) {
                 'Content-Type': 'application/json'
             }
         };
+
+        if (token) {
+            options.headers['Authorization'] = `Bearer ${token}`;
+        }
 
         const req = http.request(options, (res) => {
             let body = '';
@@ -55,6 +59,7 @@ async function runE2ETests() {
             role: 'admin'
         });
         console.log(`   -> Admin Login Status ${adminLogin.status}:`, adminLogin.body);
+        let adminToken = adminLogin.body.token;
 
         // 3. Register New User & Login
         console.log('\n3. Testing User Auth Register & Login...');
@@ -72,6 +77,7 @@ async function runE2ETests() {
             role: 'manager'
         });
         console.log(`   -> New User Login Status ${newLogin.status}:`, newLogin.body);
+        let managerToken = newLogin.body.token;
 
         // 4. Add Vendor
         console.log('\n4. Testing Vendor Creation...');
@@ -82,7 +88,7 @@ async function runE2ETests() {
             company: 'Apex Solutions Pvt Ltd',
             gst_number: '27APEXS1234F1Z9',
             address: 'Tech Park, Hyderabad'
-        });
+        }, adminToken);
         console.log(`   -> Vendor Status ${vendor.status}:`, vendor.body.message);
 
         // 5. Create RFQ
@@ -92,7 +98,7 @@ async function runE2ETests() {
             description: 'Enterprise rack servers with 128GB RAM',
             quantity: 10,
             deadline: '2026-09-15'
-        });
+        }, adminToken);
         console.log(`   -> RFQ Status ${rfq.status}: Created RFQ ID #${rfq.body.id}`);
 
         // 6. Submit Quotation
@@ -103,18 +109,18 @@ async function runE2ETests() {
             amount: 750000.00,
             delivery_days: 5,
             notes: 'Includes 3 years enterprise SLA and support'
-        });
+        }, adminToken);
         console.log(`   -> Quotation Status ${quote.status}: Submitted Quotation ID #${quote.body.id}`);
 
         // 7. Approve Quotation Request
         console.log('\n7. Testing Manager Approval...');
-        const approvalsList = await makeRequest('/approvals');
+        const approvalsList = await makeRequest('/approvals', 'GET', null, managerToken);
         const latestApproval = approvalsList.body[0];
         if (latestApproval) {
             const approvalDecision = await makeRequest(`/approvals/${latestApproval.id}`, 'PUT', {
                 status: 'approved',
                 remarks: 'Approved by Senior Manager'
-            });
+            }, managerToken);
             console.log(`   -> Approval Status ${approvalDecision.status}: Request APP#${latestApproval.id} Approved!`);
         }
 
@@ -125,12 +131,12 @@ async function runE2ETests() {
             product: 'Rack Servers 128GB',
             quantity: 10,
             unit_price: 75000.00
-        });
+        }, adminToken);
         console.log(`   -> Invoice Status ${invoice.status}: Invoice ${invoice.body.invoice ? invoice.body.invoice.invoice_number : ''} Generated!`);
 
         // 9. Fetch Updated Dashboard Metrics
         console.log('\n9. Testing Dashboard Overview Metrics...');
-        const dashboard = await makeRequest('/dashboard');
+        const dashboard = await makeRequest('/dashboard', 'GET', null, adminToken);
         console.log(`   -> Dashboard Metrics:`, dashboard.body.stats);
 
         console.log('\n====================================================');

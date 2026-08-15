@@ -10,35 +10,33 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
-// Local Storage Helper for Offline / Direct File Mode
-const LocalDB = {
-    getUsers() {
-        return JSON.parse(localStorage.getItem('vb_users')) || [
-            { id: 1, name: 'Admin User', email: 'admin@vendorbridge.com', password: 'admin123', role: 'admin' },
-            { id: 2, name: 'Manager Approver', email: 'manager@vendorbridge.com', password: 'manager123', role: 'manager' },
-            { id: 3, name: 'Procurement Officer', email: 'procurement@vendorbridge.com', password: 'procurement123', role: 'procurement_officer' },
-            { id: 4, name: 'ABC Vendor', email: 'abc@suppliers.com', password: 'vendor123', role: 'vendor' }
-        ];
-    },
-    saveUsers(users) {
-        localStorage.setItem('vb_users', JSON.stringify(users));
-    }
-};
 
 const API = {
     async request(endpoint, options = {}) {
         try {
+            const token = Auth.getToken();
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const config = {
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...options.headers
-                },
+                headers,
                 ...options
             };
             
             const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
             const data = await response.json();
             
+            if (response.status === 401 || response.status === 403) {
+                if (endpoint !== '/auth/login') {
+                    Auth.logout();
+                }
+            }
+
             if (!response.ok) {
                 throw new Error(data.message || 'API request failed');
             }
@@ -46,73 +44,6 @@ const API = {
             return data;
         } catch (error) {
             console.warn(`API network request failed for ${endpoint}:`, error.message);
-            // Fallback for login/register if server is unreachable
-            if (endpoint === '/auth/login') {
-                const body = JSON.parse(options.body || '{}');
-                const cleanEmail = (body.email || '').trim().toLowerCase();
-                const cleanPass = (body.password || '').trim();
-                
-                const users = LocalDB.getUsers();
-                const user = users.find(u => u.email.toLowerCase() === cleanEmail);
-                
-                if (!user) {
-                    throw new Error('User account not found. Please create a new account.');
-                }
-                if (user.password !== cleanPass) {
-                    throw new Error('Incorrect password. Please try again.');
-                }
-                
-                return {
-                    message: 'Login successful (Offline mode)',
-                    user: { id: user.id, name: user.name, email: user.email, role: user.role }
-                };
-            }
-
-            if (endpoint === '/auth/register') {
-                const body = JSON.parse(options.body || '{}');
-                const cleanName = (body.name || '').trim();
-                const cleanEmail = (body.email || '').trim().toLowerCase();
-                const cleanPass = (body.password || '').trim();
-                const role = body.role || 'vendor';
-
-                const users = LocalDB.getUsers();
-                if (users.some(u => u.email.toLowerCase() === cleanEmail)) {
-                    throw new Error('An account with this email address already exists.');
-                }
-
-                const newUser = {
-                    id: users.length + 1,
-                    name: cleanName || cleanEmail.split('@')[0],
-                    email: cleanEmail,
-                    password: cleanPass,
-                    role: role
-                };
-                users.push(newUser);
-                LocalDB.saveUsers(users);
-
-                return {
-                    message: 'User registered successfully!',
-                    user: { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role }
-                };
-            }
-
-            // Return mock fallback for get endpoints if offline
-            if (options.method === 'GET' || !options.method) {
-                if (endpoint === '/dashboard') {
-                    return {
-                        stats: { totalVendors: 4, activeRfqs: 3, pendingApprovals: 2, invoicesGenerated: 2 },
-                        recentRfqs: [
-                            { id: 1, title: 'Laptop Procurement', quantity: 50, deadline: '2026-08-20', status: 'open' },
-                            { id: 2, title: 'Office Furniture', quantity: 100, deadline: '2026-08-25', status: 'open' }
-                        ],
-                        recentPos: [
-                            { id: 1, po_number: 'PO-2026-001', vendor_name: 'ABC Suppliers', total_amount: 480000, status: 'approved' }
-                        ]
-                    };
-                }
-                return [];
-            }
-
             throw error;
         }
     },
@@ -227,3 +158,72 @@ function showAlert(message, type = 'danger', elementId = 'alertBox') {
         alert(message);
     }
 }
+
+// Authentication & Session Guard Helpers
+const Auth = {
+    getUser() {
+        try {
+            const u = localStorage.getItem('user');
+            return u ? JSON.parse(u) : null;
+        } catch (e) {
+            return null;
+        }
+    },
+    setUser(user) {
+        localStorage.setItem('user', JSON.stringify(user));
+    },
+    getToken() {
+        return localStorage.getItem('token') || null;
+    },
+    setToken(token) {
+        localStorage.setItem('token', token);
+    },
+    logout() {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        window.location.href = 'login.html';
+    },
+    requireAuth() {
+        const user = this.getUser();
+        const token = this.getToken();
+        if (!user || !token) {
+            window.location.href = 'login.html';
+            return null;
+        }
+        return user;
+    },
+    renderUserPill() {
+        const user = this.getUser();
+        const navUl = document.querySelector('nav ul');
+        if (!navUl) return;
+
+        let userItem = document.getElementById('navUserItem');
+        if (!userItem) {
+            userItem = document.createElement('li');
+            userItem.id = 'navUserItem';
+            const lastLi = navUl.lastElementChild;
+            if (lastLi) {
+                navUl.insertBefore(userItem, lastLi);
+            } else {
+                navUl.appendChild(userItem);
+            }
+        }
+
+        if (user) {
+            const roleDisplay = (user.role || 'user').replace('_', ' ').toUpperCase();
+            userItem.innerHTML = `
+                <div class="user-nav-badge" title="Logged in as ${user.name} (${roleDisplay})">
+                    <i class="fa-solid fa-circle-user"></i>
+                    <span class="user-nav-name">${user.name}</span>
+                    <span class="user-nav-role-tag">${roleDisplay}</span>
+                </div>
+            `;
+        } else {
+            userItem.innerHTML = '';
+        }
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    Auth.renderUserPill();
+});
