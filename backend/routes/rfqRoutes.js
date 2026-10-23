@@ -4,6 +4,8 @@ const rfqController = require('../controllers/rfqController');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 
 router.get('/', authenticateToken, rfqController.getRFQs);
+router.get('/:id', authenticateToken, rfqController.getRFQById);
 router.post('/', authenticateToken, requireRole(['admin', 'procurement_officer']), rfqController.createRFQ);
 
 module.exports = router;
+

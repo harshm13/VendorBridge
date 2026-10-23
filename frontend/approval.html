@@ -31,6 +31,12 @@
             <li><a href="approval.html" class="active"><i class="fa-solid fa-stamp"></i> Approvals</a></li>
             <li><a href="purchase-order.html"><i class="fa-solid fa-file-invoice-dollar"></i> POs</a></li>
             <li><a href="invoice.html"><i class="fa-solid fa-receipt"></i> Invoices</a></li>
+            <li>
+                <a href="#" class="notification-nav-btn" onclick="toggleNotificationDrawer(); return false;" title="Audit Notifications">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="notification-count-badge" id="navNotifBadge">4</span>
+                </a>
+            </li>
             <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i></a></li>
             <li><a href="#" onclick="Auth.logout(); return false;"><i class="fa-solid fa-power-off"></i></a></li>
         </ul>
@@ -154,6 +160,21 @@
         </div>
     </div>
 
+    <!-- Sliding Glass Activity & Notifications Drawer (Feature 5) -->
+    <div class="drawer-overlay" id="drawerOverlay" onclick="toggleNotificationDrawer()"></div>
+    <div class="notification-drawer" id="notificationDrawer">
+        <div class="drawer-header">
+            <div>
+                <h3><i class="fa-solid fa-bell" style="color: #6366f1;"></i> Procurement Telemetry</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 2px 0 0;">Real-time audit log & system alerts</p>
+            </div>
+            <button class="modal-close-btn" onclick="toggleNotificationDrawer()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="drawer-content" id="drawerLogsList">
+            <!-- Dynamic notifications -->
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer>
         <p>© 2026 VendorBridge ERP. High-Performance Procurement Mesh.</p>
@@ -265,6 +286,43 @@
             } catch (err) {
                 showAlert(err.message || 'Action failed', 'danger');
             }
+        }
+
+        // Notification Drawer (Feature 5)
+        function toggleNotificationDrawer() {
+            const drawer = document.getElementById('notificationDrawer');
+            const overlay = document.getElementById('drawerOverlay');
+            const isOpen = drawer.classList.contains('open');
+            if (isOpen) {
+                drawer.classList.remove('open');
+                overlay.classList.remove('open');
+            } else {
+                renderDrawerNotifications();
+                drawer.classList.add('open');
+                overlay.classList.add('open');
+            }
+        }
+
+        function renderDrawerNotifications() {
+            const list = document.getElementById('drawerLogsList');
+            const sampleLogs = [
+                { title: 'Pending Approval for Laptop RFQ', time: '5 mins ago', icon: 'fa-stamp', color: '#f59e0b', desc: 'Quotation by ABC Suppliers for ₹4,80,000 awaiting manager authorization.' },
+                { title: 'Invoice INV-2026-000001 Reconciled', time: '30 mins ago', icon: 'fa-receipt', color: '#10b981', desc: '3-Way Match verified with PO and GRN (0% variance).' },
+                { title: 'ABC Suppliers Achieved Tier-1 Platinum', time: '2 hours ago', icon: 'fa-crown', color: '#fbbf24', desc: 'Fulfillment reliability maintained at 98.4% across 14 orders.' },
+                { title: 'PO-2026-000001 Authenticity Stamped', time: '3 hours ago', icon: 'fa-shield-halved', color: '#06b6d4', desc: 'Cryptographic SHA-256 digital stamp verified.' }
+            ];
+            list.innerHTML = sampleLogs.map(l => `
+                <div class="drawer-item">
+                    <div class="drawer-item-icon" style="background: ${l.color}20; color: ${l.color};">
+                        <i class="fa-solid ${l.icon}"></i>
+                    </div>
+                    <div class="drawer-item-content">
+                        <strong>${l.title}</strong>
+                        <p>${l.desc}</p>
+                        <span class="drawer-item-time">${l.time}</span>
+                    </div>
+                </div>
+            `).join('');
         }
 
         window.onload = loadApprovals;

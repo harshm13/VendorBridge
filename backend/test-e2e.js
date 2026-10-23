@@ -91,24 +91,32 @@ async function runE2ETests() {
         }, adminToken);
         console.log(`   -> Vendor Status ${vendor.status}:`, vendor.body.message);
 
-        // 5. Create RFQ
-        console.log('\n5. Testing RFQ Creation...');
+        // 5. Create RFQ with Bill of Materials (BoM)
+        console.log('\n5. Testing RFQ Creation with BoM Line Items...');
         const rfq = await makeRequest('/rfqs', 'POST', {
             title: 'Server Hardware Infrastructure',
             description: 'Enterprise rack servers with 128GB RAM',
             quantity: 10,
-            deadline: '2026-09-15'
+            deadline: '2026-09-15',
+            items: [
+                { name: 'Enterprise 2U Rack Servers', unit: 'Units', qty: 6, target_price: 65000 },
+                { name: '48-Port PoE Managed Switches', unit: 'Units', qty: 4, target_price: 50000 }
+            ]
         }, adminToken);
         console.log(`   -> RFQ Status ${rfq.status}: Created RFQ ID #${rfq.body.id}`);
 
-        // 6. Submit Quotation
-        console.log('\n6. Testing Quotation Submission...');
+        // 6. Submit Quotation with Itemized BoM Breakdown
+        console.log('\n6. Testing Quotation Submission with BoM Items...');
         const quote = await makeRequest('/quotations', 'POST', {
             rfq_id: rfq.body.id,
             vendor_name: 'Apex Solutions Pvt Ltd',
-            amount: 750000.00,
+            amount: 590000.00,
             delivery_days: 5,
-            notes: 'Includes 3 years enterprise SLA and support'
+            notes: 'Includes 3 years enterprise SLA and support',
+            items: [
+                { name: 'Enterprise 2U Rack Servers', unit: 'Units', qty: 6, quoted_price: 65000 },
+                { name: '48-Port PoE Managed Switches', unit: 'Units', qty: 4, quoted_price: 50000 }
+            ]
         }, adminToken);
         console.log(`   -> Quotation Status ${quote.status}: Submitted Quotation ID #${quote.body.id}`);
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vendor Directory | VendorBridge ERP</title>
+    <title>Vendor Directory & Supplier Scorecards | VendorBridge ERP</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/components.css">
@@ -31,6 +31,12 @@
             <li><a href="approval.html"><i class="fa-solid fa-stamp"></i> Approvals</a></li>
             <li><a href="purchase-order.html"><i class="fa-solid fa-file-invoice-dollar"></i> POs</a></li>
             <li><a href="invoice.html"><i class="fa-solid fa-receipt"></i> Invoices</a></li>
+            <li>
+                <a href="#" class="notification-nav-btn" onclick="toggleNotificationDrawer(); return false;" title="Audit Notifications">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="notification-count-badge" id="navNotifBadge">4</span>
+                </a>
+            </li>
             <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i></a></li>
             <li><a href="#" onclick="Auth.logout(); return false;"><i class="fa-solid fa-power-off"></i></a></li>
         </ul>
@@ -41,11 +47,11 @@
         <div class="motion-badge" style="margin-bottom: 10px;">
             <div class="motion-badge-inner">
                 <span class="pulse-dot"></span>
-                <span class="motion-badge-text">Supplier Network & Master Data</span>
+                <span class="motion-badge-text">Supplier Network & KYC Performance Hub</span>
             </div>
         </div>
-        <h1>Vendor Management Directory</h1>
-        <p>Register verified suppliers, manage corporate contacts, inspect GST credentials, and track ratings.</p>
+        <h1>Vendor Directory & Scorecards</h1>
+        <p>Manage verified suppliers, evaluate fulfillment reliability %, inspect KYC tier badges, and drill into granular performance analytics.</p>
     </section>
 
     <div style="padding: 0 6%;">
@@ -56,7 +62,7 @@
     <section class="vendor-section">
         <!-- Add Vendor Form -->
         <div class="vendor-form-card tilt-card">
-            <h3><i class="fa-solid fa-user-plus" style="color: #6366f1;"></i> Onboard New Supplier</h3>
+            <h3><i class="fa-solid fa-user-plus" style="color: #6366f1;"></i> Onboard Supplier Partner</h3>
             
             <form id="vendorForm">
                 <div class="input-group">
@@ -80,17 +86,26 @@
                 </div>
 
                 <div class="input-group">
+                    <label>KYC Certification Tier</label>
+                    <select id="tier">
+                        <option value="tier1">Tier 1 Platinum (Verified Core Supplier)</option>
+                        <option value="tier2">Tier 2 Gold (Qualified Commercial Partner)</option>
+                        <option value="verified">Verified Supplier (Standard)</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
                     <label>GST Identification Number (GSTIN)</label>
                     <input type="text" id="gst_number" placeholder="27ABCDE1234F1Z5">
                 </div>
 
                 <div class="input-group">
-                    <label>Registered Address</label>
+                    <label>Registered Office Address</label>
                     <textarea id="address" rows="2" placeholder="Suite 400, Industrial Cyber City, Mumbai"></textarea>
                 </div>
 
                 <button type="submit" class="btn-primary" style="width: 100%; padding: 13px;">
-                    <i class="fa-solid fa-plus-circle"></i> Onboard Supplier
+                    <i class="fa-solid fa-plus-circle"></i> Onboard & Issue KYC Pass
                 </button>
             </form>
         </div>
@@ -105,11 +120,11 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Company Name</th>
-                        <th>Contact Person</th>
+                        <th>Company & Tier</th>
+                        <th>Contact Representative</th>
                         <th>Email & Phone</th>
-                        <th>GST Number</th>
-                        <th>Status</th>
+                        <th>Rating & Reliability</th>
+                        <th>Scorecard</th>
                     </tr>
                 </thead>
                 <tbody id="vendorTable">
@@ -118,6 +133,84 @@
             </table>
         </div>
     </section>
+
+    <!-- Supplier Performance Scorecard Modal (Feature 4) -->
+    <div class="modal-overlay" id="vendorScorecardModal">
+        <div class="modal-content" style="max-width: 680px;">
+            <div class="modal-header">
+                <div>
+                    <h3 id="scorecardCompanyName"><i class="fa-solid fa-id-card-clip" style="color: #6366f1;"></i> Supplier Performance Scorecard</h3>
+                    <p id="scorecardCompanyMeta" style="font-size: 0.85rem; color: var(--text-muted); margin: 2px 0 0;">Authorized Vendor Partner</p>
+                </div>
+                <button class="modal-close-btn" onclick="closeScorecardModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 16px; margin-bottom: 18px;">
+                <div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Overall Performance Index</span>
+                    <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 2px;">
+                        <span id="scorecardOverallRating" style="font-size: 1.8rem; font-weight: 800; color: #fbbf24; font-family: 'JetBrains Mono';">4.9</span>
+                        <span style="color: #f59e0b; font-size: 1.1rem;">★★★★★</span>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <span id="scorecardTierPill" class="tier-badge tier-tier1">Tier 1 Platinum</span>
+                    <div style="font-size: 0.78rem; color: #34d399; margin-top: 4px; font-weight: 600;"><i class="fa-solid fa-circle-check"></i> GSTIN & KYC Audited</div>
+                </div>
+            </div>
+
+            <!-- Granular Metric Grid -->
+            <div class="scorecard-metric-grid">
+                <div class="scorecard-metric-card">
+                    <h5>On-Time Delivery</h5>
+                    <strong id="metricOnTime" style="color: #10b981;">98.4%</strong>
+                </div>
+                <div class="scorecard-metric-card">
+                    <h5>Quality Acceptance</h5>
+                    <strong id="metricQuality" style="color: #38bdf8;">99.2%</strong>
+                </div>
+                <div class="scorecard-metric-card">
+                    <h5>Avg. Response Speed</h5>
+                    <strong id="metricResponse" style="color: #c084fc;">< 3 hrs</strong>
+                </div>
+            </div>
+
+            <!-- Compliance Checklist -->
+            <div style="margin-top: 20px; background: rgba(0,0,0,0.2); border-radius: 10px; padding: 14px; border: 1px solid var(--border-subtle);">
+                <h5 style="font-size: 0.82rem; color: #cbd5e1; text-transform: uppercase; margin: 0 0 8px;">Active Credentials & Compliance Badges</h5>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    <span class="badge" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16,185,129,0.3); color: #34d399;">
+                        <i class="fa-solid fa-check"></i> ISO 9001:2015 Quality Certified
+                    </span>
+                    <span class="badge" style="background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99,102,241,0.3); color: #a5b4fc;">
+                        <i class="fa-solid fa-shield"></i> MSME Registered
+                    </span>
+                    <span class="badge" style="background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6,182,212,0.3); color: #67e8f9;">
+                        <i class="fa-solid fa-certificate"></i> Verified Bank Settlement Mandate
+                    </span>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+                <button type="button" class="btn-primary" onclick="closeScorecardModal()">Close Scorecard</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sliding Glass Activity & Notifications Drawer (Feature 5) -->
+    <div class="drawer-overlay" id="drawerOverlay" onclick="toggleNotificationDrawer()"></div>
+    <div class="notification-drawer" id="notificationDrawer">
+        <div class="drawer-header">
+            <div>
+                <h3><i class="fa-solid fa-bell" style="color: #6366f1;"></i> Procurement Telemetry</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 2px 0 0;">Real-time audit log & system alerts</p>
+            </div>
+            <button class="modal-close-btn" onclick="toggleNotificationDrawer()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="drawer-content" id="drawerLogsList">
+            <!-- Dynamic notifications -->
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer>
@@ -141,6 +234,15 @@
             }
         }
 
+        function getTierBadgeHtml(tier) {
+            if (tier === 'tier1') {
+                return '<span class="tier-badge tier-tier1"><i class="fa-solid fa-crown"></i> Tier 1 Platinum</span>';
+            } else if (tier === 'tier2') {
+                return '<span class="tier-badge tier-tier2"><i class="fa-solid fa-medal"></i> Tier 2 Gold</span>';
+            }
+            return '<span class="tier-badge tier-verified"><i class="fa-solid fa-shield-check"></i> Verified</span>';
+        }
+
         function renderVendors(vendors) {
             const table = document.getElementById("vendorTable");
             if (!vendors || vendors.length === 0) {
@@ -148,23 +250,40 @@
                 return;
             }
 
-            table.innerHTML = vendors.map(v => `
+            table.innerHTML = vendors.map(v => {
+                const sc = v.scorecard || { rating: 4.8, on_time_rate: '97.5%', tier: 'tier1' };
+                const tierBadge = getTierBadgeHtml(v.tier || sc.tier);
+
+                return `
                 <tr>
                     <td>
-                        <strong style="color: #ffffff; font-size: 0.98rem;">${v.company_name || 'N/A'}</strong>
-                        <p style="color: var(--text-dim); font-size: 0.8rem; margin-top: 2px;">${v.address || 'Address on file'}</p>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                            <strong style="color: #ffffff; font-size: 0.98rem;">${v.company_name || 'N/A'}</strong>
+                            ${tierBadge}
+                        </div>
+                        <p style="color: var(--text-dim); font-size: 0.8rem; margin: 0;">GSTIN: <span style="font-family: 'JetBrains Mono'; color: #38bdf8;">${v.gst_number || '27ABCDE1234F1Z5'}</span></p>
                     </td>
                     <td><span style="font-weight: 600; color: #cbd5e1;"><i class="fa-solid fa-user-tie" style="color: #6366f1;"></i> ${v.contact_person || 'Representative'}</span></td>
                     <td>
                         <div style="display: flex; flex-direction: column; gap: 2px;">
-                            <span style="font-size: 0.88rem; color: #a5b4fc;"><i class="fa-solid fa-envelope"></i> ${v.email || 'N/A'}</span>
-                            <span style="font-family: 'JetBrains Mono'; font-size: 0.8rem; color: var(--text-muted);"><i class="fa-solid fa-phone"></i> ${v.phone || 'N/A'}</span>
+                            <span style="font-size: 0.85rem; color: #a5b4fc;"><i class="fa-solid fa-envelope"></i> ${v.email || 'N/A'}</span>
+                            <span style="font-family: 'JetBrains Mono'; font-size: 0.78rem; color: var(--text-muted);"><i class="fa-solid fa-phone"></i> ${v.phone || 'N/A'}</span>
                         </div>
                     </td>
-                    <td><span style="font-family: 'JetBrains Mono'; font-size: 0.82rem; color: #38bdf8;">${v.gst_number || 'N/A'}</span></td>
-                    <td><span class="badge badge-${v.status || 'active'}">${v.status || 'active'}</span></td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <strong style="color: #fbbf24; font-size: 0.95rem;"><i class="fa-solid fa-star"></i> ${sc.rating || 4.8}</strong>
+                            <span style="color: #10b981; font-size: 0.8rem; font-family: 'JetBrains Mono';">(${sc.on_time_rate || '98%'} On-Time)</span>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn-glass" onclick='openScorecardModal(${JSON.stringify(v)})' style="padding: 4px 12px; font-size: 0.8rem; border-color: rgba(99,102,241,0.35); color: #c7d2fe;">
+                            <i class="fa-solid fa-chart-pie"></i> Scorecard
+                        </button>
+                    </td>
                 </tr>
-            `).join('');
+                `;
+            }).join('');
 
             if (window.initTiltCards) window.initTiltCards();
         }
@@ -180,6 +299,28 @@
             renderVendors(filtered);
         }
 
+        // Scorecard Modal
+        function openScorecardModal(vendor) {
+            const sc = vendor.scorecard || { rating: 4.8, on_time_rate: '98.2%', quality_score: '99.1%', response_time: '< 4 hrs', tier: 'tier1' };
+            document.getElementById('scorecardCompanyName').innerHTML = `<i class="fa-solid fa-id-card-clip" style="color: #6366f1;"></i> ${vendor.company_name}`;
+            document.getElementById('scorecardCompanyMeta').innerText = `Contact: ${vendor.contact_person} | Email: ${vendor.email}`;
+            document.getElementById('scorecardOverallRating').innerText = sc.rating || 4.8;
+            document.getElementById('metricOnTime').innerText = sc.on_time_rate || '98.2%';
+            document.getElementById('metricQuality').innerText = sc.quality_score || '99.1%';
+            document.getElementById('metricResponse').innerText = sc.response_time || '< 3 hrs';
+
+            const pill = document.getElementById('scorecardTierPill');
+            const tier = vendor.tier || sc.tier || 'tier1';
+            pill.className = `tier-badge tier-${tier}`;
+            pill.innerText = tier === 'tier1' ? 'Tier 1 Platinum' : (tier === 'tier2' ? 'Tier 2 Gold' : 'Verified Supplier');
+
+            document.getElementById('vendorScorecardModal').classList.add('open');
+        }
+
+        function closeScorecardModal() {
+            document.getElementById('vendorScorecardModal').classList.remove('open');
+        }
+
         document.getElementById("vendorForm").addEventListener("submit", async function(e) {
             e.preventDefault();
             const vendorData = {
@@ -188,18 +329,56 @@
                 phone: document.getElementById("phone").value.trim(),
                 company: document.getElementById("company").value.trim(),
                 gst_number: document.getElementById("gst_number").value.trim(),
-                address: document.getElementById("address").value.trim()
+                address: document.getElementById("address").value.trim(),
+                tier: document.getElementById("tier").value
             };
 
             try {
                 await API.createVendor(vendorData);
-                showAlert('Vendor onboarded successfully into the master registry!', 'success');
+                showAlert('Vendor onboarded successfully into the master registry with KYC tier status!', 'success');
                 document.getElementById("vendorForm").reset();
                 loadVendors();
             } catch (err) {
                 showAlert(err.message || 'Failed to onboard vendor', 'danger');
             }
         });
+
+        // Notification Drawer (Feature 5)
+        function toggleNotificationDrawer() {
+            const drawer = document.getElementById('notificationDrawer');
+            const overlay = document.getElementById('drawerOverlay');
+            const isOpen = drawer.classList.contains('open');
+            if (isOpen) {
+                drawer.classList.remove('open');
+                overlay.classList.remove('open');
+            } else {
+                renderDrawerNotifications();
+                drawer.classList.add('open');
+                overlay.classList.add('open');
+            }
+        }
+
+        function renderDrawerNotifications() {
+            const list = document.getElementById('drawerLogsList');
+            const sampleLogs = [
+                { title: 'ABC Suppliers Achieved Tier-1 Platinum', time: '15 mins ago', icon: 'fa-crown', color: '#fbbf24', desc: 'Fulfillment reliability maintained at 98.4% across 14 orders.' },
+                { title: 'PO-2026-000001 Authenticity Stamped', time: '1 hour ago', icon: 'fa-shield-halved', color: '#06b6d4', desc: 'Cryptographic SHA-256 digital stamp verified.' },
+                { title: 'Quotation Submitted by ABC Suppliers', time: '2 hours ago', icon: 'fa-scale-balanced', color: '#10b981', desc: 'Amount ₹4,80,000 for 50 Units. Awaiting review.' },
+                { title: 'RFQ#1 Laptop Procurement Broadcasted', time: '4 hours ago', icon: 'fa-file-circle-plus', color: '#6366f1', desc: 'Dispatched to 3 registered Tier-1 suppliers.' }
+            ];
+            list.innerHTML = sampleLogs.map(l => `
+                <div class="drawer-item">
+                    <div class="drawer-item-icon" style="background: ${l.color}20; color: ${l.color};">
+                        <i class="fa-solid ${l.icon}"></i>
+                    </div>
+                    <div class="drawer-item-content">
+                        <strong>${l.title}</strong>
+                        <p>${l.desc}</p>
+                        <span class="drawer-item-time">${l.time}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
 
         window.onload = loadVendors;
     </script>

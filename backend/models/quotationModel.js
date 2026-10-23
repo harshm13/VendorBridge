@@ -1,5 +1,25 @@
 const db = require('../config/db');
 
+function parseQuoteItems(row) {
+    if (!row) return row;
+    let items = row.items || [];
+    let cleanNotes = row.notes || '';
+    if ((!items || items.length === 0) && cleanNotes.includes('<!--BOM_QUOTE:')) {
+        try {
+            const match = cleanNotes.match(/<!--BOM_QUOTE:(.*?)-->/);
+            if (match && match[1]) {
+                items = JSON.parse(match[1]);
+                cleanNotes = cleanNotes.replace(/<!--BOM_QUOTE:(.*?)-->/, '').trim();
+            }
+        } catch (e) {}
+    }
+    return {
+        ...row,
+        notes: cleanNotes,
+        items: items
+    };
+}
+
 const Quotation = {
     getAll: async () => {
         const [rows] = await db.query(`
@@ -8,17 +28,22 @@ const Quotation = {
             LEFT JOIN rfqs r ON q.rfq_id = r.id 
             ORDER BY q.id DESC
         `);
-        return rows;
+        return rows.map(parseQuoteItems);
     },
     getByRfqId: async (rfqId) => {
         const [rows] = await db.query('SELECT * FROM quotations WHERE rfq_id = ? ORDER BY amount ASC', [rfqId]);
-        return rows;
+        return rows.map(parseQuoteItems);
     },
     create: async (quoteData) => {
-        const { rfq_id, vendor_id, vendor_name, amount, delivery_days, notes } = quoteData;
+        const { rfq_id, vendor_id, vendor_name, amount, delivery_days, notes, items } = quoteData;
+        let formattedNotes = notes || '';
+        if (items && Array.isArray(items) && items.length > 0) {
+            formattedNotes = `${formattedNotes}\n<!--BOM_QUOTE:${JSON.stringify(items)}-->`;
+        }
+
         const [result] = await db.query(
             'INSERT INTO quotations (rfq_id, vendor_id, vendor_name, amount, delivery_days, notes, status) VALUES (?, ?, ?, ?, ?, ?, "submitted")',
-            [rfq_id || null, vendor_id || null, vendor_name, amount, delivery_days, notes]
+            [rfq_id || null, vendor_id || null, vendor_name, amount, delivery_days, formattedNotes]
         );
 
         const quoteId = result.insertId;
@@ -47,3 +72,4 @@ const Quotation = {
 };
 
 module.exports = Quotation;
+

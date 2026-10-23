@@ -58,12 +58,13 @@ exports.createQuotation = async (req, res, next) => {
             vendor_name, 
             amount: parseFloat(amount), 
             delivery_days: parseInt(delivery_days, 10), 
-            notes: notes || '' 
+            notes: notes || '',
+            items: Array.isArray(req.body.items) ? req.body.items : []
         });
 
         res.status(201).json({ 
             success: true, 
-            message: 'Quotation submitted successfully! Approval request has been generated for Manager review.', 
+            message: 'Quotation submitted successfully with Line Item breakdown! Approval request has been generated for Manager review.', 
             id: quoteId 
         });
     } catch (error) {

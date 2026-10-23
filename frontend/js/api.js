@@ -103,6 +103,10 @@ const API = {
         return this.request('/rfqs');
     },
 
+    async getRFQ(id) {
+        return this.request(`/rfqs/${id}`);
+    },
+
     async createRFQ(rfqData) {
         return this.request('/rfqs', {
             method: 'POST',

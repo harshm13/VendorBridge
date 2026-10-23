@@ -43,6 +43,18 @@
   ],
   "vendors": [
     {
+      "id": 9,
+      "user_id": null,
+      "company_name": "Apex Solutions Pvt Ltd",
+      "contact_person": "Apex Solutions",
+      "email": "contact@apexsolutions.com",
+      "phone": "+91 9123456789",
+      "gst_number": "27APEXS1234F1Z9",
+      "address": "Tech Park, Hyderabad",
+      "status": "active",
+      "created_at": "2026-10-23T13:06:57.460Z"
+    },
+    {
       "id": 8,
       "user_id": null,
       "company_name": "Apex Solutions Pvt Ltd",
@@ -139,6 +151,16 @@
   ],
   "rfqs": [
     {
+      "id": 8,
+      "title": "Server Hardware Infrastructure",
+      "description": "Enterprise rack servers with 128GB RAM",
+      "quantity": 10,
+      "deadline": "2026-09-15",
+      "created_by": 1,
+      "status": "open",
+      "created_at": "2026-10-23T13:06:57.472Z"
+    },
+    {
       "id": 7,
       "title": "Server Hardware Infrastructure",
       "description": "Enterprise rack servers with 128GB RAM",
@@ -210,6 +232,17 @@
     }
   ],
   "quotations": [
+    {
+      "id": 8,
+      "rfq_id": 8,
+      "vendor_id": null,
+      "vendor_name": "Apex Solutions Pvt Ltd",
+      "amount": 590000,
+      "delivery_days": 5,
+      "notes": "Includes 3 years enterprise SLA and support",
+      "status": "approved",
+      "created_at": "2026-10-23T13:06:57.481Z"
+    },
     {
       "id": 7,
       "rfq_id": 7,
@@ -290,6 +323,18 @@
   ],
   "approvals": [
     {
+      "id": 6,
+      "quotation_id": 8,
+      "rfq_title": "RFQ#8 - Server Hardware Infrastructure",
+      "vendor_name": "Apex Solutions Pvt Ltd",
+      "amount": 590000,
+      "status": "approved",
+      "remarks": "Approved by Senior Manager",
+      "created_at": "2026-10-23T13:06:57.487Z",
+      "approved_by": 5,
+      "approved_at": "2026-10-23T13:06:57.501Z"
+    },
+    {
       "id": 5,
       "quotation_id": 7,
       "rfq_title": "RFQ#7 - Server Hardware Infrastructure",
@@ -349,6 +394,16 @@
     }
   ],
   "purchase_orders": [
+    {
+      "id": 7,
+      "po_number": "PO-2026-000007",
+      "quotation_id": 8,
+      "vendor_name": "Apex Solutions Pvt Ltd",
+      "rfq_ref": "RFQ#8 - Server Hardware Infrastructure",
+      "total_amount": 590000,
+      "status": "pending",
+      "created_at": "2026-10-23T13:06:57.504Z"
+    },
     {
       "id": 6,
       "po_number": "PO-2026-000006",
@@ -411,6 +466,20 @@
     }
   ],
   "invoices": [
+    {
+      "id": 6,
+      "invoice_number": "INV-2026-000006",
+      "purchase_order_id": null,
+      "vendor_name": "Apex Solutions Pvt Ltd",
+      "product": "Rack Servers 128GB",
+      "quantity": 10,
+      "unit_price": 75000,
+      "subtotal": 750000,
+      "tax": 135000,
+      "total_amount": 885000,
+      "status": "generated",
+      "created_at": "2026-10-23T13:06:57.512Z"
+    },
     {
       "id": 5,
       "invoice_number": "INV-2026-000005",

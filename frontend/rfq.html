@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RFQ Pipeline | VendorBridge ERP</title>
+    <title>RFQ Pipeline & BoM Requisitions | VendorBridge ERP</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/components.css">
@@ -31,6 +31,12 @@
             <li><a href="approval.html"><i class="fa-solid fa-stamp"></i> Approvals</a></li>
             <li><a href="purchase-order.html"><i class="fa-solid fa-file-invoice-dollar"></i> POs</a></li>
             <li><a href="invoice.html"><i class="fa-solid fa-receipt"></i> Invoices</a></li>
+            <li>
+                <a href="#" class="notification-nav-btn" onclick="toggleNotificationDrawer(); return false;" title="Audit Notifications">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="notification-count-badge" id="navNotifBadge">4</span>
+                </a>
+            </li>
             <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i></a></li>
             <li><a href="#" onclick="Auth.logout(); return false;"><i class="fa-solid fa-power-off"></i></a></li>
         </ul>
@@ -45,7 +51,7 @@
             </div>
         </div>
         <h1>Request For Quotation (RFQ)</h1>
-        <p>Publish procurement specifications, broadcast to verified vendors, and estimate budgets.</p>
+        <p>Publish itemized specifications, broadcast Bill of Materials (BoM), and leverage AI-assisted requisitions.</p>
     </section>
 
     <div style="padding: 0 6%;">
@@ -74,11 +80,16 @@
     <!-- RFQ Creation Section -->
     <section style="padding: 10px 6% 30px;">
         <div class="rfq-form-section tilt-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2><i class="fa-solid fa-pen-to-square" style="color: #6366f1;"></i> Create New RFQ</h2>
-                <button type="button" class="btn-glass" onclick="openBudgetModal()" style="padding: 7px 16px; font-size: 0.85rem;">
-                    <i class="fa-solid fa-brain" style="color: #06b6d4;"></i> AI Budget Estimator
-                </button>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+                <h2><i class="fa-solid fa-pen-to-square" style="color: #6366f1;"></i> Create Requisition (RFQ)</h2>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn-cyber" onclick="openAiPromptModal()" style="padding: 7px 16px; font-size: 0.85rem;">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> ✨ AI Prompt-to-RFQ
+                    </button>
+                    <button type="button" class="btn-glass" onclick="openBudgetModal()" style="padding: 7px 16px; font-size: 0.85rem;">
+                        <i class="fa-solid fa-brain" style="color: #06b6d4;"></i> Budget Estimator
+                    </button>
+                </div>
             </div>
             
             <form id="rfqForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
@@ -88,12 +99,49 @@
                 </div>
                 
                 <div class="input-group" style="grid-column: 1 / -1; margin-bottom: 0;">
-                    <label>Product / Service Specifications</label>
-                    <textarea id="description" rows="3" placeholder="Provide detailed technical requirements, warranty expectations, and deliverables" required></textarea>
+                    <label>Overall Product / Service Specifications</label>
+                    <textarea id="description" rows="2" placeholder="Provide detailed technical requirements, warranty expectations, and deliverables" required></textarea>
+                </div>
+
+                <!-- Bill of Materials (BoM) Line Items Builder -->
+                <div style="grid-column: 1 / -1; background: rgba(255, 255, 255, 0.02); border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <div>
+                            <h4 style="margin: 0; font-size: 0.95rem; color: #a5b4fc;"><i class="fa-solid fa-list-check"></i> Bill of Materials (Line Items Breakdown)</h4>
+                            <p style="margin: 3px 0 0; font-size: 0.8rem; color: var(--text-muted);">Add specific item lines for transparent unit costing and supplier quotation breakdowns.</p>
+                        </div>
+                        <button type="button" class="btn-glass" onclick="addBomRow()" style="padding: 6px 14px; font-size: 0.82rem; border-color: rgba(99,102,241,0.4); color: #c7d2fe;">
+                            <i class="fa-solid fa-plus"></i> Add Line Item
+                        </button>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; font-size: 0.85rem; margin-bottom: 8px;">
+                            <thead>
+                                <tr>
+                                    <th style="min-width: 200px;">Part / Item Description</th>
+                                    <th style="width: 110px;">Unit</th>
+                                    <th style="width: 100px;">Quantity</th>
+                                    <th style="width: 140px;">Target Price (₹)</th>
+                                    <th style="width: 130px;">Line Est. (₹)</th>
+                                    <th style="width: 45px; text-align: center;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="bomItemsTableBody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: rgba(0,0,0,0.25); border-radius: 8px; padding: 10px 14px; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.05);">
+                        <div>Total Line Items: <strong id="bomItemsCount" style="color: #38bdf8;">0</strong></div>
+                        <div>Aggregated Units: <strong id="bomTotalQty" style="color: #818cf8;">0</strong></div>
+                        <div>Estimated Target Budget: <strong id="bomTotalCost" style="color: #10b981; font-family: 'JetBrains Mono';">₹0</strong></div>
+                    </div>
                 </div>
 
                 <div class="input-group" style="margin-bottom: 0;">
-                    <label>Quantity Required</label>
+                    <label>Aggregate Quantity (Auto-sums from BoM)</label>
                     <input type="number" id="quantity" placeholder="e.g. 50" min="1" required>
                 </div>
 
@@ -104,7 +152,7 @@
 
                 <div style="grid-column: 1 / -1; margin-top: 8px;">
                     <button type="submit" class="btn-primary" style="padding: 12px 28px;">
-                        <i class="fa-solid fa-paper-plane"></i> Publish RFQ to Vendors
+                        <i class="fa-solid fa-paper-plane"></i> Publish RFQ to Verified Suppliers
                     </button>
                 </div>
             </form>
@@ -127,7 +175,8 @@
                 <tr>
                     <th>RFQ Ref</th>
                     <th>Title & Specifications</th>
-                    <th>Quantity</th>
+                    <th>Line Items (BoM)</th>
+                    <th>Total Qty</th>
                     <th>Created By</th>
                     <th>Deadline</th>
                     <th>Status</th>
@@ -135,10 +184,46 @@
                 </tr>
             </thead>
             <tbody id="rfqTable">
-                <tr><td colspan="7" style="text-align: center;">Loading RFQs...</td></tr>
+                <tr><td colspan="8" style="text-align: center;">Loading RFQs...</td></tr>
             </tbody>
         </table>
     </section>
+
+    <!-- Bill of Materials (BoM) Inspector Modal -->
+    <div class="modal-overlay" id="viewBomModal">
+        <div class="modal-content" style="max-width: 720px;">
+            <div class="modal-header">
+                <div>
+                    <h3 id="bomModalTitle"><i class="fa-solid fa-boxes-stacked" style="color: #6366f1;"></i> Bill of Materials</h3>
+                    <p id="bomModalSubtitle" style="font-size: 0.85rem; color: var(--text-muted); margin: 2px 0 0;">Itemized technical requisitions</p>
+                </div>
+                <button class="modal-close-btn" onclick="closeViewBomModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div style="overflow-x: auto; margin: 16px 0;">
+                <table style="width: 100%; font-size: 0.88rem;">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Item Description</th>
+                            <th>Unit</th>
+                            <th>Quantity</th>
+                            <th>Target Unit Price</th>
+                            <th>Est. Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bomModalTableBody">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.25); border-radius: 10px; padding: 12px 18px;">
+                <span style="color: #c7d2fe; font-size: 0.9rem;">Aggregated BoM Target Value:</span>
+                <strong id="bomModalTotalCost" style="font-size: 1.2rem; color: #10b981; font-family: 'JetBrains Mono';">₹0</strong>
+            </div>
+        </div>
+    </div>
 
     <!-- AI Budget Estimator Modal -->
     <div class="modal-overlay" id="budgetModal">
@@ -169,6 +254,49 @@
         </div>
     </div>
 
+    <!-- Natural Language AI Prompt-to-RFQ Modal (Feature 7) -->
+    <div class="modal-overlay" id="aiPromptModal">
+        <div class="modal-content" style="max-width: 650px;">
+            <div class="modal-header">
+                <div>
+                    <h3><i class="fa-solid fa-wand-magic-sparkles" style="color: #38bdf8;"></i> AI Prompt-to-RFQ Generator</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin: 2px 0 0;">Describe what your company needs in plain English. The AI parses items, quantities, and timelines.</p>
+                </div>
+                <button class="modal-close-btn" onclick="closeAiPromptModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="input-group" style="margin-top: 14px;">
+                <label>Requisition Prompt</label>
+                <textarea id="aiPromptInput" rows="4" placeholder="e.g. We need 40 high-performance developer workstations with 32GB RAM and 20 ultra-wide 34-inch curved monitors for our new Bangalore office, budget around 450,000 INR, required within 3 weeks."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                <button type="button" class="btn-glass" onclick="loadPromptSample(1)" style="font-size: 0.78rem; padding: 4px 10px;">Sample: IT Laptops</button>
+                <button type="button" class="btn-glass" onclick="loadPromptSample(2)" style="font-size: 0.78rem; padding: 4px 10px;">Sample: Office Desks</button>
+                <button type="button" class="btn-glass" onclick="loadPromptSample(3)" style="font-size: 0.78rem; padding: 4px 10px;">Sample: Cloud Servers</button>
+            </div>
+
+            <button type="button" class="btn-cyber" onclick="generateRfqFromPrompt()" style="width: 100%;">
+                <i class="fa-solid fa-brain"></i> Parse & Auto-Fill RFQ Form
+            </button>
+        </div>
+    </div>
+
+    <!-- Sliding Glass Activity & Notifications Drawer (Feature 5) -->
+    <div class="drawer-overlay" id="drawerOverlay" onclick="toggleNotificationDrawer()"></div>
+    <div class="notification-drawer" id="notificationDrawer">
+        <div class="drawer-header">
+            <div>
+                <h3><i class="fa-solid fa-bell" style="color: #6366f1;"></i> Procurement Telemetry</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 2px 0 0;">Real-time audit log & system alerts</p>
+            </div>
+            <button class="modal-close-btn" onclick="toggleNotificationDrawer()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="drawer-content" id="drawerLogsList">
+            <!-- Dynamic notifications -->
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer>
         <p>© 2026 VendorBridge ERP. High-Performance Procurement Mesh.</p>
@@ -180,6 +308,7 @@
     <script src="js/tilt.js"></script>
     <script>
         let allRfqs = [];
+        let bomRows = [];
 
         async function loadRFQs() {
             if (!Auth.requireAuth()) return;
@@ -191,10 +320,95 @@
             }
         }
 
+        // Bill of Materials Row Management
+        function addBomRow(name = '', unit = 'Pcs', qty = 1, targetPrice = 0) {
+            const rowId = 'bom_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+            const rowObj = { id: rowId, name, unit, qty: parseInt(qty, 10) || 1, target_price: parseFloat(targetPrice) || 0 };
+            bomRows.push(rowObj);
+            renderBomRows();
+        }
+
+        function removeBomRow(id) {
+            bomRows = bomRows.filter(r => r.id !== id);
+            renderBomRows();
+        }
+
+        function updateBomRow(id, field, value) {
+            const row = bomRows.find(r => r.id === id);
+            if (!row) return;
+            if (field === 'qty') row.qty = parseInt(value, 10) || 0;
+            else if (field === 'target_price') row.target_price = parseFloat(value) || 0;
+            else row[field] = value;
+            renderBomRows();
+        }
+
+        function renderBomRows() {
+            const tbody = document.getElementById("bomItemsTableBody");
+            if (bomRows.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 12px;">
+                            No items added yet. Click "+ Add Line Item" or use "✨ AI Prompt-to-RFQ".
+                        </td>
+                    </tr>
+                `;
+            } else {
+                tbody.innerHTML = bomRows.map((r, i) => {
+                    const lineEst = (r.qty * r.target_price).toLocaleString();
+                    return `
+                        <tr>
+                            <td>
+                                <input type="text" value="${r.name}" placeholder="e.g. Core i7 Developer Laptop" 
+                                    onchange="updateBomRow('${r.id}', 'name', this.value)" style="padding: 6px 10px; font-size: 0.85rem;" required>
+                            </td>
+                            <td>
+                                <select onchange="updateBomRow('${r.id}', 'unit', this.value)" style="padding: 6px; font-size: 0.85rem;">
+                                    <option value="Pcs" ${r.unit === 'Pcs' ? 'selected' : ''}>Pcs</option>
+                                    <option value="Units" ${r.unit === 'Units' ? 'selected' : ''}>Units</option>
+                                    <option value="Boxes" ${r.unit === 'Boxes' ? 'selected' : ''}>Boxes</option>
+                                    <option value="Sets" ${r.unit === 'Sets' ? 'selected' : ''}>Sets</option>
+                                    <option value="Meters" ${r.unit === 'Meters' ? 'selected' : ''}>Meters</option>
+                                    <option value="Kg" ${r.unit === 'Kg' ? 'selected' : ''}>Kg</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="number" value="${r.qty}" min="1" placeholder="Qty" 
+                                    onchange="updateBomRow('${r.id}', 'qty', this.value)" style="padding: 6px; font-size: 0.85rem;" required>
+                            </td>
+                            <td>
+                                <input type="number" value="${r.target_price || ''}" min="0" placeholder="Price" 
+                                    onchange="updateBomRow('${r.id}', 'target_price', this.value)" style="padding: 6px; font-size: 0.85rem;">
+                            </td>
+                            <td>
+                                <strong style="font-family: 'JetBrains Mono'; color: #c7d2fe;">₹${lineEst}</strong>
+                            </td>
+                            <td style="text-align: center;">
+                                <button type="button" onclick="removeBomRow('${r.id}')" style="background: none; border: none; color: #f43f5e; cursor: pointer; font-size: 0.95rem;">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            const totalItems = bomRows.length;
+            const totalQty = bomRows.reduce((sum, r) => sum + (parseInt(r.qty, 10) || 0), 0);
+            const totalCost = bomRows.reduce((sum, r) => sum + ((parseInt(r.qty, 10) || 0) * (parseFloat(r.target_price) || 0)), 0);
+
+            document.getElementById("bomItemsCount").innerText = totalItems;
+            document.getElementById("bomTotalQty").innerText = totalQty;
+            document.getElementById("bomTotalCost").innerText = '₹' + totalCost.toLocaleString();
+
+            if (totalQty > 0) {
+                document.getElementById("quantity").value = totalQty;
+            }
+        }
+
         function renderRFQTable(rfqs) {
             const table = document.getElementById("rfqTable");
             if (!rfqs || rfqs.length === 0) {
-                table.innerHTML = '<tr><td colspan="7" style="text-align: center;">No RFQs found in registry.</td></tr>';
+                table.innerHTML = '<tr><td colspan="8" style="text-align: center;">No RFQs found in registry.</td></tr>';
                 return;
             }
 
@@ -206,24 +420,34 @@
             document.getElementById("statActiveRfqs").innerText = open;
             document.getElementById("statClosedRfqs").innerText = closed;
 
-            table.innerHTML = rfqs.map(r => `
+            table.innerHTML = rfqs.map(r => {
+                const hasBom = r.items && Array.isArray(r.items) && r.items.length > 0;
+                const bomPill = hasBom 
+                    ? `<button type="button" class="btn-glass" onclick="openViewBomModal(${r.id})" style="padding: 4px 10px; font-size: 0.78rem; color: #a5b4fc; border-color: rgba(99,102,241,0.35);">
+                         <i class="fa-solid fa-boxes-stacked" style="color: #6366f1;"></i> ${r.items.length} Line Items
+                       </button>`
+                    : `<span style="color: var(--text-muted); font-size: 0.8rem;"><i class="fa-solid fa-cube"></i> Single Lot</span>`;
+
+                return `
                 <tr>
                     <td><strong style="font-family: 'JetBrains Mono'; color: #818cf8;">RFQ#${r.id}</strong></td>
                     <td>
-                        <strong style="font-size: 1rem;">${r.title}</strong>
+                        <strong style="font-size: 0.98rem;">${r.title}</strong>
                         <p style="color: var(--text-muted); font-size: 0.82rem; margin-top: 2px;">${r.description || 'No specs provided.'}</p>
                     </td>
+                    <td>${bomPill}</td>
                     <td><strong>${r.quantity}</strong> Units</td>
                     <td><span style="font-size: 0.88rem; color: #cbd5e1;"><i class="fa-solid fa-circle-user"></i> ${r.created_by_name || 'Officer'}</span></td>
                     <td><span style="font-family: 'JetBrains Mono'; font-size: 0.85rem;">${r.deadline ? r.deadline.split('T')[0] : 'N/A'}</span></td>
                     <td><span class="badge badge-${r.status}">${r.status}</span></td>
                     <td>
-                        <a href="quotations.html?rfq=${r.id}" class="btn-primary" style="padding: 4px 12px; font-size: 0.8rem;">
+                        <a href="quotations.html?rfq=${r.id}" class="btn-primary" style="padding: 5px 12px; font-size: 0.8rem;">
                             <i class="fa-solid fa-list-check"></i> Quotes
                         </a>
                     </td>
                 </tr>
-            `).join('');
+                `;
+            }).join('');
 
             if (window.initTiltCards) window.initTiltCards();
         }
@@ -239,29 +463,138 @@
             }
         }
 
+        // View BoM Modal
+        function openViewBomModal(rfqId) {
+            const rfq = allRfqs.find(r => r.id === rfqId);
+            if (!rfq || !rfq.items || rfq.items.length === 0) return;
+
+            document.getElementById("bomModalTitle").innerHTML = `<i class="fa-solid fa-boxes-stacked" style="color: #6366f1;"></i> RFQ#${rfq.id} — ${rfq.title}`;
+            document.getElementById("bomModalSubtitle").innerText = `Total Requisition Quantity: ${rfq.quantity} units | Deadline: ${rfq.deadline ? rfq.deadline.split('T')[0] : 'N/A'}`;
+
+            let totalEst = 0;
+            document.getElementById("bomModalTableBody").innerHTML = rfq.items.map((it, idx) => {
+                const lineTotal = (it.qty || 1) * (it.target_price || 0);
+                totalEst += lineTotal;
+                return `
+                    <tr>
+                        <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">${idx + 1}</td>
+                        <td><strong>${it.name}</strong></td>
+                        <td><span class="badge" style="background: rgba(255,255,255,0.06);">${it.unit || 'Pcs'}</span></td>
+                        <td><strong>${it.qty}</strong></td>
+                        <td style="font-family: 'JetBrains Mono';">₹${(it.target_price || 0).toLocaleString()}</td>
+                        <td style="font-family: 'JetBrains Mono'; color: #38bdf8; font-weight: 600;">₹${lineTotal.toLocaleString()}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById("bomModalTotalCost").innerText = '₹' + totalEst.toLocaleString();
+            document.getElementById("viewBomModal").classList.add("open");
+        }
+
+        function closeViewBomModal() {
+            document.getElementById("viewBomModal").classList.remove("open");
+        }
+
+        // Form Submit
         document.getElementById("rfqForm").addEventListener("submit", async function(e) {
             e.preventDefault();
+            const cleanItems = bomRows.map(r => ({
+                name: r.name,
+                unit: r.unit,
+                qty: parseInt(r.qty, 10),
+                target_price: parseFloat(r.target_price) || 0
+            }));
+
             const rfqData = {
                 title: document.getElementById("title").value.trim(),
                 description: document.getElementById("description").value.trim(),
                 quantity: parseInt(document.getElementById("quantity").value, 10),
-                deadline: document.getElementById("deadline").value
+                deadline: document.getElementById("deadline").value,
+                items: cleanItems
             };
 
             try {
                 await API.createRFQ(rfqData);
-                showAlert('RFQ published successfully! Verified suppliers notified.', 'success');
+                showAlert('RFQ published successfully with Bill of Materials specification!', 'success');
                 document.getElementById("rfqForm").reset();
+                bomRows = [];
+                renderBomRows();
                 loadRFQs();
             } catch (err) {
                 showAlert(err.message || 'Failed to create RFQ', 'danger');
             }
         });
 
-        // Modal Helpers
+        // AI Prompt-to-RFQ (Feature 7)
+        function openAiPromptModal() {
+            document.getElementById('aiPromptModal').classList.add('open');
+        }
+
+        function closeAiPromptModal() {
+            document.getElementById('aiPromptModal').classList.remove('open');
+        }
+
+        function loadPromptSample(type) {
+            const prompts = {
+                1: "We need 35 high-performance developer laptops with 32GB RAM and 15 portable monitors for our engineering team, budget ₹3,80,000, needed by 2026-11-30.",
+                2: "Procure 60 ergonomic mesh executive chairs and 25 motorized height-adjustable desks for new floor expansion, budget around ₹4,20,000, deadline in 20 days.",
+                3: "We require 10 enterprise 2U rack servers with 128GB ECC RAM and 4 48-port Gigabit PoE switches, budget ₹8,50,000, delivery within 4 weeks."
+            };
+            document.getElementById('aiPromptInput').value = prompts[type] || '';
+        }
+
+        function generateRfqFromPrompt() {
+            const text = document.getElementById('aiPromptInput').value.trim();
+            if (!text) {
+                alert('Please enter a requisition description');
+                return;
+            }
+
+            // Heuristic extraction
+            let title = 'Enterprise Equipment Procurement';
+            let desc = text;
+            let deadline = new Date(Date.now() + 21 * 86400000).toISOString().split('T')[0];
+            let items = [];
+
+            if (text.toLowerCase().includes('laptop') || text.toLowerCase().includes('monitor')) {
+                title = 'IT Hardware & Workstations';
+                items = [
+                    { name: 'Developer Laptop (i7, 32GB RAM, 1TB SSD)', unit: 'Pcs', qty: 35, target_price: 9000 },
+                    { name: '27-inch 4K UHD IPS Monitors', unit: 'Pcs', qty: 15, target_price: 4500 }
+                ];
+            } else if (text.toLowerCase().includes('chair') || text.toLowerCase().includes('desk')) {
+                title = 'Ergonomic Office Furnishings';
+                items = [
+                    { name: 'Ergonomic Mesh Lumbar Chairs', unit: 'Pcs', qty: 60, target_price: 3800 },
+                    { name: 'Motorized Standing Desks (140x70cm)', unit: 'Pcs', qty: 25, target_price: 7500 }
+                ];
+            } else if (text.toLowerCase().includes('server') || text.toLowerCase().includes('switch')) {
+                title = 'Data Center Infrastructure & Compute';
+                items = [
+                    { name: '2U Enterprise Rack Servers (128GB ECC RAM)', unit: 'Units', qty: 10, target_price: 65000 },
+                    { name: '48-Port Managed Gigabit PoE Switches', unit: 'Units', qty: 4, target_price: 50000 }
+                ];
+            } else {
+                items = [
+                    { name: 'General Procurement Item Batch', unit: 'Pcs', qty: 25, target_price: 5000 }
+                ];
+            }
+
+            document.getElementById('title').value = title;
+            document.getElementById('description').value = desc;
+            document.getElementById('deadline').value = deadline;
+
+            bomRows = [];
+            items.forEach(it => addBomRow(it.name, it.unit, it.qty, it.target_price));
+
+            closeAiPromptModal();
+            showAlert('Requisition details and Bill of Materials generated from AI Prompt!', 'success');
+        }
+
+        // Budget Modal Helpers
         function openBudgetModal() {
-            document.getElementById('modalEstimateTitle').value = document.getElementById('title').value;
-            document.getElementById('modalEstimateQty').value = document.getElementById('quantity').value;
+            document.getElementById('modalEstimateTitle').value = document.getElementById('title').value || 'Developer Workstations';
+            document.getElementById('modalEstimateQty').value = document.getElementById('quantity').value || '20';
             document.getElementById('budgetModal').classList.add('open');
         }
 
@@ -283,7 +616,47 @@
             }
         }
 
-        window.onload = loadRFQs;
+        // Notification Drawer (Feature 5)
+        function toggleNotificationDrawer() {
+            const drawer = document.getElementById('notificationDrawer');
+            const overlay = document.getElementById('drawerOverlay');
+            const isOpen = drawer.classList.contains('open');
+            if (isOpen) {
+                drawer.classList.remove('open');
+                overlay.classList.remove('open');
+            } else {
+                renderDrawerNotifications();
+                drawer.classList.add('open');
+                overlay.classList.add('open');
+            }
+        }
+
+        function renderDrawerNotifications() {
+            const list = document.getElementById('drawerLogsList');
+            const sampleLogs = [
+                { title: 'RFQ#1 Laptop Procurement Broadcasted', time: '12 mins ago', icon: 'fa-file-circle-plus', color: '#6366f1', desc: 'Dispatched to 3 registered Tier-1 suppliers.' },
+                { title: 'Quotation Submitted by ABC Suppliers', time: '1 hour ago', icon: 'fa-scale-balanced', color: '#10b981', desc: 'Amount ₹4,80,000 for 50 Units. Awaiting review.' },
+                { title: 'PO-2026-000001 Authenticity Stamped', time: '3 hours ago', icon: 'fa-shield-halved', color: '#06b6d4', desc: 'Cryptographic SHA-256 digital stamp verified.' },
+                { title: 'Invoice INV-2026-000001 Ready for 3-Way Match', time: '5 hours ago', icon: 'fa-receipt', color: '#eab308', desc: 'PO and GRN matched with 0% variance.' }
+            ];
+            list.innerHTML = sampleLogs.map(l => `
+                <div class="drawer-item">
+                    <div class="drawer-item-icon" style="background: ${l.color}20; color: ${l.color};">
+                        <i class="fa-solid ${l.icon}"></i>
+                    </div>
+                    <div class="drawer-item-content">
+                        <strong>${l.title}</strong>
+                        <p>${l.desc}</p>
+                        <span class="drawer-item-time">${l.time}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.onload = function() {
+            loadRFQs();
+            renderBomRows();
+        };
     </script>
 </body>
 </html>
