@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Orders | VendorBridge ERP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="js/appearance.js"></script>
+</head>
+<body>
+
+    <!-- Three Canvas -->
+    <div id="threeCanvasContainer"></div>
+
+    <!-- Navbar -->
+    <nav>
+        <div class="logo">
+            <a href="index.html">
+                <span class="logo-badge"><i class="fa-solid fa-cube"></i></span>
+                <h2>VendorBridge</h2>
+            </a>
+        </div>
+        <ul>
+            <li><a href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+            <li><a href="vendor.html"><i class="fa-solid fa-building-user"></i> Vendors</a></li>
+            <li><a href="rfq.html"><i class="fa-solid fa-file-circle-plus"></i> RFQs</a></li>
+            <li><a href="quotations.html"><i class="fa-solid fa-scale-balanced"></i> Quotations</a></li>
+            <li><a href="approval.html"><i class="fa-solid fa-stamp"></i> Approvals</a></li>
+            <li><a href="purchase-order.html" class="active"><i class="fa-solid fa-file-invoice-dollar"></i> POs</a></li>
+            <li><a href="invoice.html"><i class="fa-solid fa-receipt"></i> Invoices</a></li>
+            <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i></a></li>
+            <li><a href="#" onclick="Auth.logout(); return false;"><i class="fa-solid fa-power-off"></i></a></li>
+        </ul>
+    </nav>
+
+    <!-- Header -->
+    <section class="page-header">
+        <div class="motion-badge" style="margin-bottom: 10px;">
+            <div class="motion-badge-inner">
+                <span class="pulse-dot"></span>
+                <span class="motion-badge-text">Official Order Registry</span>
+            </div>
+        </div>
+        <h1>Purchase Order Management</h1>
+        <p>Issue, track, and generate official printable purchase orders for approved vendor proposals.</p>
+    </section>
+
+    <div style="padding: 0 6%;">
+        <div id="alertBox" class="alert-box"></div>
+    </div>
+
+    <!-- Stats -->
+    <section class="po-stats">
+        <div class="stat-card tilt-card">
+            <h3 id="statTotalPo">0</h3>
+            <p>Total Purchase Orders</p>
+            <span class="stat-trend"><i class="fa-solid fa-file-contract"></i> Active Ledger</span>
+        </div>
+        <div class="stat-card tilt-card">
+            <h3 id="statPendingPo" style="color: #f59e0b;">0</h3>
+            <p>Pending Orders</p>
+            <span class="stat-trend" style="color: #f59e0b;"><i class="fa-solid fa-clock"></i> Awaiting Issuance</span>
+        </div>
+        <div class="stat-card tilt-card">
+            <h3 id="statApprovedPo" style="color: #10b981;">0</h3>
+            <p>Approved Orders</p>
+            <span class="stat-trend"><i class="fa-solid fa-circle-check"></i> Ready for Billing</span>
+        </div>
+    </section>
+
+    <!-- Create PO Form Section -->
+    <section style="padding: 10px 6% 30px;">
+        <div class="po-section tilt-card">
+            <h2><i class="fa-solid fa-stamp" style="color: #6366f1;"></i> Issue Manual Purchase Order</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">
+                Direct PO generation for authorized corporate procurement requisitions outside the RFQ pipeline.
+            </p>
+
+            <form id="poForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+                <div class="input-group" style="margin-bottom: 0;">
+                    <label>Vendor Partner</label>
+                    <input type="text" id="vendor_name" placeholder="e.g. ABC Suppliers Ltd" required>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 0;">
+                    <label>RFQ / Project Reference</label>
+                    <input type="text" id="rfq_ref" placeholder="e.g. RFQ-2026-CLOUD" required>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 0;">
+                    <label>Total Order Amount (₹)</label>
+                    <input type="number" id="total_amount" placeholder="e.g. 480000" min="1" step="0.01" required>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 0;">
+                    <label>Initial Status</label>
+                    <select id="status">
+                        <option value="approved">Approved & Ready</option>
+                        <option value="pending">Pending Review</option>
+                    </select>
+                </div>
+
+                <div style="grid-column: 1 / -1; margin-top: 8px;">
+                    <button type="submit" class="btn-primary" style="padding: 12px 28px;">
+                        <i class="fa-solid fa-file-circle-check"></i> Generate Official PO
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- PO Table Section -->
+    <section class="po-table-section" style="padding-bottom: 60px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h2>Official Purchase Orders Registry</h2>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>PO Number</th>
+                    <th>Vendor Partner</th>
+                    <th>Reference</th>
+                    <th>Created Date</th>
+                    <th>Total Value (₹)</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="poTable">
+                <tr><td colspan="7" style="text-align: center;">Loading purchase orders...</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Printable PO Document Modal -->
+    <div class="modal-overlay" id="poPrintModal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-file-contract" style="color: #6366f1;"></i> Official Purchase Order Preview</h3>
+                <button class="modal-close-btn" onclick="closePoModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="invoice-print-container" id="poPrintDoc">
+                <div class="invoice-print-header">
+                    <div>
+                        <h2 class="invoice-print-title">PURCHASE ORDER</h2>
+                        <p style="color: #64748b; font-size: 0.85rem; margin-top: 4px;">VendorBridge Corporate Procurement</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <strong id="modalPoNum" style="font-family: 'JetBrains Mono'; font-size: 1.2rem; color: #4f46e5;">PO-2026-000001</strong>
+                        <p id="modalPoDate" style="color: #64748b; font-size: 0.85rem; margin-top: 4px;">Date: 2026-10-23</p>
+                    </div>
+                </div>
+
+                <div class="invoice-print-grid">
+                    <div>
+                        <strong style="color: #475569; font-size: 0.8rem; text-transform: uppercase;">Vendor Details:</strong>
+                        <p id="modalPoVendor" style="font-size: 1.05rem; font-weight: 700; color: #0f172a; margin-top: 2px;">ABC Suppliers</p>
+                        <p style="color: #64748b; font-size: 0.85rem;">Authorized Vendor Partner</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <strong style="color: #475569; font-size: 0.8rem; text-transform: uppercase;">Requisition Ref:</strong>
+                        <p id="modalPoRef" style="font-weight: 600; color: #0f172a; margin-top: 2px;">RFQ#1</p>
+                        <p style="color: #64748b; font-size: 0.85rem;">Status: <span id="modalPoStatus" style="font-weight: 700; color: #10b981;">APPROVED</span></p>
+                    </div>
+                </div>
+
+                <table class="invoice-print-table">
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th>Reference</th>
+                            <th style="text-align: right;">Authorized Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Procurement Contract Deliverables</td>
+                            <td id="modalPoRef2">RFQ#1</td>
+                            <td id="modalPoAmount" style="text-align: right; font-weight: 700;">₹4,80,000</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="invoice-print-total-box">
+                    <div class="invoice-print-total-row invoice-print-grand-total">
+                        <span>Total PO Value:</span>
+                        <span id="modalPoGrandTotal">₹4,80,000</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 16px;">
+                <button type="button" class="btn-glass" onclick="closePoModal()">Close</button>
+                <button type="button" class="btn-primary" onclick="window.print()">
+                    <i class="fa-solid fa-print"></i> Print Purchase Order
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2026 VendorBridge ERP. High-Performance Procurement Mesh.</p>
+    </footer>
+
+    <!-- Client Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/three-scene.js"></script>
+    <script src="js/tilt.js"></script>
+    <script>
+        let allPOs = [];
+
+        async function loadPOs() {
+            if (!Auth.requireAuth()) return;
+            try {
+                allPOs = await API.getPOs();
+                renderPOs(allPOs);
+            } catch (err) {
+                showAlert('Error loading purchase orders', 'danger');
+            }
+        }
+
+        function renderPOs(pos) {
+            const table = document.getElementById("poTable");
+            if (!pos || pos.length === 0) {
+                table.innerHTML = '<tr><td colspan="7" style="text-align: center;">No purchase orders found.</td></tr>';
+                return;
+            }
+
+            const total = pos.length;
+            const pending = pos.filter(p => p.status === 'pending').length;
+            const approved = pos.filter(p => p.status === 'approved' || p.status === 'issued').length;
+
+            document.getElementById("statTotalPo").innerText = total;
+            document.getElementById("statPendingPo").innerText = pending;
+            document.getElementById("statApprovedPo").innerText = approved;
+
+            table.innerHTML = pos.map(p => `
+                <tr>
+                    <td><strong style="font-family: 'JetBrains Mono'; color: #34d399;">${p.po_number}</strong></td>
+                    <td><span style="font-weight: 600;"><i class="fa-solid fa-store" style="color: #6366f1;"></i> ${p.vendor_name}</span></td>
+                    <td><span style="color: #cbd5e1;">${p.rfq_ref || 'Direct PO'}</span></td>
+                    <td><span style="font-family: 'JetBrains Mono'; font-size: 0.85rem; color: var(--text-muted);">${p.created_at ? p.created_at.split('T')[0] : 'N/A'}</span></td>
+                    <td><strong style="font-size: 1.05rem; color: #ffffff;">₹${parseFloat(p.total_amount).toLocaleString()}</strong></td>
+                    <td><span class="badge badge-${p.status}">${p.status}</span></td>
+                    <td>
+                        <button class="btn-glass" onclick='viewPoModal(${JSON.stringify(p)})' style="padding: 4px 12px; font-size: 0.8rem;">
+                            <i class="fa-solid fa-eye"></i> View PO
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            if (window.initTiltCards) window.initTiltCards();
+        }
+
+        function viewPoModal(po) {
+            document.getElementById('modalPoNum').innerText = po.po_number;
+            document.getElementById('modalPoDate').innerText = `Date: ${po.created_at ? po.created_at.split('T')[0] : new Date().toISOString().split('T')[0]}`;
+            document.getElementById('modalPoVendor').innerText = po.vendor_name;
+            document.getElementById('modalPoRef').innerText = po.rfq_ref || 'Direct Procurement';
+            document.getElementById('modalPoRef2').innerText = po.rfq_ref || 'Direct Procurement';
+            document.getElementById('modalPoStatus').innerText = (po.status || 'APPROVED').toUpperCase();
+            document.getElementById('modalPoAmount').innerText = `₹${parseFloat(po.total_amount).toLocaleString()}`;
+            document.getElementById('modalPoGrandTotal').innerText = `₹${parseFloat(po.total_amount).toLocaleString()}`;
+            
+            document.getElementById('poPrintModal').classList.add('open');
+        }
+
+        function closePoModal() {
+            document.getElementById('poPrintModal').classList.remove('open');
+        }
+
+        document.getElementById("poForm").addEventListener("submit", async function(e) {
+            e.preventDefault();
+            const poData = {
+                vendor_name: document.getElementById("vendor_name").value.trim(),
+                rfq_ref: document.getElementById("rfq_ref").value.trim(),
+                total_amount: parseFloat(document.getElementById("total_amount").value),
+                status: document.getElementById("status").value
+            };
+
+            try {
+                await API.createPO(poData);
+                showAlert('Purchase order issued successfully!', 'success');
+                document.getElementById("poForm").reset();
+                loadPOs();
+            } catch (err) {
+                showAlert(err.message || 'Failed to create PO', 'danger');
+            }
+        });
+
+        window.onload = loadPOs;
+    </script>
+</body>
+</html>

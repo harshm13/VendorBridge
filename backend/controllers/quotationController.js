@@ -19,29 +19,53 @@ exports.createQuotation = async (req, res, next) => {
         }
 
         let vendor_id = null;
-        let vendor_name = req.body.vendor_name || 'Unknown Vendor';
+        let vendor_name = req.body.vendor_name || 'Vendor Partner';
         
         if (req.user && req.user.id) {
             const vendor = await Vendor.getByUserId(req.user.id);
-            if (!vendor && req.user.role === 'vendor') {
-                return res.status(403).json({ success: false, message: 'Vendor profile not found for this user' });
-            }
             if (vendor) {
                 vendor_id = vendor.id;
-                vendor_name = vendor.company_name;
+                vendor_name = vendor.company_name || req.body.vendor_name || req.user.name;
+            } else if (req.user.role === 'vendor') {
+                // If vendor profile row is missing, auto-create one
+                try {
+                    vendor_id = await Vendor.create({
+                        name: req.user.name || 'Vendor Partner',
+                        email: req.user.email,
+                        phone: '',
+                        company: req.body.vendor_name || req.user.name || 'Vendor Partner',
+                        user_id: req.user.id
+                    });
+                    vendor_name = req.body.vendor_name || req.user.name || 'Vendor Partner';
+                } catch (e) {
+                    // Fallback to name
+                }
             }
         }
 
-        const [rfqRows] = await db.query('SELECT * FROM rfqs WHERE id = ?', [rfq_id]);
-        if (!rfqRows[0]) {
-             return res.status(404).json({ success: false, message: 'RFQ not found' });
-        }
-        if (rfqRows[0].status !== 'open') {
-             return res.status(400).json({ success: false, message: 'Cannot submit quotation for a closed or draft RFQ' });
+        if (rfq_id) {
+            const [rfqRows] = await db.query('SELECT * FROM rfqs WHERE id = ?', [rfq_id]);
+            if (rfqRows && rfqRows.length > 0) {
+                if (rfqRows[0].status === 'closed') {
+                    return res.status(400).json({ success: false, message: 'Cannot submit quotation for a closed RFQ' });
+                }
+            }
         }
 
-        const quoteId = await Quotation.create({ rfq_id, vendor_id, vendor_name, amount, delivery_days, notes });
-        res.status(201).json({ success: true, message: 'Quotation submitted successfully!', id: quoteId });
+        const quoteId = await Quotation.create({ 
+            rfq_id: rfq_id ? parseInt(rfq_id, 10) : null, 
+            vendor_id, 
+            vendor_name, 
+            amount: parseFloat(amount), 
+            delivery_days: parseInt(delivery_days, 10), 
+            notes: notes || '' 
+        });
+
+        res.status(201).json({ 
+            success: true, 
+            message: 'Quotation submitted successfully! Approval request has been generated for Manager review.', 
+            id: quoteId 
+        });
     } catch (error) {
         next(error);
     }

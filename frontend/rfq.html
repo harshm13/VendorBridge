@@ -1,102 +1,191 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RFQ Management | VendorBridge ERP</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>RFQ Pipeline | VendorBridge ERP</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="js/appearance.js"></script>
 </head>
 <body>
 
+    <!-- Three Canvas -->
+    <div id="threeCanvasContainer"></div>
+
     <!-- Navbar -->
     <nav>
         <div class="logo">
-            <h2><a href="index.html">VendorBridge</a></h2>
+            <a href="index.html">
+                <span class="logo-badge"><i class="fa-solid fa-cube"></i></span>
+                <h2>VendorBridge</h2>
+            </a>
         </div>
         <ul>
-            <li><a href="dashboard.html">Dashboard</a></li>
-            <li><a href="vendor.html">Vendors</a></li>
-            <li><a href="quotations.html">Quotations</a></li>
-            <li><a href="approval.html">Approvals</a></li>
-            <li><a href="purchase-order.html">Purchase Orders</a></li>
-            <li><a href="invoice.html">Invoices</a></li>
-            <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i> Theme</a></li>
-            <li><a href="#" onclick="Auth.logout(); return false;">Logout</a></li>
+            <li><a href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+            <li><a href="vendor.html"><i class="fa-solid fa-building-user"></i> Vendors</a></li>
+            <li><a href="rfq.html" class="active"><i class="fa-solid fa-file-circle-plus"></i> RFQs</a></li>
+            <li><a href="quotations.html"><i class="fa-solid fa-scale-balanced"></i> Quotations</a></li>
+            <li><a href="approval.html"><i class="fa-solid fa-stamp"></i> Approvals</a></li>
+            <li><a href="purchase-order.html"><i class="fa-solid fa-file-invoice-dollar"></i> POs</a></li>
+            <li><a href="invoice.html"><i class="fa-solid fa-receipt"></i> Invoices</a></li>
+            <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i></a></li>
+            <li><a href="#" onclick="Auth.logout(); return false;"><i class="fa-solid fa-power-off"></i></a></li>
         </ul>
     </nav>
 
     <!-- Header -->
     <section class="page-header">
+        <div class="motion-badge" style="margin-bottom: 10px;">
+            <div class="motion-badge-inner">
+                <span class="pulse-dot"></span>
+                <span class="motion-badge-text">Procurement Requisition Pipeline</span>
+            </div>
+        </div>
         <h1>Request For Quotation (RFQ)</h1>
-        <p>Create and manage procurement requests efficiently.</p>
+        <p>Publish procurement specifications, broadcast to verified vendors, and estimate budgets.</p>
     </section>
 
-    <div style="padding: 0 8%;">
+    <div style="padding: 0 6%;">
         <div id="alertBox" class="alert-box"></div>
     </div>
 
-    <!-- RFQ Form -->
-    <section class="rfq-form-section">
-        <h2>Create New RFQ</h2>
-        <form id="rfqForm" class="rfq-form">
-            <input type="text" id="title" placeholder="RFQ Title (e.g. Laptop Procurement)" required>
-            <textarea id="description" rows="3" placeholder="Product / Service Details & Specifications" required></textarea>
-            <input type="number" id="quantity" placeholder="Quantity required" required>
-            <input type="date" id="deadline" required>
-            <button type="submit">Create RFQ</button>
-        </form>
-    </section>
-
     <!-- RFQ Statistics -->
     <section class="rfq-stats">
-        <div class="stat-card">
+        <div class="stat-card tilt-card">
             <h3 id="statTotalRfqs">0</h3>
-            <p>Total RFQs</p>
+            <p>Total Requisitions</p>
+            <span class="stat-trend"><i class="fa-solid fa-database"></i> Registered</span>
         </div>
-        <div class="stat-card">
+        <div class="stat-card tilt-card">
             <h3 id="statActiveRfqs">0</h3>
-            <p>Active RFQs</p>
+            <p>Active Open RFQs</p>
+            <span class="stat-trend" style="color: #06b6d4;"><i class="fa-solid fa-arrows-spin"></i> Open to Bidding</span>
         </div>
-        <div class="stat-card">
+        <div class="stat-card tilt-card">
             <h3 id="statClosedRfqs">0</h3>
             <p>Closed RFQs</p>
+            <span class="stat-trend" style="color: #64748b;"><i class="fa-solid fa-circle-check"></i> Fulfilled</span>
         </div>
     </section>
 
-    <!-- RFQ Table -->
-    <section class="rfq-table-section">
-        <h2>Active RFQs</h2>
+    <!-- RFQ Creation Section -->
+    <section style="padding: 10px 6% 30px;">
+        <div class="rfq-form-section tilt-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2><i class="fa-solid fa-pen-to-square" style="color: #6366f1;"></i> Create New RFQ</h2>
+                <button type="button" class="btn-glass" onclick="openBudgetModal()" style="padding: 7px 16px; font-size: 0.85rem;">
+                    <i class="fa-solid fa-brain" style="color: #06b6d4;"></i> AI Budget Estimator
+                </button>
+            </div>
+            
+            <form id="rfqForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+                <div class="input-group" style="grid-column: 1 / -1; margin-bottom: 0;">
+                    <label>RFQ Title</label>
+                    <input type="text" id="title" placeholder="e.g. Enterprise Cloud Server Infrastructure" required>
+                </div>
+                
+                <div class="input-group" style="grid-column: 1 / -1; margin-bottom: 0;">
+                    <label>Product / Service Specifications</label>
+                    <textarea id="description" rows="3" placeholder="Provide detailed technical requirements, warranty expectations, and deliverables" required></textarea>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 0;">
+                    <label>Quantity Required</label>
+                    <input type="number" id="quantity" placeholder="e.g. 50" min="1" required>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 0;">
+                    <label>Bid Submission Deadline</label>
+                    <input type="date" id="deadline" required>
+                </div>
+
+                <div style="grid-column: 1 / -1; margin-top: 8px;">
+                    <button type="submit" class="btn-primary" style="padding: 12px 28px;">
+                        <i class="fa-solid fa-paper-plane"></i> Publish RFQ to Vendors
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- RFQ Table Section -->
+    <section class="rfq-table-section" style="padding-bottom: 60px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 16px;">
+            <h2>Requisition Registry</h2>
+            <div class="filter-pills-container" style="margin-bottom: 0;">
+                <button type="button" class="filter-pill-btn active" onclick="filterRfqs('all', this)">All</button>
+                <button type="button" class="filter-pill-btn" onclick="filterRfqs('open', this)">Open</button>
+                <button type="button" class="filter-pill-btn" onclick="filterRfqs('closed', this)">Closed</button>
+            </div>
+        </div>
+
         <table>
             <thead>
                 <tr>
-                    <th>RFQ ID</th>
-                    <th>Title</th>
-                    <th>Description</th>
+                    <th>RFQ Ref</th>
+                    <th>Title & Specifications</th>
                     <th>Quantity</th>
+                    <th>Created By</th>
                     <th>Deadline</th>
                     <th>Status</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody id="rfqTable">
-                <tr><td colspan="6">Loading RFQs...</td></tr>
+                <tr><td colspan="7" style="text-align: center;">Loading RFQs...</td></tr>
             </tbody>
         </table>
     </section>
 
+    <!-- AI Budget Estimator Modal -->
+    <div class="modal-overlay" id="budgetModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-wand-magic-sparkles" style="color: #6366f1;"></i> AI Requisition Estimator</h3>
+                <button class="modal-close-btn" onclick="closeBudgetModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">
+                Enter procurement details to get recommended benchmark unit costs, estimated market ranges, and delivery milestones.
+            </p>
+            <div class="input-group">
+                <label>Item Name</label>
+                <input type="text" id="modalEstimateTitle" placeholder="e.g. Developer Laptops or Server Racks">
+            </div>
+            <div class="input-group">
+                <label>Estimated Quantity</label>
+                <input type="number" id="modalEstimateQty" placeholder="10" min="1">
+            </div>
+            <button type="button" class="btn-cyber" onclick="runAiEstimation()" style="width: 100%; margin-bottom: 16px;">
+                <i class="fa-solid fa-calculator"></i> Calculate Benchmarks
+            </button>
+            <div id="aiEstimateResult" style="display: none; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 12px; padding: 16px;">
+                <h4 style="font-size: 1rem; color: #a5b4fc; margin-bottom: 6px;">AI Market Benchmark:</h4>
+                <p id="aiEstimateTotal" style="font-size: 1.15rem; font-weight: 700; color: #ffffff;"></p>
+                <p id="aiEstimateAdvice" style="font-size: 0.88rem; color: #cbd5e1; margin-top: 6px;"></p>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer>
-        <p>© 2026 VendorBridge ERP. All Rights Reserved.</p>
+        <p>© 2026 VendorBridge ERP. High-Performance Procurement Mesh.</p>
     </footer>
 
+    <!-- Client Scripts -->
     <script src="js/api.js"></script>
+    <script src="js/three-scene.js"></script>
+    <script src="js/tilt.js"></script>
     <script>
+        let allRfqs = [];
+
         async function loadRFQs() {
             if (!Auth.requireAuth()) return;
             try {
-                const rfqs = await API.getRFQs();
-                renderRFQTable(rfqs);
+                allRfqs = await API.getRFQs();
+                renderRFQTable(allRfqs);
             } catch (err) {
                 showAlert('Error loading RFQs', 'danger');
             }
@@ -105,48 +194,94 @@
         function renderRFQTable(rfqs) {
             const table = document.getElementById("rfqTable");
             if (!rfqs || rfqs.length === 0) {
-                table.innerHTML = '<tr><td colspan="6">No RFQs found. Create one above!</td></tr>';
+                table.innerHTML = '<tr><td colspan="7" style="text-align: center;">No RFQs found in registry.</td></tr>';
                 return;
             }
 
-            let total = rfqs.length;
-            let active = rfqs.filter(r => r.status === 'open').length;
-            let closed = rfqs.filter(r => r.status === 'closed').length;
+            const total = rfqs.length;
+            const open = rfqs.filter(r => r.status === 'open').length;
+            const closed = rfqs.filter(r => r.status === 'closed').length;
 
             document.getElementById("statTotalRfqs").innerText = total;
-            document.getElementById("statActiveRfqs").innerText = active;
+            document.getElementById("statActiveRfqs").innerText = open;
             document.getElementById("statClosedRfqs").innerText = closed;
 
             table.innerHTML = rfqs.map(r => `
                 <tr>
-                    <td><strong>RFQ#${r.id}</strong></td>
-                    <td>${r.title}</td>
-                    <td>${r.description || 'N/A'}</td>
-                    <td>${r.quantity}</td>
-                    <td>${r.deadline ? r.deadline.split('T')[0] : 'N/A'}</td>
+                    <td><strong style="font-family: 'JetBrains Mono'; color: #818cf8;">RFQ#${r.id}</strong></td>
+                    <td>
+                        <strong style="font-size: 1rem;">${r.title}</strong>
+                        <p style="color: var(--text-muted); font-size: 0.82rem; margin-top: 2px;">${r.description || 'No specs provided.'}</p>
+                    </td>
+                    <td><strong>${r.quantity}</strong> Units</td>
+                    <td><span style="font-size: 0.88rem; color: #cbd5e1;"><i class="fa-solid fa-circle-user"></i> ${r.created_by_name || 'Officer'}</span></td>
+                    <td><span style="font-family: 'JetBrains Mono'; font-size: 0.85rem;">${r.deadline ? r.deadline.split('T')[0] : 'N/A'}</span></td>
                     <td><span class="badge badge-${r.status}">${r.status}</span></td>
+                    <td>
+                        <a href="quotations.html?rfq=${r.id}" class="btn-primary" style="padding: 4px 12px; font-size: 0.8rem;">
+                            <i class="fa-solid fa-list-check"></i> Quotes
+                        </a>
+                    </td>
                 </tr>
             `).join('');
+
+            if (window.initTiltCards) window.initTiltCards();
+        }
+
+        function filterRfqs(status, btn) {
+            document.querySelectorAll('.filter-pill-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
+            if (status === 'all') {
+                renderRFQTable(allRfqs);
+            } else {
+                renderRFQTable(allRfqs.filter(r => r.status === status));
+            }
         }
 
         document.getElementById("rfqForm").addEventListener("submit", async function(e) {
             e.preventDefault();
             const rfqData = {
-                title: document.getElementById("title").value,
-                description: document.getElementById("description").value,
+                title: document.getElementById("title").value.trim(),
+                description: document.getElementById("description").value.trim(),
                 quantity: parseInt(document.getElementById("quantity").value, 10),
                 deadline: document.getElementById("deadline").value
             };
 
             try {
                 await API.createRFQ(rfqData);
-                showAlert('RFQ created successfully!', 'success');
+                showAlert('RFQ published successfully! Verified suppliers notified.', 'success');
                 document.getElementById("rfqForm").reset();
                 loadRFQs();
             } catch (err) {
                 showAlert(err.message || 'Failed to create RFQ', 'danger');
             }
         });
+
+        // Modal Helpers
+        function openBudgetModal() {
+            document.getElementById('modalEstimateTitle').value = document.getElementById('title').value;
+            document.getElementById('modalEstimateQty').value = document.getElementById('quantity').value;
+            document.getElementById('budgetModal').classList.add('open');
+        }
+
+        function closeBudgetModal() {
+            document.getElementById('budgetModal').classList.remove('open');
+        }
+
+        async function runAiEstimation() {
+            const title = document.getElementById('modalEstimateTitle').value;
+            const quantity = document.getElementById('modalEstimateQty').value;
+            try {
+                const res = await API.estimateRFQ({ title, quantity });
+                const est = res.estimation;
+                document.getElementById('aiEstimateTotal').innerText = `Estimated Benchmark: ${est.suggestedBudgetRange}`;
+                document.getElementById('aiEstimateAdvice').innerText = `Unit Benchmark: ₹${est.estimatedUnitCost.toLocaleString()} | Target Turnaround: ${est.recommendedDeliveryDays} days. ${est.advice}`;
+                document.getElementById('aiEstimateResult').style.display = 'block';
+            } catch (e) {
+                showAlert('Failed to calculate estimate', 'danger');
+            }
+        }
 
         window.onload = loadRFQs;
     </script>

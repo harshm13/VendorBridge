@@ -1,72 +1,128 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | VendorBridge ERP</title>
-    <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="js/appearance.js"></script>
 </head>
 <body>
 
+    <!-- ThreeUI Background 3D Particle Constellation Canvas -->
+    <div id="threeCanvasContainer"></div>
+
     <!-- Navbar -->
     <nav>
         <div class="logo">
-            <h2><a href="index.html">VendorBridge</a></h2>
+            <a href="index.html">
+                <span class="logo-badge"><i class="fa-solid fa-cube"></i></span>
+                <h2>VendorBridge</h2>
+            </a>
         </div>
         <ul>
-            <li><a href="vendor.html">Vendors</a></li>
-            <li><a href="rfq.html">RFQs</a></li>
-            <li><a href="quotations.html">Quotations</a></li>
-            <li><a href="approval.html">Approvals</a></li>
-            <li><a href="purchase-order.html">Purchase Orders</a></li>
-            <li><a href="invoice.html">Invoices</a></li>
-            <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i> Theme</a></li>
-            <li><a href="#" onclick="Auth.logout(); return false;">Logout</a></li>
+            <li><a href="dashboard.html" class="active"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+            <li><a href="vendor.html"><i class="fa-solid fa-building-user"></i> Vendors</a></li>
+            <li><a href="rfq.html"><i class="fa-solid fa-file-circle-plus"></i> RFQs</a></li>
+            <li><a href="quotations.html"><i class="fa-solid fa-scale-balanced"></i> Quotations</a></li>
+            <li><a href="approval.html"><i class="fa-solid fa-stamp"></i> Approvals</a></li>
+            <li><a href="purchase-order.html"><i class="fa-solid fa-file-invoice-dollar"></i> POs</a></li>
+            <li><a href="invoice.html"><i class="fa-solid fa-receipt"></i> Invoices</a></li>
+            <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i></a></li>
+            <li><a href="#" onclick="Auth.logout(); return false;" title="Logout"><i class="fa-solid fa-power-off"></i></a></li>
         </ul>
     </nav>
 
     <!-- Header -->
     <section class="dashboard-header">
-        <h1>Procurement Dashboard</h1>
-        <p id="welcomeUserMsg">Monitor real-time procurement metrics and workflows.</p>
+        <div class="motion-badge" style="margin-bottom: 10px;">
+            <div class="motion-badge-inner">
+                <span class="pulse-dot"></span>
+                <span class="motion-badge-text">Real-Time Procurement Telemetry</span>
+            </div>
+        </div>
+        <h1 id="welcomeUserMsg">Procurement Command Center</h1>
+        <p>Monitor live vendor requisitions, approval bottlenecks, and transaction flows in real time.</p>
     </section>
 
-    <!-- Analytics Cards -->
+    <!-- AI Procurement Insight Banner -->
+    <div style="padding: 0 6%;">
+        <div class="ai-insight-banner tilt-card">
+            <div class="ai-insight-left">
+                <div class="ai-insight-icon">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <div class="ai-insight-text">
+                    <h4>AI Optimization Engine Active</h4>
+                    <p id="aiInsightText">Quotations algorithm ready. 1-click comparison available across all active procurement streams.</p>
+                </div>
+            </div>
+            <a href="quotations.html" class="btn-primary" style="padding: 9px 18px; font-size: 0.88rem;">
+                <i class="fa-solid fa-chart-pie"></i> Compare Quotes
+            </a>
+        </div>
+    </div>
+
+    <!-- Analytics Cards (3D Tilt Cards) -->
     <section class="dashboard-cards">
-        <div class="stat-card">
-            <h2 id="totalVendors">0</h2>
-            <p>Total Vendors</p>
+        <div class="stat-card tilt-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <h2 id="totalVendors">0</h2>
+                <span style="font-size: 1.3rem; color: #6366f1; background: rgba(99, 102, 241, 0.15); padding: 8px 12px; border-radius: 12px;"><i class="fa-solid fa-users"></i></span>
+            </div>
+            <p>Active Vendors</p>
+            <span class="stat-trend"><i class="fa-solid fa-arrow-trend-up"></i> +12.5% this quarter</span>
         </div>
-        <div class="stat-card">
-            <h2 id="activeRfqs">0</h2>
-            <p>Active RFQs</p>
+
+        <div class="stat-card tilt-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <h2 id="activeRfqs">0</h2>
+                <span style="font-size: 1.3rem; color: #06b6d4; background: rgba(6, 182, 212, 0.15); padding: 8px 12px; border-radius: 12px;"><i class="fa-solid fa-folder-open"></i></span>
+            </div>
+            <p>Open RFQs</p>
+            <span class="stat-trend" style="color: #06b6d4;"><i class="fa-solid fa-clock"></i> Active bidding</span>
         </div>
-        <div class="stat-card">
-            <h2 id="pendingApprovals">0</h2>
+
+        <div class="stat-card tilt-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <h2 id="pendingApprovals">0</h2>
+                <span style="font-size: 1.3rem; color: #f59e0b; background: rgba(245, 158, 11, 0.15); padding: 8px 12px; border-radius: 12px;"><i class="fa-solid fa-hourglass-half"></i></span>
+            </div>
             <p>Pending Approvals</p>
+            <span class="stat-trend" style="color: #f59e0b;"><i class="fa-solid fa-bolt"></i> Needs manager action</span>
         </div>
-        <div class="stat-card">
-            <h2 id="invoicesGenerated">0</h2>
+
+        <div class="stat-card tilt-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <h2 id="invoicesGenerated">0</h2>
+                <span style="font-size: 1.3rem; color: #10b981; background: rgba(16, 185, 129, 0.15); padding: 8px 12px; border-radius: 12px;"><i class="fa-solid fa-receipt"></i></span>
+            </div>
             <p>Invoices Generated</p>
+            <span class="stat-trend" style="color: #10b981;"><i class="fa-solid fa-check"></i> Reconciled</span>
         </div>
     </section>
 
-    <!-- Quick Actions -->
+    <!-- Quick Actions Bar -->
     <section class="quick-actions">
-        <h2>Quick Actions</h2>
+        <h2>Quick Operations</h2>
         <div class="action-buttons">
-            <a href="rfq.html"><button>Create RFQ</button></a>
-            <a href="vendor.html"><button>Add Vendor</button></a>    
-            <a href="quotations.html"><button>Compare Quotes</button></a>
-            <a href="invoice.html"><button>Generate Invoice</button></a>
+            <a href="rfq.html"><button class="btn-primary"><i class="fa-solid fa-plus"></i> Create RFQ</button></a>
+            <a href="vendor.html"><button class="btn-glass"><i class="fa-solid fa-user-plus"></i> Add Vendor</button></a>    
+            <a href="quotations.html"><button class="btn-glass"><i class="fa-solid fa-scale-balanced"></i> Compare Quotes</button></a>
+            <a href="approval.html"><button class="btn-glass"><i class="fa-solid fa-check-double"></i> Review Approvals</button></a>
+            <a href="invoice.html"><button class="btn-glass"><i class="fa-solid fa-file-invoice"></i> Generate Invoice</button></a>
         </div>
     </section>
 
-    <!-- Recent RFQs -->
+    <!-- Recent RFQs Table -->
     <section class="recent-section">
-        <h2>Recent RFQs</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h2>Recent RFQ Pipeline</h2>
+            <a href="rfq.html" style="color: var(--accent-primary); font-size: 0.9rem; font-weight: 600;">View All RFQs →</a>
+        </div>
         <table>
             <thead>
                 <tr>
@@ -75,49 +131,70 @@
                     <th>Quantity</th>
                     <th>Deadline</th>
                     <th>Status</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody id="recentRfqTable">
-                <tr><td colspan="5">Loading recent RFQs...</td></tr>
+                <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading recent RFQs...</td></tr>
             </tbody>
         </table>
     </section>
 
-    <!-- Recent Purchase Orders -->
+    <!-- Recent Purchase Orders Table -->
     <section class="recent-section">
-        <h2>Recent Purchase Orders</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h2>Recent Purchase Orders</h2>
+            <a href="purchase-order.html" style="color: var(--accent-primary); font-size: 0.9rem; font-weight: 600;">View All POs →</a>
+        </div>
         <table>
             <thead>
                 <tr>
                     <th>PO Number</th>
-                    <th>Vendor</th>
-                    <th>Total Amount</th>
+                    <th>Vendor Partner</th>
+                    <th>Total Value</th>
                     <th>Status</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody id="recentPoTable">
-                <tr><td colspan="4">Loading recent purchase orders...</td></tr>
+                <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Loading recent purchase orders...</td></tr>
             </tbody>
         </table>
     </section>
 
-    <!-- Notifications -->
-    <section class="notifications">
-        <h2>System Notifications</h2>
-        <ul>
-            <li>RFQ001 received a new quotation from ABC Suppliers.</li>
-            <li>PO-2026-001 has been approved by Manager.</li>
-            <li>Invoice INV-2026-001 generated successfully.</li>
-            <li>Manager approval pending for laptop procurement.</li>
-        </ul>
+    <!-- System Notifications -->
+    <section class="notifications" style="padding-bottom: 60px;">
+        <h2>Procurement Activity Feed</h2>
+        <div style="background: var(--bg-card); border: var(--border-card); border-radius: var(--radius-card); padding: 24px; margin-top: 16px; backdrop-filter: blur(18px);">
+            <ul style="list-style: none; display: flex; flex-direction: column; gap: 14px;">
+                <li style="display: flex; align-items: center; gap: 12px; font-size: 0.92rem;">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+                    <span><strong>PO-2026-000001</strong> issued and approved by Senior Manager.</span>
+                    <span style="margin-left: auto; color: var(--text-dim); font-size: 0.78rem;">Just now</span>
+                </li>
+                <li style="display: flex; align-items: center; gap: 12px; font-size: 0.92rem;">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #06b6d4;"></span>
+                    <span><strong>RFQ#1 Laptop Procurement</strong> received a new competitive bid from Tech Industries.</span>
+                    <span style="margin-left: auto; color: var(--text-dim); font-size: 0.78rem;">12m ago</span>
+                </li>
+                <li style="display: flex; align-items: center; gap: 12px; font-size: 0.92rem;">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #6366f1;"></span>
+                    <span><strong>Invoice INV-2026-000001</strong> generated with 18% GST calculation.</span>
+                    <span style="margin-left: auto; color: var(--text-dim); font-size: 0.78rem;">1h ago</span>
+                </li>
+            </ul>
+        </div>
     </section>
 
     <!-- Footer -->
     <footer>
-        <p>© 2026 VendorBridge ERP. All Rights Reserved.</p>
+        <p>© 2026 VendorBridge ERP. High-Performance Procurement Mesh.</p>
     </footer>
 
+    <!-- Client Scripts -->
     <script src="js/api.js"></script>
+    <script src="js/three-scene.js"></script>
+    <script src="js/tilt.js"></script>
     <script>
         async function loadDashboard() {
             const currentUser = Auth.requireAuth();
@@ -125,7 +202,8 @@
 
             const welcomeMsg = document.getElementById('welcomeUserMsg');
             if (welcomeMsg && currentUser.name) {
-                welcomeMsg.innerText = `Welcome back, ${currentUser.name}! Monitor real-time procurement metrics below.`;
+                const roleFormatted = (currentUser.role || 'user').replace('_', ' ').toUpperCase();
+                welcomeMsg.innerText = `Welcome back, ${currentUser.name} (${roleFormatted})`;
             }
 
             try {
@@ -140,30 +218,42 @@
                 if (data.recentRfqs && data.recentRfqs.length > 0) {
                     rfqTable.innerHTML = data.recentRfqs.map(r => `
                         <tr>
-                            <td>RFQ#${r.id}</td>
+                            <td><strong style="font-family: 'JetBrains Mono'; color: #a5b4fc;">RFQ#${r.id}</strong></td>
                             <td>${r.title}</td>
-                            <td>${r.quantity}</td>
+                            <td>${r.quantity} Units</td>
                             <td>${r.deadline ? r.deadline.split('T')[0] : 'N/A'}</td>
                             <td><span class="badge badge-${r.status}">${r.status}</span></td>
+                            <td>
+                                <a href="quotations.html?rfq=${r.id}" class="btn-glass" style="padding: 4px 12px; font-size: 0.8rem;">
+                                    View Quotes
+                                </a>
+                            </td>
                         </tr>
                     `).join('');
                 } else {
-                    rfqTable.innerHTML = '<tr><td colspan="5">No active RFQs found.</td></tr>';
+                    rfqTable.innerHTML = '<tr><td colspan="6" style="text-align: center;">No active RFQs found.</td></tr>';
                 }
 
                 const poTable = document.getElementById('recentPoTable');
                 if (data.recentPos && data.recentPos.length > 0) {
                     poTable.innerHTML = data.recentPos.map(p => `
                         <tr>
-                            <td>${p.po_number}</td>
+                            <td><strong style="font-family: 'JetBrains Mono'; color: #34d399;">${p.po_number}</strong></td>
                             <td>${p.vendor_name}</td>
-                            <td>₹${parseFloat(p.total_amount).toLocaleString()}</td>
+                            <td><strong>₹${parseFloat(p.total_amount).toLocaleString()}</strong></td>
                             <td><span class="badge badge-${p.status}">${p.status}</span></td>
+                            <td>
+                                <a href="purchase-order.html" class="btn-glass" style="padding: 4px 12px; font-size: 0.8rem;">
+                                    Details
+                                </a>
+                            </td>
                         </tr>
                     `).join('');
                 } else {
-                    poTable.innerHTML = '<tr><td colspan="4">No purchase orders found.</td></tr>';
+                    poTable.innerHTML = '<tr><td colspan="5" style="text-align: center;">No purchase orders found.</td></tr>';
                 }
+
+                if (window.initTiltCards) window.initTiltCards();
             } catch (err) {
                 console.error('Failed to load dashboard:', err);
             }

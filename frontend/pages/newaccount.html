@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account | VendorBridge ERP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="js/appearance.js"></script>
+</head>
+<body>
+
+    <!-- Three Canvas -->
+    <div id="threeCanvasContainer"></div>
+
+    <div class="login-container">
+        <div class="login-card tilt-card">
+            <!-- Badge -->
+            <div class="motion-badge" style="margin-bottom: 12px;">
+                <div class="motion-badge-inner">
+                    <span class="pulse-dot"></span>
+                    <span class="motion-badge-text">Account Provisioning</span>
+                </div>
+            </div>
+
+            <div class="login-header">
+                <h1>Join VendorBridge</h1>
+                <p>Register a new enterprise user account</p>
+            </div>
+
+            <div id="alertBox" class="alert-box"></div>
+
+            <form id="signupForm">
+                <div class="input-group">
+                    <label><i class="fa-solid fa-user"></i> Full Name / Company Contact</label>
+                    <input type="text" id="name" placeholder="e.g. Alex Morgan" required>
+                </div>
+
+                <div class="input-group">
+                    <label><i class="fa-solid fa-envelope"></i> Work Email Address</label>
+                    <input type="email" id="email" placeholder="name@company.com" required autocomplete="email">
+                </div>
+
+                <div class="input-group">
+                    <label><i class="fa-solid fa-lock"></i> Account Password</label>
+                    <input type="password" id="password" placeholder="Create a secure password" minlength="6" required autocomplete="new-password">
+                </div>
+
+                <div class="input-group">
+                    <label><i class="fa-solid fa-id-badge"></i> System Role</label>
+                    <select id="role" required>
+                        <option value="">Select Organizational Role</option>
+                        <option value="admin">System Administrator</option>
+                        <option value="manager">Approving Manager</option>
+                        <option value="procurement_officer">Procurement Officer</option>
+                        <option value="vendor">Vendor / Supplier</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-primary login-btn">
+                    <i class="fa-solid fa-user-plus"></i> Create Account
+                </button>
+            </form>
+
+            <div class="footer-links">
+                <a href="login.html">Already have an account? Sign in here</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/three-scene.js"></script>
+    <script src="js/tilt.js"></script>
+    <script>
+        document.getElementById('signupForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const role = document.getElementById('role').value;
+
+            try {
+                showAlert('Creating account on Enterprise Mesh...', 'info');
+                const res = await API.register(name, email, password, role);
+                showAlert('Account created successfully! Redirecting to sign in...', 'success');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 1200);
+            } catch (err) {
+                showAlert(err.message || 'Registration failed. Please try a different email.', 'danger');
+            }
+        });
+    </script>
+</body>
+</html>

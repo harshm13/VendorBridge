@@ -23,10 +23,23 @@ const Quotation = {
 
         const quoteId = result.insertId;
 
+        // Fetch actual RFQ title for rich approval display
+        let rfqTitle = `RFQ#${rfq_id || 'General'}`;
+        try {
+            if (rfq_id) {
+                const [rfqs] = await db.query('SELECT * FROM rfqs WHERE id = ?', [rfq_id]);
+                if (rfqs && rfqs[0] && rfqs[0].title) {
+                    rfqTitle = `RFQ#${rfq_id} - ${rfqs[0].title}`;
+                }
+            }
+        } catch (e) {
+            // Keep default fallback
+        }
+
         // Auto-create approval request for this quotation
         await db.query(
             'INSERT INTO approvals (quotation_id, rfq_title, vendor_name, amount, status, remarks) VALUES (?, ?, ?, ?, "pending", ?)',
-            [quoteId, `RFQ#${rfq_id || 'General'}`, vendor_name, amount, 'Pending manager review']
+            [quoteId, rfqTitle, vendor_name, amount, 'Pending manager review']
         );
 
         return quoteId;

@@ -1,103 +1,178 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Approval Workflow | VendorBridge ERP</title>
-    <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="js/appearance.js"></script>
 </head>
 <body>
 
+    <!-- Three Canvas -->
+    <div id="threeCanvasContainer"></div>
+
     <!-- Navbar -->
     <nav>
         <div class="logo">
-            <h2><a href="index.html">VendorBridge</a></h2>
+            <a href="index.html">
+                <span class="logo-badge"><i class="fa-solid fa-cube"></i></span>
+                <h2>VendorBridge</h2>
+            </a>
         </div>
         <ul>
-            <li><a href="dashboard.html">Dashboard</a></li>
-            <li><a href="vendor.html">Vendors</a></li>
-            <li><a href="rfq.html">RFQs</a></li>
-            <li><a href="quotations.html">Quotations</a></li>
-            <li><a href="purchase-order.html">Purchase Orders</a></li>
-            <li><a href="invoice.html">Invoices</a></li>
-            <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i> Theme</a></li>
-            <li><a href="#" onclick="Auth.logout(); return false;">Logout</a></li>
+            <li><a href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+            <li><a href="vendor.html"><i class="fa-solid fa-building-user"></i> Vendors</a></li>
+            <li><a href="rfq.html"><i class="fa-solid fa-file-circle-plus"></i> RFQs</a></li>
+            <li><a href="quotations.html"><i class="fa-solid fa-scale-balanced"></i> Quotations</a></li>
+            <li><a href="approval.html" class="active"><i class="fa-solid fa-stamp"></i> Approvals</a></li>
+            <li><a href="purchase-order.html"><i class="fa-solid fa-file-invoice-dollar"></i> POs</a></li>
+            <li><a href="invoice.html"><i class="fa-solid fa-receipt"></i> Invoices</a></li>
+            <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i></a></li>
+            <li><a href="#" onclick="Auth.logout(); return false;"><i class="fa-solid fa-power-off"></i></a></li>
         </ul>
     </nav>
 
     <!-- Header -->
     <section class="page-header">
-        <h1>Approval Workflow</h1>
-        <p>Review pending procurement proposals and manage manager approvals.</p>
+        <div class="motion-badge" style="margin-bottom: 10px;">
+            <div class="motion-badge-inner">
+                <span class="pulse-dot"></span>
+                <span class="motion-badge-text">Management Authorization Desk</span>
+            </div>
+        </div>
+        <h1>Procurement Approvals</h1>
+        <p>Authorize or reject vendor bids. Approving an item automatically issues an official Purchase Order.</p>
     </section>
 
-    <div style="padding: 0 8%;">
+    <div style="padding: 0 6%;">
         <div id="alertBox" class="alert-box"></div>
     </div>
 
     <!-- Statistics -->
     <section class="approval-stats">
-        <div class="stat-card">
-            <h3 id="pendingCount">0</h3>
+        <div class="stat-card tilt-card">
+            <h3 id="pendingCount" style="color: #f59e0b;">0</h3>
             <p>Pending Approvals</p>
+            <span class="stat-trend" style="color: #f59e0b;"><i class="fa-solid fa-bell"></i> Action Required</span>
         </div>
-        <div class="stat-card">
-            <h3 id="approvedCount">0</h3>
+        <div class="stat-card tilt-card">
+            <h3 id="approvedCount" style="color: #10b981;">0</h3>
             <p>Approved Requests</p>
+            <span class="stat-trend"><i class="fa-solid fa-circle-check"></i> POs Issued</span>
         </div>
-        <div class="stat-card">
-            <h3 id="rejectedCount">0</h3>
-            <p>Rejected Requests</p>
+        <div class="stat-card tilt-card">
+            <h3 id="rejectedCount" style="color: #ef4444;">0</h3>
+            <p>Rejected Proposals</p>
+            <span class="stat-trend" style="color: #ef4444;"><i class="fa-solid fa-ban"></i> Dismissed</span>
         </div>
     </section>
 
     <!-- Approval Requests Table -->
-    <section class="approval-table-section">
-        <h2>Procurement Approval Requests</h2>
+    <section class="approval-table-section" style="padding-bottom: 40px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 16px;">
+            <h2>Authorization Tickets</h2>
+            <div class="filter-pills-container" style="margin-bottom: 0;">
+                <button type="button" class="filter-pill-btn active" onclick="filterApprovals('all', this)">All</button>
+                <button type="button" class="filter-pill-btn" onclick="filterApprovals('pending', this)">Pending</button>
+                <button type="button" class="filter-pill-btn" onclick="filterApprovals('approved', this)">Approved</button>
+                <button type="button" class="filter-pill-btn" onclick="filterApprovals('rejected', this)">Rejected</button>
+            </div>
+        </div>
+
         <table>
             <thead>
                 <tr>
-                    <th>Approval ID</th>
-                    <th>RFQ Ref</th>
-                    <th>Vendor Name</th>
-                    <th>Amount (₹)</th>
-                    <th>Remarks</th>
+                    <th>Ticket ID</th>
+                    <th>RFQ Requisition</th>
+                    <th>Vendor Partner</th>
+                    <th>Total Value (₹)</th>
+                    <th>Manager Remarks</th>
                     <th>Status</th>
                     <th>Action</th>
                 </tr>
             </thead>
             <tbody id="approvalTable">
-                <tr><td colspan="7">Loading approvals...</td></tr>
+                <tr><td colspan="7" style="text-align: center;">Loading approval requests...</td></tr>
             </tbody>
         </table>
     </section>
 
-    <!-- Timeline -->
-    <section class="timeline-section">
-        <h2>Procurement Lifecycle Timeline</h2>
-        <ul>
-            <li>RFQ Created by Procurement Officer</li>
-            <li>Vendor Submits Quotation proposal</li>
-            <li>Procurement Team Compares Quotations</li>
-            <li>Manager Decision (Approve / Reject)</li>
-            <li>Automatic Purchase Order & Invoice Generation upon approval</li>
-        </ul>
+    <!-- Lifecycle Stepper Visual -->
+    <section style="padding: 10px 6% 60px;">
+        <h2>Procurement Governance Policy</h2>
+        <div style="background: var(--bg-card); border: var(--border-card); border-radius: var(--radius-card); padding: 28px; margin-top: 16px; backdrop-filter: blur(18px);">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+                <div style="display: flex; gap: 12px; align-items: flex-start;">
+                    <span style="font-size: 1.2rem; color: #6366f1;"><i class="fa-solid fa-shield-halved"></i></span>
+                    <div>
+                        <strong style="color: #fff;">Dual-Control Verification</strong>
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 3px;">Procurement proposals above baseline require authorized Manager or Admin sign-off.</p>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 12px; align-items: flex-start;">
+                    <span style="font-size: 1.2rem; color: #06b6d4;"><i class="fa-solid fa-bolt"></i></span>
+                    <div>
+                        <strong style="color: #fff;">Zero-Touch PO Issuance</strong>
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 3px;">Approved tickets immediately dispatch an official Purchase Order into the ERP ledger.</p>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 12px; align-items: flex-start;">
+                    <span style="font-size: 1.2rem; color: #10b981;"><i class="fa-solid fa-receipt"></i></span>
+                    <div>
+                        <strong style="color: #fff;">Invoice Settlement</strong>
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 3px;">Vendors can bill directly against issued POs with statutory GST calculations.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
+
+    <!-- Decision Remarks Modal -->
+    <div class="modal-overlay" id="decisionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalDecisionTitle"><i class="fa-solid fa-stamp" style="color: #6366f1;"></i> Review Decision</h3>
+                <button class="modal-close-btn" onclick="closeDecisionModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p id="modalDecisionSubtitle" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">
+                Enter authorization remarks for this procurement proposal.
+            </p>
+            <div class="input-group">
+                <label>Audit Notes / Remarks</label>
+                <textarea id="modalRemarks" rows="3" placeholder="e.g. Approved within quarterly infrastructure budget. Delivery terms accepted."></textarea>
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 16px;">
+                <button type="button" class="btn-glass" onclick="closeDecisionModal()">Cancel</button>
+                <button type="button" id="confirmDecisionBtn" class="btn-primary" onclick="submitDecision()">
+                    Confirm Decision
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer>
-        <p>© 2026 VendorBridge ERP. All Rights Reserved.</p>
+        <p>© 2026 VendorBridge ERP. High-Performance Procurement Mesh.</p>
     </footer>
 
+    <!-- Client Scripts -->
     <script src="js/api.js"></script>
+    <script src="js/three-scene.js"></script>
+    <script src="js/tilt.js"></script>
     <script>
+        let allApprovals = [];
+        let activeApprovalId = null;
+        let activeDecisionStatus = null;
+
         async function loadApprovals() {
             if (!Auth.requireAuth()) return;
             try {
-                const approvals = await API.getApprovals();
-                renderApprovals(approvals);
+                allApprovals = await API.getApprovals();
+                renderApprovals(allApprovals);
             } catch (err) {
                 showAlert('Error loading approvals', 'danger');
             }
@@ -106,13 +181,13 @@
         function renderApprovals(approvals) {
             const table = document.getElementById("approvalTable");
             if (!approvals || approvals.length === 0) {
-                table.innerHTML = '<tr><td colspan="7">No approval requests found.</td></tr>';
+                table.innerHTML = '<tr><td colspan="7" style="text-align: center;">No approval tickets found.</td></tr>';
                 return;
             }
 
-            let pending = approvals.filter(a => a.status === 'pending').length;
-            let approved = approvals.filter(a => a.status === 'approved').length;
-            let rejected = approvals.filter(a => a.status === 'rejected').length;
+            const pending = allApprovals.filter(a => a.status === 'pending').length;
+            const approved = allApprovals.filter(a => a.status === 'approved').length;
+            const rejected = allApprovals.filter(a => a.status === 'rejected').length;
 
             document.getElementById("pendingCount").innerText = pending;
             document.getElementById("approvedCount").innerText = approved;
@@ -120,29 +195,72 @@
 
             table.innerHTML = approvals.map(a => `
                 <tr>
-                    <td><strong>APP#${a.id}</strong></td>
-                    <td>${a.rfq_title || 'N/A'}</td>
-                    <td>${a.vendor_name}</td>
-                    <td>₹${parseFloat(a.amount).toLocaleString()}</td>
-                    <td>${a.remarks || 'None'}</td>
+                    <td><strong style="font-family: 'JetBrains Mono'; color: #818cf8;">APP#${a.id}</strong></td>
+                    <td><strong style="color: #ffffff;">${a.rfq_title || 'General Requisition'}</strong></td>
+                    <td><span style="font-weight: 600;"><i class="fa-solid fa-store" style="color: #6366f1;"></i> ${a.vendor_name}</span></td>
+                    <td><strong style="font-size: 1.05rem; color: #34d399;">₹${parseFloat(a.amount).toLocaleString()}</strong></td>
+                    <td><span style="color: var(--text-muted); font-size: 0.85rem;">${a.remarks || 'None'}</span></td>
                     <td><span class="badge badge-${a.status}">${a.status}</span></td>
                     <td>
                         ${a.status === 'pending' ? `
-                            <button class="btn-approve" onclick="handleDecision(${a.id}, 'approved')" style="padding: 5px 10px; font-size: 0.85rem;">Approve</button>
-                            <button class="btn-reject" onclick="handleDecision(${a.id}, 'rejected')" style="padding: 5px 10px; font-size: 0.85rem;">Reject</button>
-                        ` : '<span style="color: #666; font-size: 0.85rem;">Completed</span>'}
+                            <div style="display: flex; gap: 6px;">
+                                <button class="btn-approve" onclick="openDecisionModal(${a.id}, 'approved')"><i class="fa-solid fa-check"></i> Approve</button>
+                                <button class="btn-reject" onclick="openDecisionModal(${a.id}, 'rejected')"><i class="fa-solid fa-xmark"></i> Reject</button>
+                            </div>
+                        ` : `<span style="color: var(--text-dim); font-size: 0.82rem; font-family: 'JetBrains Mono';"><i class="fa-solid fa-lock"></i> Processed</span>`}
                     </td>
                 </tr>
             `).join('');
+
+            if (window.initTiltCards) window.initTiltCards();
         }
 
-        async function handleDecision(id, status) {
-            const remarks = prompt(`Enter remarks for ${status.toUpperCase()} decision (optional):`, `Manager ${status}`);
-            if (remarks === null) return;
+        function filterApprovals(status, btn) {
+            document.querySelectorAll('.filter-pill-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
+            if (status === 'all') {
+                renderApprovals(allApprovals);
+            } else {
+                renderApprovals(allApprovals.filter(a => a.status === status));
+            }
+        }
+
+        function openDecisionModal(id, status) {
+            activeApprovalId = id;
+            activeDecisionStatus = status;
+
+            const isApproved = (status === 'approved');
+            document.getElementById('modalDecisionTitle').innerHTML = isApproved 
+                ? '<i class="fa-solid fa-circle-check" style="color: #10b981;"></i> Authorize Proposal' 
+                : '<i class="fa-solid fa-circle-xmark" style="color: #ef4444;"></i> Reject Proposal';
+            
+            document.getElementById('modalDecisionSubtitle').innerText = isApproved
+                ? `Authorizing APP#${id} will immediately generate a formal Purchase Order and mark the quotation approved.`
+                : `Rejecting APP#${id} will mark the quotation rejected in the registry.`;
+
+            document.getElementById('modalRemarks').value = isApproved ? 'Approved by Manager. Meets procurement benchmarks.' : 'Proposal rejected due to pricing or timeline mismatch.';
+            
+            const confirmBtn = document.getElementById('confirmDecisionBtn');
+            confirmBtn.className = isApproved ? 'btn-approve' : 'btn-reject';
+            confirmBtn.style.padding = '10px 20px';
+            confirmBtn.innerText = isApproved ? 'Authorize & Issue PO' : 'Reject Proposal';
+
+            document.getElementById('decisionModal').classList.add('open');
+        }
+
+        function closeDecisionModal() {
+            document.getElementById('decisionModal').classList.remove('open');
+        }
+
+        async function submitDecision() {
+            if (!activeApprovalId || !activeDecisionStatus) return;
+            const remarks = document.getElementById('modalRemarks').value.trim();
 
             try {
-                await API.updateApproval(id, status, remarks);
-                showAlert(`Request APP#${id} ${status} successfully!${status === 'approved' ? ' Purchase Order created automatically.' : ''}`, 'success');
+                await API.updateApproval(activeApprovalId, activeDecisionStatus, remarks);
+                closeDecisionModal();
+                showAlert(`Ticket APP#${activeApprovalId} ${activeDecisionStatus} successfully!${activeDecisionStatus === 'approved' ? ' Purchase Order created automatically.' : ''}`, 'success');
                 loadApprovals();
             } catch (err) {
                 showAlert(err.message || 'Action failed', 'danger');

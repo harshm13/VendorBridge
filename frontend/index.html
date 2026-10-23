@@ -1,132 +1,221 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VendorBridge ERP - Procurement & Vendor Management</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>VendorBridge ERP — Next-Gen Procurement & Vendor Management Mesh</title>
+    <meta name="description" content="State-of-the-art procurement management ERP with RFQs, quotations, approvals, purchase orders, and AI quotation intelligence.">
+    
+    <!-- Design & Typography -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+
+    <!-- 3D & Appearance Engines -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="js/appearance.js"></script>
 </head>
 <body>
 
-    <!-- Navbar -->
+    <!-- ThreeUI Background 3D Particle Constellation Canvas -->
+    <div id="threeCanvasContainer"></div>
+
+    <!-- Top Navigation (MotionSites Floating Glass) -->
     <nav>
         <div class="logo">
-            <h2><a href="index.html">VendorBridge</a></h2>
+            <a href="index.html">
+                <span class="logo-badge"><i class="fa-solid fa-cube"></i></span>
+                <h2>VendorBridge</h2>
+            </a>
         </div>
         <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="#features">Features</a></li>
-            <li><a href="#workflow">Workflow</a></li>
-            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="index.html" class="active"><i class="fa-solid fa-house"></i> Home</a></li>
+            <li><a href="#features"><i class="fa-solid fa-layer-group"></i> Features</a></li>
+            <li><a href="#workflow"><i class="fa-solid fa-timeline"></i> Workflow</a></li>
+            <li><a href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
             <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i> Theme</a></li>
-            <li><a href="login.html" class="btn-primary" style="padding: 6px 16px;">Login</a></li>
+            <li><a href="login.html" class="btn-primary" style="padding: 7px 18px;"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login</a></li>
         </ul>
     </nav>
 
-    <!-- Hero Section -->
+    <!-- Hero Section (MotionSites AI Flagship Layout) -->
     <section class="hero">
         <div class="hero-content">
-            <h1>Procurement & Vendor Management ERP</h1>
-            <p>Simplify procurement operations through RFQs, vendor management, approvals, purchase orders, and invoice generation in one unified platform.</p>
-            <a href="login.html">
-                <button>Get Started</button>
-            </a>
+            <!-- MotionSites Iridescent Radial Badge -->
+            <div class="motion-badge">
+                <div class="motion-badge-inner">
+                    <span class="pulse-dot"></span>
+                    <span class="motion-badge-text">Fresh Drops Everyday &nbsp;•&nbsp; Next-Gen Procurement Mesh</span>
+                </div>
+            </div>
+
+            <!-- Animated Shimmer Headline -->
+            <h1>Unleash Your <span class="gradient-text-shimmer">Procurement Superpowers</span></h1>
+            <p>Automate enterprise vendor lifecycles, RFQs, AI-assisted quotation comparison, multi-tiered approvals, purchase orders, and tax billing in one unified, cosmic-grade interface.</p>
+            
+            <div class="hero-actions">
+                <a href="dashboard.html" class="btn-primary" style="font-size: 1.05rem; padding: 13px 28px;">
+                    <i class="fa-solid fa-bolt"></i> Launch Workspace
+                </a>
+                <a href="#demo" class="btn-glass" style="font-size: 1.05rem; padding: 13px 24px;">
+                    <i class="fa-solid fa-play"></i> 1-Click Role Demos
+                </a>
+            </div>
+
+            <!-- Quick Live Demo Pills -->
+            <div id="demo" class="filter-pills-container" style="margin-top: 10px;">
+                <span style="font-size: 0.78rem; font-weight: 700; color: #a5b4fc; padding: 0 10px; text-transform: uppercase; letter-spacing: 0.05em;">
+                    <i class="fa-solid fa-fingerprint"></i> Instant Demos:
+                </span>
+                <button type="button" class="filter-pill-btn" onclick="Auth.quickLoginDemo('admin@vendorbridge.com', 'admin123', 'admin')">
+                    <i class="fa-solid fa-shield-halved"></i> Admin
+                </button>
+                <button type="button" class="filter-pill-btn" onclick="Auth.quickLoginDemo('manager@vendorbridge.com', 'manager123', 'manager')">
+                    <i class="fa-solid fa-user-check"></i> Manager
+                </button>
+                <button type="button" class="filter-pill-btn" onclick="Auth.quickLoginDemo('procurement@vendorbridge.com', 'procurement123', 'procurement_officer')">
+                    <i class="fa-solid fa-briefcase"></i> Officer
+                </button>
+                <button type="button" class="filter-pill-btn" onclick="Auth.quickLoginDemo('abc@suppliers.com', 'vendor123', 'vendor')">
+                    <i class="fa-solid fa-truck-ramp-box"></i> Vendor
+                </button>
+            </div>
         </div>
     </section>
 
-    <!-- Features -->
+    <!-- Core Features (ThreeUI 3D Tilt Cards) -->
     <section id="features">
-        <h2>Core Features</h2>
+        <h2>Enterprise Capabilities</h2>
+        <p class="section-subtitle">Architected for high-velocity teams managing complex vendor ecosystems.</p>
+
         <div class="feature-container">
-            <div class="card">
-                <i class="fa-solid fa-users"></i>
-                <a href="vendor.html" style="text-decoration:none; color:inherit;">
-                    <h3>Vendor Management</h3>
+            <div class="card tilt-card">
+                <i class="fa-solid fa-building-user"></i>
+                <a href="vendor.html">
+                    <h3>Vendor Directory</h3>
                 </a>
-                <p>Manage vendor records, contacts, and categories.</p>
+                <p>Maintain verified vendor profiles, GST identification numbers, contact hierarchies, and automated vendor user account links.</p>
             </div>
-            <div class="card">
+
+            <div class="card tilt-card">
                 <i class="fa-solid fa-file-circle-plus"></i>
-                <a href="rfq.html" style="text-decoration:none; color:inherit;">
-                    <h3>RFQ Creation</h3>
+                <a href="rfq.html">
+                    <h3>RFQ Pipeline</h3>
                 </a>
-                <p>Create procurement requests efficiently.</p>
+                <p>Generate Requests for Quotation with deadline tracking, specifications, and instant AI cost estimation.</p>
             </div>
-            <div class="card">
+
+            <div class="card tilt-card">
                 <i class="fa-solid fa-scale-balanced"></i>
-                <a href="quotations.html" style="text-decoration:none; color:inherit;">
-                    <h3>Quotation Comparison</h3>
+                <a href="quotations.html">
+                    <h3>AI Quote Comparison</h3>
                 </a>
-                <p>Compare vendor quotations side by side.</p>
+                <p>Side-by-side multidimensional comparison matrix evaluating price, delivery timeframes, and AI confidence scoring.</p>
             </div>
-            <div class="card">
-                <i class="fa-solid fa-check"></i>
-                <a href="approval.html" style="text-decoration:none; color:inherit;">
-                    <h3>Approvals</h3>
+
+            <div class="card tilt-card">
+                <i class="fa-solid fa-stamp"></i>
+                <a href="approval.html">
+                    <h3>Multi-Tier Approvals</h3>
                 </a>
-                <p>Streamlined approval workflow process.</p>
+                <p>Streamlined manager decision workflows with custom audit remarks and automatic downstream PO generation.</p>
             </div>
-            <div class="card">
-                <i class="fa-solid fa-cart-shopping"></i>
-                <a href="purchase-order.html" style="text-decoration:none; color:inherit;">
-                    <h3>Purchase Orders</h3>
+
+            <div class="card tilt-card">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+                <a href="purchase-order.html">
+                    <h3>Automated POs</h3>
                 </a>
-                <p>Generate official purchase orders automatically.</p>
+                <p>Official purchase orders automatically provisioned upon quote approval, complete with printable audit formats.</p>
             </div>
-            <div class="card">
-                <i class="fa-solid fa-file-invoice"></i>
-                <a href="invoice.html" style="text-decoration:none; color:inherit;">
-                    <h3>Invoice Generation</h3>
+
+            <div class="card tilt-card">
+                <i class="fa-solid fa-receipt"></i>
+                <a href="invoice.html">
+                    <h3>Tax Invoice Engine</h3>
                 </a>
-                <p>Create, print, and track invoices with GST calculation.</p>
+                <p>Real-time 18% GST calculation, PO auto-linking, status tracking, and printable tax invoice generation.</p>
             </div>
         </div>
     </section>
 
-    <!-- User Roles -->
+    <!-- Procurement Lifecycle Stepper -->
+    <section id="workflow" style="background: rgba(14, 18, 30, 0.4); border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle);">
+        <h2>Full-Cycle Procurement Workflow</h2>
+        <p class="section-subtitle">End-to-end automation from initial requisition to paid settlement.</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; max-width: 1100px; margin: 0 auto;">
+            <div class="stat-card tilt-card" style="padding: 22px; text-align: left;">
+                <span style="font-family: 'JetBrains Mono'; color: #818cf8; font-size: 0.8rem; font-weight: 700;">STAGE 01</span>
+                <h4 style="font-size: 1.1rem; margin: 6px 0;">Create RFQ</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Officer publishes request with specs and deadlines.</p>
+            </div>
+            <div class="stat-card tilt-card" style="padding: 22px; text-align: left;">
+                <span style="font-family: 'JetBrains Mono'; color: #06b6d4; font-size: 0.8rem; font-weight: 700;">STAGE 02</span>
+                <h4 style="font-size: 1.1rem; margin: 6px 0;">Vendor Bids</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Suppliers submit pricing, delivery days, and notes.</p>
+            </div>
+            <div class="stat-card tilt-card" style="padding: 22px; text-align: left;">
+                <span style="font-family: 'JetBrains Mono'; color: #a855f7; font-size: 0.8rem; font-weight: 700;">STAGE 03</span>
+                <h4 style="font-size: 1.1rem; margin: 6px 0;">AI Evaluation</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Heuristic algorithms score optimal value and risk.</p>
+            </div>
+            <div class="stat-card tilt-card" style="padding: 22px; text-align: left;">
+                <span style="font-family: 'JetBrains Mono'; color: #10b981; font-size: 0.8rem; font-weight: 700;">STAGE 04</span>
+                <h4 style="font-size: 1.1rem; margin: 6px 0;">Manager Approval</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Authorizers review quotes and issue formal POs.</p>
+            </div>
+            <div class="stat-card tilt-card" style="padding: 22px; text-align: left;">
+                <span style="font-family: 'JetBrains Mono'; color: #f59e0b; font-size: 0.8rem; font-weight: 700;">STAGE 05</span>
+                <h4 style="font-size: 1.1rem; margin: 6px 0;">Invoice & Settlement</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Itemized GST billing and ledger reconciliation.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- User Roles Deck -->
     <section class="roles">
-        <h2>User Roles</h2>
+        <h2>Role-Based Access Control</h2>
+        <p class="section-subtitle">Tailored command centers designed for every stakeholder in the procurement loop.</p>
+
         <div class="role-container">
-            <div class="role-card">
-                <h3>Procurement Officer</h3>
-                <p>Create RFQs and generate POs.</p>
+            <div class="role-card tilt-card" onclick="Auth.quickLoginDemo('procurement@vendorbridge.com', 'procurement123', 'procurement_officer')">
+                <h3><i class="fa-solid fa-briefcase" style="color: #6366f1;"></i> Procurement Officer</h3>
+                <p>Create RFQs, monitor incoming bids, issue purchase orders, and manage inventory requisitions.</p>
             </div>
-            <div class="role-card">
-                <h3>Vendor</h3>
-                <p>Submit quotations and track status.</p>
+            <div class="role-card tilt-card" onclick="Auth.quickLoginDemo('abc@suppliers.com', 'vendor123', 'vendor')">
+                <h3><i class="fa-solid fa-truck-fast" style="color: #06b6d4;"></i> Vendor Partner</h3>
+                <p>Submit quotations against active RFQs, inspect delivery requirements, and submit tax invoices.</p>
             </div>
-            <div class="role-card">
-                <h3>Manager</h3>
-                <p>Approve or reject procurement requests.</p>
+            <div class="role-card tilt-card" onclick="Auth.quickLoginDemo('manager@vendorbridge.com', 'manager123', 'manager')">
+                <h3><i class="fa-solid fa-user-check" style="color: #a855f7;"></i> Approving Manager</h3>
+                <p>Review quotation proposals, conduct budget oversight, and approve or reject procurement tickets.</p>
             </div>
-            <div class="role-card">
-                <h3>Admin</h3>
-                <p>Manage users and procurement analytics.</p>
+            <div class="role-card tilt-card" onclick="Auth.quickLoginDemo('admin@vendorbridge.com', 'admin123', 'admin')">
+                <h3><i class="fa-solid fa-shield-halved" style="color: #10b981;"></i> System Admin</h3>
+                <p>Manage enterprise users, audit vendor records, analyze procurement metrics, and configure workflows.</p>
             </div>
         </div>
-    </section>
-
-    <!-- Workflow -->
-    <section id="workflow">
-        <h2>Procurement Workflow</h2>
-        <ol style="max-width: 600px; margin: 0 auto; line-height: 2;">
-            <li>Create RFQ (Request for Quotation)</li>
-            <li>Vendor Submits Quotation</li>
-            <li>Compare Quotations & Select Offer</li>
-            <li>Approval Process by Manager</li>
-            <li>Generate Purchase Order (PO)</li>
-            <li>Generate & Issue Invoice</li>
-            <li>Track Procurement Activity & Payment</li>
-        </ol>
     </section>
 
     <!-- Footer -->
     <footer>
-        <p>© 2026 VendorBridge ERP. All Rights Reserved.</p>
+        <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; flex-wrap: wrap; gap: 20px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="logo-badge" style="width: 26px; height: 26px; font-size: 0.8rem;"><i class="fa-solid fa-cube"></i></span>
+                <span style="font-weight: 700; color: #fff;">VendorBridge ERP</span>
+            </div>
+            <p>© 2026 VendorBridge ERP. Designed with MotionSites & ThreeUI aesthetics. MIT License.</p>
+            <div style="display: flex; gap: 16px;">
+                <a href="https://github.com/harshm13/VendorBridge" target="_blank" style="color: var(--text-muted);"><i class="fa-brands fa-github"></i> GitHub</a>
+                <a href="dashboard.html" style="color: var(--text-muted);"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+            </div>
+        </div>
     </footer>
 
+    <!-- Client Scripts -->
     <script src="js/api.js"></script>
+    <script src="js/three-scene.js"></script>
+    <script src="js/tilt.js"></script>
 </body>
 </html>

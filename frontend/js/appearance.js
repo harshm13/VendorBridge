@@ -6,11 +6,11 @@
     const STORAGE_KEY = 'vb_appearance_settings';
 
     const defaultSettings = {
-        theme: 'light',
+        theme: 'dark',
         accent: 'indigo',
-        radius: 'modern',
+        radius: 'round',
         density: 'standard',
-        glass: false
+        glass: true
     };
 
     // Load saved settings or fallback to defaults

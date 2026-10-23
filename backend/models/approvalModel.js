@@ -14,7 +14,7 @@ const Approval = {
         try {
             await connection.beginTransaction();
             
-            const [approvals] = await connection.query('SELECT * FROM approvals WHERE id = ? FOR UPDATE', [id]);
+            const [approvals] = await connection.query('SELECT * FROM approvals WHERE id = ?', [id]);
             const approval = approvals[0];
             
             if (!approval) {
@@ -50,7 +50,7 @@ const Approval = {
             }
 
             await connection.commit();
-            return result.affectedRows > 0;
+            return result && result.affectedRows > 0;
         } catch (error) {
             await connection.rollback();
             throw error;

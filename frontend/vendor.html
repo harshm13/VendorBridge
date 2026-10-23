@@ -1,96 +1,119 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vendor Management - VendorBridge ERP</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Vendor Directory | VendorBridge ERP</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="js/appearance.js"></script>
 </head>
 <body>
 
+    <!-- Three Canvas -->
+    <div id="threeCanvasContainer"></div>
+
     <!-- Navbar -->
     <nav>
         <div class="logo">
-            <h2><a href="index.html">VendorBridge</a></h2>
+            <a href="index.html">
+                <span class="logo-badge"><i class="fa-solid fa-cube"></i></span>
+                <h2>VendorBridge</h2>
+            </a>
         </div>
         <ul>
-            <li><a href="dashboard.html">Dashboard</a></li>
-            <li><a href="rfq.html">RFQs</a></li>
-            <li><a href="quotations.html">Quotations</a></li>
-            <li><a href="approval.html">Approvals</a></li>
-            <li><a href="purchase-order.html">Purchase Orders</a></li>
-            <li><a href="invoice.html">Invoices</a></li>
-            <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i> Theme</a></li>
-            <li><a href="#" onclick="Auth.logout(); return false;">Logout</a></li>
+            <li><a href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+            <li><a href="vendor.html" class="active"><i class="fa-solid fa-building-user"></i> Vendors</a></li>
+            <li><a href="rfq.html"><i class="fa-solid fa-file-circle-plus"></i> RFQs</a></li>
+            <li><a href="quotations.html"><i class="fa-solid fa-scale-balanced"></i> Quotations</a></li>
+            <li><a href="approval.html"><i class="fa-solid fa-stamp"></i> Approvals</a></li>
+            <li><a href="purchase-order.html"><i class="fa-solid fa-file-invoice-dollar"></i> POs</a></li>
+            <li><a href="invoice.html"><i class="fa-solid fa-receipt"></i> Invoices</a></li>
+            <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i></a></li>
+            <li><a href="#" onclick="Auth.logout(); return false;"><i class="fa-solid fa-power-off"></i></a></li>
         </ul>
     </nav>
 
     <!-- Header -->
     <section class="page-header">
-        <h1>Vendor Management</h1>
-        <p>Register new vendors and maintain updated supplier records.</p>
+        <div class="motion-badge" style="margin-bottom: 10px;">
+            <div class="motion-badge-inner">
+                <span class="pulse-dot"></span>
+                <span class="motion-badge-text">Supplier Network & Master Data</span>
+            </div>
+        </div>
+        <h1>Vendor Management Directory</h1>
+        <p>Register verified suppliers, manage corporate contacts, inspect GST credentials, and track ratings.</p>
     </section>
 
-    <!-- Vendor Section -->
-    <section class="vendor-section">
+    <div style="padding: 0 6%;">
         <div id="alertBox" class="alert-box"></div>
+    </div>
 
-        <!-- Add Vendor -->
-        <div class="vendor-form-card">
-            <h3>Add New Vendor</h3>
+    <!-- Vendor Operations Grid -->
+    <section class="vendor-section">
+        <!-- Add Vendor Form -->
+        <div class="vendor-form-card tilt-card">
+            <h3><i class="fa-solid fa-user-plus" style="color: #6366f1;"></i> Onboard New Supplier</h3>
+            
             <form id="vendorForm">
                 <div class="input-group">
-                    <label>Vendor / Contact Person</label>
-                    <input type="text" id="name" placeholder="John Doe" required>
+                    <label>Company Legal Name</label>
+                    <input type="text" id="company" placeholder="e.g. Acme Tech Solutions Pvt Ltd" required>
                 </div>
 
                 <div class="input-group">
-                    <label>Email Address</label>
-                    <input type="email" id="email" placeholder="vendor@company.com" required>
+                    <label>Authorized Contact Person</label>
+                    <input type="text" id="name" placeholder="e.g. Sarah Jenkins" required>
                 </div>
 
                 <div class="input-group">
-                    <label>Phone Number</label>
-                    <input type="text" id="phone" placeholder="+91 9876543210" required>
+                    <label>Corporate Email Address</label>
+                    <input type="email" id="email" placeholder="vendor@acmetech.com" required>
                 </div>
 
                 <div class="input-group">
-                    <label>Company Name</label>
-                    <input type="text" id="company" placeholder="ABC Suppliers Ltd." required>
+                    <label>Contact Phone Number</label>
+                    <input type="text" id="phone" placeholder="+91 98765 43210" required>
                 </div>
 
                 <div class="input-group">
-                    <label>GST Number</label>
-                    <input type="text" id="gst_number" placeholder="29ABCDE1234F1Z5">
+                    <label>GST Identification Number (GSTIN)</label>
+                    <input type="text" id="gst_number" placeholder="27ABCDE1234F1Z5">
                 </div>
 
                 <div class="input-group">
-                    <label>Address</label>
-                    <textarea id="address" rows="2" placeholder="Corporate address"></textarea>
+                    <label>Registered Address</label>
+                    <textarea id="address" rows="2" placeholder="Suite 400, Industrial Cyber City, Mumbai"></textarea>
                 </div>
 
-                <button type="submit" class="login-btn">Add Vendor</button>
+                <button type="submit" class="btn-primary" style="width: 100%; padding: 13px;">
+                    <i class="fa-solid fa-plus-circle"></i> Onboard Supplier
+                </button>
             </form>
         </div>
 
-        <!-- Vendor List -->
-        <div class="vendor-list-card">
-            <h3>Registered Vendors</h3>
+        <!-- Registered Vendors List -->
+        <div class="vendor-list-card tilt-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+                <h3>Active Supplier Directory</h3>
+                <input type="text" id="vendorSearch" placeholder="Search by name, company, or GST..." oninput="searchVendors()" style="width: 250px; padding: 8px 14px; font-size: 0.85rem;">
+            </div>
+
             <table>
                 <thead>
                     <tr>
-                        <th>Company</th>
+                        <th>Company Name</th>
                         <th>Contact Person</th>
-                        <th>Email</th>
-                        <th>Phone</th>
+                        <th>Email & Phone</th>
                         <th>GST Number</th>
                         <th>Status</th>
                     </tr>
                 </thead>
                 <tbody id="vendorTable">
-                    <tr><td colspan="6">Loading vendors from database...</td></tr>
+                    <tr><td colspan="5" style="text-align: center;">Loading suppliers from database...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -98,59 +121,83 @@
 
     <!-- Footer -->
     <footer>
-        <p>© 2026 VendorBridge ERP. All Rights Reserved.</p>
+        <p>© 2026 VendorBridge ERP. High-Performance Procurement Mesh.</p>
     </footer>
 
+    <!-- Client Scripts -->
     <script src="js/api.js"></script>
+    <script src="js/three-scene.js"></script>
+    <script src="js/tilt.js"></script>
     <script>
-        const form = document.getElementById("vendorForm");
-        const table = document.getElementById("vendorTable");
+        let allVendors = [];
 
         async function loadVendors() {
             if (!Auth.requireAuth()) return;
             try {
-                const vendors = await API.getVendors();
-                renderVendorTable(vendors);
+                allVendors = await API.getVendors();
+                renderVendors(allVendors);
             } catch (err) {
-                showAlert('Failed to load vendors from server', 'danger');
+                showAlert('Error loading vendors', 'danger');
             }
         }
 
-        function renderVendorTable(vendors) {
+        function renderVendors(vendors) {
+            const table = document.getElementById("vendorTable");
             if (!vendors || vendors.length === 0) {
-                table.innerHTML = '<tr><td colspan="6">No vendors registered yet.</td></tr>';
+                table.innerHTML = '<tr><td colspan="5" style="text-align: center;">No registered suppliers found.</td></tr>';
                 return;
             }
+
             table.innerHTML = vendors.map(v => `
                 <tr>
-                    <td><strong>${v.company_name || v.name}</strong></td>
-                    <td>${v.contact_person || v.name}</td>
-                    <td>${v.email}</td>
-                    <td>${v.phone}</td>
-                    <td>${v.gst_number || 'N/A'}</td>
+                    <td>
+                        <strong style="color: #ffffff; font-size: 0.98rem;">${v.company_name || 'N/A'}</strong>
+                        <p style="color: var(--text-dim); font-size: 0.8rem; margin-top: 2px;">${v.address || 'Address on file'}</p>
+                    </td>
+                    <td><span style="font-weight: 600; color: #cbd5e1;"><i class="fa-solid fa-user-tie" style="color: #6366f1;"></i> ${v.contact_person || 'Representative'}</span></td>
+                    <td>
+                        <div style="display: flex; flex-direction: column; gap: 2px;">
+                            <span style="font-size: 0.88rem; color: #a5b4fc;"><i class="fa-solid fa-envelope"></i> ${v.email || 'N/A'}</span>
+                            <span style="font-family: 'JetBrains Mono'; font-size: 0.8rem; color: var(--text-muted);"><i class="fa-solid fa-phone"></i> ${v.phone || 'N/A'}</span>
+                        </div>
+                    </td>
+                    <td><span style="font-family: 'JetBrains Mono'; font-size: 0.82rem; color: #38bdf8;">${v.gst_number || 'N/A'}</span></td>
                     <td><span class="badge badge-${v.status || 'active'}">${v.status || 'active'}</span></td>
                 </tr>
             `).join('');
+
+            if (window.initTiltCards) window.initTiltCards();
         }
 
-        form.addEventListener("submit", async function(e) {
+        function searchVendors() {
+            const query = (document.getElementById("vendorSearch").value || '').toLowerCase();
+            const filtered = allVendors.filter(v => 
+                (v.company_name || '').toLowerCase().includes(query) ||
+                (v.contact_person || '').toLowerCase().includes(query) ||
+                (v.email || '').toLowerCase().includes(query) ||
+                (v.gst_number || '').toLowerCase().includes(query)
+            );
+            renderVendors(filtered);
+        }
+
+        document.getElementById("vendorForm").addEventListener("submit", async function(e) {
             e.preventDefault();
             const vendorData = {
-                name: document.getElementById("name").value,
-                email: document.getElementById("email").value,
-                phone: document.getElementById("phone").value,
-                company: document.getElementById("company").value,
-                gst_number: document.getElementById("gst_number").value,
-                address: document.getElementById("address").value
+                name: document.getElementById("name").value.trim(),
+                email: document.getElementById("email").value.trim(),
+                phone: document.getElementById("phone").value.trim(),
+                company: document.getElementById("company").value.trim(),
+                gst_number: document.getElementById("gst_number").value.trim(),
+                address: document.getElementById("address").value.trim()
             };
 
             try {
                 await API.createVendor(vendorData);
-                showAlert('Vendor registered successfully!', 'success');
-                form.reset();
+                showAlert('Vendor onboarded successfully into the master registry!', 'success');
+                document.getElementById("vendorForm").reset();
                 loadVendors();
             } catch (err) {
-                showAlert(err.message || 'Error creating vendor', 'danger');
+                showAlert(err.message || 'Failed to onboard vendor', 'danger');
             }
         });
 
