@@ -1,101 +1,129 @@
 const http = require('http');
+const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
+const app = require('./server');
+const dbStore = require('./services/dbStore');
 
-const API_HOST = '127.0.0.1';
-const API_PORT = 5000;
+const DATA_FILE = path.join(__dirname, '../database/data.json');
 
-function makeRequest(path, method = 'GET', data = null, token = null) {
+function makeRequest(port, reqPath, method = 'GET', data = null, token = null) {
     return new Promise((resolve, reject) => {
         const options = {
-            hostname: API_HOST,
-            port: API_PORT,
-            path: `/api${path}`,
-            method: method,
-            headers: {
-                'Content-Type': 'application/json'
-            }
+            hostname: '127.0.0.1',
+            port,
+            path: `/api${reqPath}`,
+            method,
+            headers: { 'Content-Type': 'application/json' }
         };
-
-        if (token) {
-            options.headers['Authorization'] = `Bearer ${token}`;
-        }
+        if (token) options.headers['Authorization'] = `Bearer ${token}`;
 
         const req = http.request(options, (res) => {
             let body = '';
             res.on('data', chunk => body += chunk);
             res.on('end', () => {
                 try {
-                    const parsed = JSON.parse(body);
-                    resolve({ status: res.statusCode, body: parsed });
-                } catch (e) {
+                    resolve({ status: res.statusCode, body: JSON.parse(body) });
+                } catch {
                     resolve({ status: res.statusCode, body });
                 }
             });
         });
-
-        req.on('error', (e) => reject(e));
-        if (data) {
-            req.write(JSON.stringify(data));
-        }
+        req.on('error', reject);
+        if (data) req.write(JSON.stringify(data));
         req.end();
     });
 }
 
 async function runTests() {
     console.log('--- STARTING VENDORBRIDGE API INTEGRATION TEST ---');
-    try {
-        // 1. Health check
-        console.log('Testing GET /health...');
-        const health = await makeRequest('/health');
-        console.log(`[PASS] Health Status: ${health.status}`, health.body);
+    const backup = fs.existsSync(DATA_FILE) ? fs.readFileSync(DATA_FILE, 'utf8') : null;
+    const server = await new Promise((resolve) => {
+        const s = app.listen(0, '127.0.0.1', () => resolve(s));
+    });
+    const port = server.address().port;
 
-        // 2. Auth Login
-        console.log('\nTesting POST /auth/login...');
-        const login = await makeRequest('/auth/login', 'POST', {
+    try {
+        const health = await makeRequest(port, '/health');
+        assert.strictEqual(health.status, 200);
+        assert.strictEqual(health.body.success, true);
+        console.log(`[PASS] GET /health (${health.status})`);
+
+        const login = await makeRequest(port, '/auth/login', 'POST', {
             email: 'admin@vendorbridge.com',
             password: 'admin123',
             role: 'admin'
         });
-        console.log(`[PASS] Login Status: ${login.status}`, login.body);
+        assert.strictEqual(login.status, 200);
+        assert.ok(login.body.token, 'JWT token expected');
         const token = login.body.token;
+        console.log(`[PASS] POST /auth/login (${login.status})`);
 
-        // 3. Get Dashboard Stats
-        console.log('\nTesting GET /dashboard...');
-        const dashboard = await makeRequest('/dashboard', 'GET', null, token);
-        console.log(`[PASS] Dashboard Status: ${dashboard.status}`, dashboard.body.stats);
+        const me = await makeRequest(port, '/auth/me', 'GET', null, token);
+        assert.strictEqual(me.status, 200);
+        assert.strictEqual(me.body.user.email, 'admin@vendorbridge.com');
+        console.log(`[PASS] GET /auth/me (${me.status})`);
 
-        // 4. Vendors API
-        console.log('\nTesting GET /vendors...');
-        const vendors = await makeRequest('/vendors', 'GET', null, token);
-        console.log(`[PASS] Vendors Status: ${vendors.status}, Count: ${Array.isArray(vendors.body) ? vendors.body.length : 0}`);
+        const dashboard = await makeRequest(port, '/dashboard?period=quarter', 'GET', null, token);
+        assert.strictEqual(dashboard.status, 200);
+        assert.strictEqual(dashboard.body.period, 'quarter');
+        assert.ok(dashboard.body.stats.totalVendors >= 1);
+        console.log(`[PASS] GET /dashboard?period=quarter (${dashboard.status})`);
 
-        // 5. RFQs API
-        console.log('\nTesting GET /rfqs...');
-        const rfqs = await makeRequest('/rfqs', 'GET', null, token);
-        console.log(`[PASS] RFQs Status: ${rfqs.status}, Count: ${Array.isArray(rfqs.body) ? rfqs.body.length : 0}`);
+        const vendors = await makeRequest(port, '/vendors', 'GET', null, token);
+        assert.strictEqual(vendors.status, 200);
+        assert.ok(Array.isArray(vendors.body) && vendors.body.length >= 1);
+        console.log(`[PASS] GET /vendors (${vendors.status}, count=${vendors.body.length})`);
 
-        // 6. Quotations API
-        console.log('\nTesting GET /quotations...');
-        const quotations = await makeRequest('/quotations', 'GET', null, token);
-        console.log(`[PASS] Quotations Status: ${quotations.status}, Count: ${Array.isArray(quotations.body) ? quotations.body.length : 0}`);
+        const rfqs = await makeRequest(port, '/rfqs', 'GET', null, token);
+        assert.strictEqual(rfqs.status, 200);
+        assert.ok(Array.isArray(rfqs.body));
+        console.log(`[PASS] GET /rfqs (${rfqs.status}, count=${rfqs.body.length})`);
 
-        // 7. Approvals API
-        console.log('\nTesting GET /approvals...');
-        const approvals = await makeRequest('/approvals', 'GET', null, token);
-        console.log(`[PASS] Approvals Status: ${approvals.status}, Count: ${Array.isArray(approvals.body) ? approvals.body.length : 0}`);
+        const quotations = await makeRequest(port, '/quotations', 'GET', null, token);
+        assert.strictEqual(quotations.status, 200);
+        assert.ok(Array.isArray(quotations.body));
+        console.log(`[PASS] GET /quotations (${quotations.status}, count=${quotations.body.length})`);
 
-        // 8. Purchase Orders API
-        console.log('\nTesting GET /purchase-orders...');
-        const pos = await makeRequest('/purchase-orders', 'GET', null, token);
-        console.log(`[PASS] Purchase Orders Status: ${pos.status}, Count: ${Array.isArray(pos.body) ? pos.body.length : 0}`);
+        const approvals = await makeRequest(port, '/approvals', 'GET', null, token);
+        assert.strictEqual(approvals.status, 200);
+        assert.ok(Array.isArray(approvals.body));
+        console.log(`[PASS] GET /approvals (${approvals.status}, count=${approvals.body.length})`);
 
-        // 9. Invoices API
-        console.log('\nTesting GET /invoices...');
-        const invoices = await makeRequest('/invoices', 'GET', null, token);
-        console.log(`[PASS] Invoices Status: ${invoices.status}, Count: ${Array.isArray(invoices.body) ? invoices.body.length : 0}`);
+        const pos = await makeRequest(port, '/purchase-orders', 'GET', null, token);
+        assert.strictEqual(pos.status, 200);
+        assert.ok(Array.isArray(pos.body));
+        console.log(`[PASS] GET /purchase-orders (${pos.status}, count=${pos.body.length})`);
 
-        console.log('\n--- ALL API INTEGRATION TESTS COMPLETED ---');
+        const invoices = await makeRequest(port, '/invoices', 'GET', null, token);
+        assert.strictEqual(invoices.status, 200);
+        assert.ok(Array.isArray(invoices.body));
+        assert.ok(invoices.body[0].three_way_match, '3-way match metadata expected');
+        console.log(`[PASS] GET /invoices (${invoices.status}, count=${invoices.body.length})`);
+
+        const notifs = await makeRequest(port, '/notifications', 'GET', null, token);
+        assert.strictEqual(notifs.status, 200);
+        assert.strictEqual(notifs.body.success, true);
+        console.log(`[PASS] GET /notifications (${notifs.status})`);
+
+        const aiPrompt = await makeRequest(port, '/ai/parse-prompt', 'POST', {
+            prompt: 'Need 20 developer laptops and 10 monitors within 2 weeks',
+            currency: 'USD'
+        }, token);
+        assert.strictEqual(aiPrompt.status, 200);
+        assert.ok(aiPrompt.body.parsed.items.length >= 2);
+        console.log(`[PASS] POST /ai/parse-prompt (${aiPrompt.status})`);
+
+        console.log('\n--- ALL API INTEGRATION TESTS PASSED (100% OK) ---');
     } catch (err) {
-        console.error('Test Execution Error:', err);
+        console.error('API Integration Test Failed:', err);
+        process.exitCode = 1;
+    } finally {
+        server.close();
+        if (backup !== null) {
+            fs.writeFileSync(DATA_FILE, backup, 'utf8');
+            dbStore.reload();
+        }
     }
 }
 

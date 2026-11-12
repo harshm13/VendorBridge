@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const bcrypt = require('bcryptjs');
 
 const DATA_FILE = path.join(__dirname, '../../database/data.json');
 
@@ -42,34 +41,30 @@ class DBStore {
     initDefaults() {
         this.data = {
             users: [
-                { id: 1, name: 'Admin User', email: 'admin@vendorbridge.com', password: 'admin123', role: 'admin', created_at: new Date().toISOString() },
-                { id: 2, name: 'Manager Approver', email: 'manager@vendorbridge.com', password: 'manager123', role: 'manager', created_at: new Date().toISOString() },
-                { id: 3, name: 'Procurement Officer', email: 'procurement@vendorbridge.com', password: 'procurement123', role: 'procurement_officer', created_at: new Date().toISOString() },
-                { id: 4, name: 'ABC Vendor', email: 'abc@suppliers.com', password: 'vendor123', role: 'vendor', created_at: new Date().toISOString() }
+                { id: 1, name: 'Elena Rostova', email: 'admin@vendorbridge.com', password: 'admin123', role: 'admin', created_at: new Date().toISOString() },
+                { id: 2, name: 'Marcus Vance', email: 'manager@vendorbridge.com', password: 'manager123', role: 'manager', created_at: new Date().toISOString() },
+                { id: 3, name: 'Priya Nair', email: 'procurement@vendorbridge.com', password: 'procurement123', role: 'procurement_officer', created_at: new Date().toISOString() },
+                { id: 4, name: 'ABC Global Suppliers', email: 'abc@suppliers.com', password: 'vendor123', role: 'vendor', created_at: new Date().toISOString() }
             ],
             vendors: [
-                { id: 1, user_id: 4, company_name: 'ABC Suppliers', contact_person: 'John Doe', email: 'abc@suppliers.com', phone: '+91 9876543210', gst_number: '29ABCDE1234F1Z5', address: '123 Industrial Estate, Mumbai', status: 'active', created_at: new Date().toISOString() },
-                { id: 2, user_id: null, company_name: 'Tech Industries', contact_person: 'Sarah Smith', email: 'contact@techind.com', phone: '+91 9812345678', gst_number: '27TECH9876G1Z2', address: '456 Tech Park, Bengaluru', status: 'active', created_at: new Date().toISOString() },
-                { id: 3, user_id: null, company_name: 'Office Essentials', contact_person: 'Mike Johnson', email: 'info@officeessentials.com', phone: '+91 9988776655', gst_number: '07OFFIC4321H1Z9', address: '789 Commercial Zone, Delhi', status: 'active', created_at: new Date().toISOString() }
+                { id: 1, user_id: 4, company_name: 'ABC Global Suppliers', contact_person: 'John Doe', email: 'abc@suppliers.com', phone: '+1 (415) 555-0192', gst_number: '29ABCDE1234F1Z5', address: '450 Mission St, San Francisco, CA', tier: 'tier1', country: 'United States (NA)', currency: 'USD', status: 'active', created_at: new Date().toISOString() },
+                { id: 2, user_id: null, company_name: 'Nordic Tech Industries', contact_person: 'Astrid Lindqvist', email: 'contact@nordictech.eu', phone: '+46 8 501 234 00', gst_number: 'SE556012345601', address: 'Kista Science Tower, Stockholm', tier: 'tier1', country: 'Sweden (EMEA)', currency: 'EUR', status: 'active', created_at: new Date().toISOString() },
+                { id: 3, user_id: null, company_name: 'Office & Workspace Co.', contact_person: 'Mike Johnson', email: 'info@workspaceco.co.uk', phone: '+44 20 7946 0821', gst_number: 'GB884129044', address: 'One Canada Square, London', tier: 'verified', country: 'United Kingdom (EMEA)', currency: 'GBP', status: 'active', created_at: new Date().toISOString() }
             ],
             rfqs: [
-                { id: 1, title: 'Laptop Procurement', description: 'High performance laptops for development team', quantity: 50, deadline: '2026-11-20', created_by: 3, status: 'open', created_at: new Date().toISOString() },
-                { id: 2, title: 'Office Furniture', description: 'Ergonomic chairs and executive desks', quantity: 100, deadline: '2026-11-25', created_by: 3, status: 'open', created_at: new Date().toISOString() },
-                { id: 3, title: 'Printer Supplies', description: 'LaserJet toner cartridges and heavy duty paper', quantity: 30, deadline: '2026-10-18', created_by: 3, status: 'closed', created_at: new Date().toISOString() }
+                { id: 1, title: 'Global Engineering Laptop Fleet', description: 'High performance developer workstations', category: 'IT Hardware & Infrastructure', quantity: 50, currency: 'USD', deadline: '2026-12-01', created_by: 3, status: 'open', items: [], created_at: new Date().toISOString() }
             ],
             quotations: [
-                { id: 1, rfq_id: 1, vendor_id: 1, vendor_name: 'ABC Suppliers', amount: 480000, delivery_days: 7, notes: 'Includes 3 years warranty and free delivery', status: 'approved', created_at: new Date().toISOString() },
-                { id: 2, rfq_id: 1, vendor_id: 2, vendor_name: 'Tech Industries', amount: 510000, delivery_days: 5, notes: 'Includes fast shipping and setup', status: 'submitted', created_at: new Date().toISOString() },
-                { id: 3, rfq_id: 1, vendor_id: 3, vendor_name: 'Office Essentials', amount: 465000, delivery_days: 10, notes: 'Standard warranty', status: 'submitted', created_at: new Date().toISOString() }
+                { id: 1, rfq_id: 1, vendor_id: 1, vendor_name: 'ABC Global Suppliers', amount: 89500, currency: 'USD', delivery_days: 6, notes: '3-year global warranty', items: [], status: 'approved', created_at: new Date().toISOString() }
             ],
             approvals: [
-                { id: 1, quotation_id: 1, rfq_title: 'RFQ001 - Laptop Procurement', vendor_name: 'ABC Suppliers', amount: 480000, approved_by: 1, status: 'approved', remarks: 'Best balance of pricing and warranty.', created_at: new Date().toISOString() }
+                { id: 1, quotation_id: 1, rfq_title: 'RFQ#1 - Global Engineering Laptop Fleet', vendor_name: 'ABC Global Suppliers', amount: 89500, approved_by: 2, status: 'approved', remarks: 'Best value balance.', created_at: new Date().toISOString(), approved_at: new Date().toISOString() }
             ],
             purchase_orders: [
-                { id: 1, po_number: 'PO-2026-000001', quotation_id: 1, vendor_name: 'ABC Suppliers', rfq_ref: 'RFQ001 - Laptop Procurement', total_amount: 480000, status: 'approved', created_at: new Date().toISOString() }
+                { id: 1, po_number: 'PO-2026-000001', quotation_id: 1, vendor_name: 'ABC Global Suppliers', rfq_ref: 'RFQ#1 - Global Engineering Laptop Fleet', total_amount: 89500, currency: 'USD', status: 'approved', created_at: new Date().toISOString() }
             ],
             invoices: [
-                { id: 1, invoice_number: 'INV-2026-000001', purchase_order_id: 1, vendor_name: 'ABC Suppliers', product: 'Development Laptops', quantity: 50, unit_price: 9600, subtotal: 480000, tax: 86400, total_amount: 566400, status: 'generated', created_at: new Date().toISOString() }
+                { id: 1, invoice_number: 'INV-2026-000001', purchase_order_id: 1, vendor_name: 'ABC Global Suppliers', product: 'Developer Workstation Laptops', quantity: 50, unit_price: 1790, subtotal: 89500, tax_rate: 18, tax_label: 'GST', tax: 16110, total_amount: 105610, currency: 'USD', status: 'generated', created_at: new Date().toISOString() }
             ],
             activity_logs: [],
             notifications: []
@@ -78,10 +73,10 @@ class DBStore {
 
     ensureDefaultUsers() {
         const defaults = [
-            { id: 1, name: 'Admin User', email: 'admin@vendorbridge.com', password: 'admin123', role: 'admin' },
-            { id: 2, name: 'Manager Approver', email: 'manager@vendorbridge.com', password: 'manager123', role: 'manager' },
-            { id: 3, name: 'Procurement Officer', email: 'procurement@vendorbridge.com', password: 'procurement123', role: 'procurement_officer' },
-            { id: 4, name: 'ABC Vendor', email: 'abc@suppliers.com', password: 'vendor123', role: 'vendor' }
+            { id: 1, name: 'Elena Rostova', email: 'admin@vendorbridge.com', password: 'admin123', role: 'admin' },
+            { id: 2, name: 'Marcus Vance', email: 'manager@vendorbridge.com', password: 'manager123', role: 'manager' },
+            { id: 3, name: 'Priya Nair', email: 'procurement@vendorbridge.com', password: 'procurement123', role: 'procurement_officer' },
+            { id: 4, name: 'ABC Global Suppliers', email: 'abc@suppliers.com', password: 'vendor123', role: 'vendor' }
         ];
 
         defaults.forEach(def => {
@@ -104,7 +99,15 @@ class DBStore {
         }
     }
 
-    // Emulated SQL query engine
+    // Reload from disk (useful when external scripts or tests modify data.json)
+    reload() {
+        this.load();
+    }
+
+    nextId(arr) {
+        return arr.reduce((max, item) => Math.max(max, item.id || 0), 0) + 1;
+    }
+
     async query(sql, params = []) {
         const clean = sql.trim().replace(/\s+/g, ' ');
         const upper = clean.toUpperCase();
@@ -121,11 +124,16 @@ class DBStore {
             return [user ? [user] : []];
         }
 
+        if (upper.includes('FROM USERS WHERE ID = ?')) {
+            const id = parseInt(params[0], 10);
+            const user = this.data.users.find(u => u.id === id);
+            return [user ? [user] : []];
+        }
+
         if (upper.startsWith('INSERT INTO USERS')) {
             const [name, email, password, role] = params;
-            const maxId = this.data.users.reduce((max, u) => Math.max(max, u.id || 0), 0);
             const newUser = {
-                id: maxId + 1,
+                id: this.nextId(this.data.users),
                 name: name || (email ? email.split('@')[0] : 'User'),
                 email: email.toLowerCase().trim(),
                 password,
@@ -135,6 +143,17 @@ class DBStore {
             this.data.users.push(newUser);
             this.save();
             return [{ insertId: newUser.id, affectedRows: 1 }];
+        }
+
+        if (upper.startsWith('UPDATE USERS SET NAME = ? WHERE ID = ?')) {
+            const [name, id] = params;
+            const user = this.data.users.find(u => u.id === parseInt(id, 10));
+            if (user) {
+                user.name = name;
+                this.save();
+                return [{ affectedRows: 1 }];
+            }
+            return [{ affectedRows: 0 }];
         }
 
         if (upper.startsWith('SELECT ID, NAME, EMAIL, ROLE, CREATED_AT FROM USERS') || upper.startsWith('SELECT * FROM USERS')) {
@@ -160,10 +179,9 @@ class DBStore {
         }
 
         if (upper.startsWith('INSERT INTO VENDORS')) {
-            const [user_id, company_name, contact_person, email, phone, gst_number, address] = params;
-            const maxId = this.data.vendors.reduce((max, v) => Math.max(max, v.id || 0), 0);
+            const [user_id, company_name, contact_person, email, phone, gst_number, address, tier, country, currency] = params;
             const newVendor = {
-                id: maxId + 1,
+                id: this.nextId(this.data.vendors),
                 user_id: user_id || null,
                 company_name,
                 contact_person,
@@ -171,6 +189,9 @@ class DBStore {
                 phone,
                 gst_number: gst_number || null,
                 address: address || null,
+                tier: tier || 'verified',
+                country: country || 'Global',
+                currency: currency || 'USD',
                 status: 'active',
                 created_at: new Date().toISOString()
             };
@@ -179,7 +200,34 @@ class DBStore {
             return [{ insertId: newVendor.id, affectedRows: 1 }];
         }
 
-        if (upper.includes('FROM VENDORS ORDER BY ID DESC') || upper.includes('FROM VENDORS')) {
+        if (upper.startsWith('UPDATE VENDORS SET') && upper.includes('WHERE ID = ?')) {
+            const id = parseInt(params[params.length - 1], 10);
+            const vendor = this.data.vendors.find(v => v.id === id);
+            if (!vendor) return [{ affectedRows: 0 }];
+            const [company_name, contact_person, email, phone, gst_number, address, tier, country, currency, status] = params;
+            if (company_name !== undefined) vendor.company_name = company_name;
+            if (contact_person !== undefined) vendor.contact_person = contact_person;
+            if (email !== undefined) vendor.email = email;
+            if (phone !== undefined) vendor.phone = phone;
+            if (gst_number !== undefined) vendor.gst_number = gst_number;
+            if (address !== undefined) vendor.address = address;
+            if (tier !== undefined) vendor.tier = tier;
+            if (country !== undefined) vendor.country = country;
+            if (currency !== undefined) vendor.currency = currency;
+            if (status !== undefined) vendor.status = status;
+            this.save();
+            return [{ affectedRows: 1 }];
+        }
+
+        if (upper.startsWith('DELETE FROM VENDORS WHERE ID = ?')) {
+            const id = parseInt(params[0], 10);
+            const before = this.data.vendors.length;
+            this.data.vendors = this.data.vendors.filter(v => v.id !== id);
+            this.save();
+            return [{ affectedRows: before - this.data.vendors.length }];
+        }
+
+        if (upper.includes('FROM VENDORS')) {
             const sorted = [...this.data.vendors].sort((a, b) => b.id - a.id);
             return [sorted];
         }
@@ -197,13 +245,14 @@ class DBStore {
         }
 
         if (upper.startsWith('INSERT INTO RFQS')) {
-            const [title, description, quantity, deadline, created_by, status] = params;
-            const maxId = this.data.rfqs.reduce((max, r) => Math.max(max, r.id || 0), 0);
+            const [title, description, category, quantity, currency, deadline, created_by, status] = params;
             const newRfq = {
-                id: maxId + 1,
+                id: this.nextId(this.data.rfqs),
                 title,
                 description,
+                category: category || 'IT Hardware & Infrastructure',
                 quantity: parseInt(quantity, 10),
+                currency: currency || 'USD',
                 deadline,
                 created_by: created_by || 1,
                 status: status || 'open',
@@ -212,6 +261,17 @@ class DBStore {
             this.data.rfqs.unshift(newRfq);
             this.save();
             return [{ insertId: newRfq.id, affectedRows: 1 }];
+        }
+
+        if (upper.startsWith('UPDATE RFQS SET STATUS = ? WHERE ID = ?')) {
+            const [status, id] = params;
+            const rfq = this.data.rfqs.find(r => r.id === parseInt(id, 10));
+            if (rfq) {
+                rfq.status = status;
+                this.save();
+                return [{ affectedRows: 1 }];
+            }
+            return [{ affectedRows: 0 }];
         }
 
         if (upper.includes('FROM RFQS') && upper.includes('JOIN USERS')) {
@@ -232,14 +292,14 @@ class DBStore {
 
         // 5. QUOTATIONS Queries
         if (upper.startsWith('INSERT INTO QUOTATIONS')) {
-            const [rfq_id, vendor_id, vendor_name, amount, delivery_days, notes] = params;
-            const maxId = this.data.quotations.reduce((max, q) => Math.max(max, q.id || 0), 0);
+            const [rfq_id, vendor_id, vendor_name, amount, currency, delivery_days, notes] = params;
             const newQuote = {
-                id: maxId + 1,
+                id: this.nextId(this.data.quotations),
                 rfq_id: rfq_id || null,
                 vendor_id: vendor_id || null,
                 vendor_name,
                 amount: parseFloat(amount),
+                currency: currency || 'USD',
                 delivery_days: parseInt(delivery_days, 10),
                 notes: notes || '',
                 status: 'submitted',
@@ -296,9 +356,8 @@ class DBStore {
 
         if (upper.startsWith('INSERT INTO APPROVALS')) {
             const [quotation_id, rfq_title, vendor_name, amount, remarks] = params;
-            const maxId = this.data.approvals.reduce((max, a) => Math.max(max, a.id || 0), 0);
             const newApp = {
-                id: maxId + 1,
+                id: this.nextId(this.data.approvals),
                 quotation_id: quotation_id || null,
                 rfq_title: rfq_title || 'General RFQ',
                 vendor_name: vendor_name || 'Vendor',
@@ -346,21 +405,32 @@ class DBStore {
         }
 
         if (upper.startsWith('INSERT INTO PURCHASE_ORDERS')) {
-            const [po_number, quotation_id, vendor_name, rfq_ref, total_amount, status] = params;
-            const maxId = this.data.purchase_orders.reduce((max, p) => Math.max(max, p.id || 0), 0);
+            const [po_number, quotation_id, vendor_name, rfq_ref, total_amount, currency, status] = params;
             const newPo = {
-                id: maxId + 1,
+                id: this.nextId(this.data.purchase_orders),
                 po_number,
                 quotation_id: quotation_id || null,
                 vendor_name,
                 rfq_ref: rfq_ref || 'RFQ001',
                 total_amount: parseFloat(total_amount),
+                currency: currency || 'USD',
                 status: status || 'pending',
                 created_at: new Date().toISOString()
             };
             this.data.purchase_orders.unshift(newPo);
             this.save();
             return [{ insertId: newPo.id, affectedRows: 1 }];
+        }
+
+        if (upper.startsWith('UPDATE PURCHASE_ORDERS SET STATUS = ? WHERE ID = ?')) {
+            const [status, id] = params;
+            const po = this.data.purchase_orders.find(p => p.id === parseInt(id, 10));
+            if (po) {
+                po.status = status;
+                this.save();
+                return [{ affectedRows: 1 }];
+            }
+            return [{ affectedRows: 0 }];
         }
 
         if (upper.includes('FROM PURCHASE_ORDERS WHERE ID = ?')) {
@@ -385,10 +455,9 @@ class DBStore {
         }
 
         if (upper.startsWith('INSERT INTO INVOICES')) {
-            const [invoice_number, purchase_order_id, vendor_name, product, qty, price, subtotal, tax, total_amount] = params;
-            const maxId = this.data.invoices.reduce((max, i) => Math.max(max, i.id || 0), 0);
+            const [invoice_number, purchase_order_id, vendor_name, product, qty, price, subtotal, tax_rate, tax_label, tax, total_amount, currency] = params;
             const newInvoice = {
-                id: maxId + 1,
+                id: this.nextId(this.data.invoices),
                 invoice_number,
                 purchase_order_id: purchase_order_id || null,
                 vendor_name,
@@ -396,8 +465,11 @@ class DBStore {
                 quantity: parseInt(qty, 10),
                 unit_price: parseFloat(price),
                 subtotal: parseFloat(subtotal),
+                tax_rate: tax_rate !== undefined ? parseFloat(tax_rate) : 18,
+                tax_label: tax_label || 'GST',
                 tax: parseFloat(tax),
                 total_amount: parseFloat(total_amount),
+                currency: currency || 'USD',
                 status: 'generated',
                 created_at: new Date().toISOString()
             };
@@ -406,9 +478,85 @@ class DBStore {
             return [{ insertId: newInvoice.id, affectedRows: 1 }];
         }
 
+        if (upper.startsWith('UPDATE INVOICES SET STATUS = ? WHERE ID = ?')) {
+            const [status, id] = params;
+            const inv = this.data.invoices.find(i => i.id === parseInt(id, 10));
+            if (inv) {
+                inv.status = status;
+                this.save();
+                return [{ affectedRows: 1 }];
+            }
+            return [{ affectedRows: 0 }];
+        }
+
+        if (upper.includes('FROM INVOICES WHERE ID = ?')) {
+            const id = parseInt(params[0], 10);
+            const inv = this.data.invoices.find(i => i.id === id);
+            return [inv ? [inv] : []];
+        }
+
         if (upper.includes('FROM INVOICES')) {
             const sorted = [...this.data.invoices].sort((a, b) => b.id - a.id);
             return [sorted];
+        }
+
+        // 9. ACTIVITY LOGS Queries
+        if (upper.startsWith('INSERT INTO ACTIVITY_LOGS')) {
+            const [user_id, title, category, action] = params;
+            if (!Array.isArray(this.data.activity_logs)) this.data.activity_logs = [];
+            const entry = {
+                id: this.nextId(this.data.activity_logs),
+                user_id: user_id || null,
+                title: title || 'System Event',
+                category: category || 'system',
+                action: action || '',
+                created_at: new Date().toISOString()
+            };
+            this.data.activity_logs.unshift(entry);
+            if (this.data.activity_logs.length > 50) {
+                this.data.activity_logs = this.data.activity_logs.slice(0, 50);
+            }
+            this.save();
+            return [{ insertId: entry.id, affectedRows: 1 }];
+        }
+
+        if (upper.includes('FROM ACTIVITY_LOGS')) {
+            const logs = Array.isArray(this.data.activity_logs) ? [...this.data.activity_logs] : [];
+            return [logs.sort((a, b) => b.id - a.id).slice(0, 25)];
+        }
+
+        // 10. NOTIFICATIONS Queries
+        if (upper.startsWith('INSERT INTO NOTIFICATIONS')) {
+            const [user_id, title, message, category] = params;
+            if (!Array.isArray(this.data.notifications)) this.data.notifications = [];
+            const notif = {
+                id: this.nextId(this.data.notifications),
+                user_id: user_id || null,
+                title: title || 'Notification',
+                message: message || '',
+                category: category || 'info',
+                is_read: false,
+                created_at: new Date().toISOString()
+            };
+            this.data.notifications.unshift(notif);
+            if (this.data.notifications.length > 50) {
+                this.data.notifications = this.data.notifications.slice(0, 50);
+            }
+            this.save();
+            return [{ insertId: notif.id, affectedRows: 1 }];
+        }
+
+        if (upper.startsWith('UPDATE NOTIFICATIONS SET IS_READ = TRUE')) {
+            if (Array.isArray(this.data.notifications)) {
+                this.data.notifications.forEach(n => { n.is_read = true; });
+                this.save();
+            }
+            return [{ affectedRows: 1 }];
+        }
+
+        if (upper.includes('FROM NOTIFICATIONS')) {
+            const list = Array.isArray(this.data.notifications) ? [...this.data.notifications] : [];
+            return [list.sort((a, b) => b.id - a.id).slice(0, 25)];
         }
 
         console.warn('DBStore unhandled query fallback:', clean);

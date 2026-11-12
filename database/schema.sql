@@ -18,9 +18,12 @@ CREATE TABLE IF NOT EXISTS vendors (
     company_name VARCHAR(200) NOT NULL,
     contact_person VARCHAR(100),
     email VARCHAR(150),
-    phone VARCHAR(20),
+    phone VARCHAR(30),
     gst_number VARCHAR(50),
     address TEXT,
+    tier ENUM('tier1', 'tier2', 'verified') DEFAULT 'verified',
+    country VARCHAR(80) DEFAULT 'United States',
+    currency VARCHAR(10) DEFAULT 'USD',
     status ENUM('active', 'inactive', 'blocked') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
@@ -31,7 +34,9 @@ CREATE TABLE IF NOT EXISTS rfqs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT,
+    category VARCHAR(100) DEFAULT 'IT Hardware & Infrastructure',
     quantity INT,
+    currency VARCHAR(10) DEFAULT 'USD',
     deadline DATE,
     created_by INT,
     status ENUM('draft', 'open', 'closed') DEFAULT 'open',
@@ -45,7 +50,8 @@ CREATE TABLE IF NOT EXISTS quotations (
     rfq_id INT,
     vendor_id INT,
     vendor_name VARCHAR(200),
-    amount DECIMAL(10,2),
+    amount DECIMAL(14,2),
+    currency VARCHAR(10) DEFAULT 'USD',
     delivery_days INT,
     notes TEXT,
     status ENUM('submitted', 'approved', 'rejected') DEFAULT 'submitted',
@@ -60,10 +66,11 @@ CREATE TABLE IF NOT EXISTS approvals (
     quotation_id INT,
     rfq_title VARCHAR(255),
     vendor_name VARCHAR(200),
-    amount DECIMAL(10,2),
+    amount DECIMAL(14,2),
     approved_by INT,
     status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
     remarks TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     approved_at TIMESTAMP NULL,
     FOREIGN KEY (quotation_id) REFERENCES quotations(id) ON DELETE CASCADE,
     FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL
@@ -75,8 +82,9 @@ CREATE TABLE IF NOT EXISTS purchase_orders (
     po_number VARCHAR(100) UNIQUE,
     quotation_id INT,
     vendor_name VARCHAR(200),
-    rfq_ref VARCHAR(100),
-    total_amount DECIMAL(10,2),
+    rfq_ref VARCHAR(150),
+    total_amount DECIMAL(14,2),
+    currency VARCHAR(10) DEFAULT 'USD',
     status ENUM('pending', 'issued', 'approved', 'completed') DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (quotation_id) REFERENCES quotations(id) ON DELETE SET NULL
@@ -90,10 +98,13 @@ CREATE TABLE IF NOT EXISTS invoices (
     vendor_name VARCHAR(200),
     product VARCHAR(255),
     quantity INT,
-    unit_price DECIMAL(10,2),
-    subtotal DECIMAL(10,2),
-    tax DECIMAL(10,2),
-    total_amount DECIMAL(10,2),
+    unit_price DECIMAL(14,2),
+    subtotal DECIMAL(14,2),
+    tax_rate DECIMAL(5,2) DEFAULT 18.00,
+    tax_label VARCHAR(40) DEFAULT 'GST',
+    tax DECIMAL(14,2),
+    total_amount DECIMAL(14,2),
+    currency VARCHAR(10) DEFAULT 'USD',
     status ENUM('generated', 'paid') DEFAULT 'generated',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (purchase_order_id) REFERENCES purchase_orders(id) ON DELETE SET NULL
@@ -103,16 +114,20 @@ CREATE TABLE IF NOT EXISTS invoices (
 CREATE TABLE IF NOT EXISTS activity_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
+    title VARCHAR(255),
+    category VARCHAR(50) DEFAULT 'system',
     action TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- Notifications table
 CREATE TABLE IF NOT EXISTS notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
+    title VARCHAR(255),
     message TEXT,
+    category VARCHAR(50) DEFAULT 'info',
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -125,27 +140,8 @@ INSERT IGNORE INTO users (id, name, email, password, role) VALUES
 (3, 'Procurement Officer', 'procurement@vendorbridge.com', 'procurement123', 'procurement_officer'),
 (4, 'ABC Vendor', 'abc@suppliers.com', 'vendor123', 'vendor');
 
-INSERT IGNORE INTO vendors (id, user_id, company_name, contact_person, email, phone, gst_number, address, status) VALUES
-(1, 4, 'ABC Suppliers', 'John Doe', 'abc@suppliers.com', '+91 9876543210', '29ABCDE1234F1Z5', '123 Industrial Estate, Mumbai', 'active'),
-(2, NULL, 'Tech Industries', 'Sarah Smith', 'contact@techind.com', '+91 9812345678', '27TECH9876G1Z2', '456 Tech Park, Bengaluru', 'active'),
-(3, NULL, 'Office Essentials', 'Mike Johnson', 'info@officeessentials.com', '+91 9988776655', '07OFFIC4321H1Z9', '789 Commercial Zone, Delhi', 'active');
-
-INSERT IGNORE INTO rfqs (id, title, description, quantity, deadline, created_by, status) VALUES
-(1, 'Laptop Procurement', 'High performance laptops for development team', 50, '2026-08-20', 3, 'open'),
-(2, 'Office Furniture', 'Ergonomic chairs and executive desks', 100, '2026-08-25', 3, 'open'),
-(3, 'Printer Supplies', 'LaserJet toner cartridges and heavy duty paper', 30, '2026-08-18', 3, 'closed');
-
-INSERT IGNORE INTO quotations (id, rfq_id, vendor_id, vendor_name, amount, delivery_days, notes, status) VALUES
-(1, 1, 1, 'ABC Suppliers', 480000.00, 7, 'Includes 3 years warranty and free delivery', 'approved'),
-(2, 1, 2, 'Tech Industries', 510000.00, 5, 'Includes fast shipping and setup', 'submitted'),
-(3, 1, 3, 'Office Essentials', 465000.00, 10, 'Standard warranty', 'submitted');
-
-INSERT IGNORE INTO approvals (id, quotation_id, rfq_title, vendor_name, amount, approved_by, status, remarks) VALUES
-(1, 1, 'RFQ001 - Laptop Procurement', 'ABC Suppliers', 480000.00, 2, 'pending', 'Best balance of pricing, warranty, and delivery time.');
-
-INSERT IGNORE INTO purchase_orders (id, po_number, quotation_id, vendor_name, rfq_ref, total_amount, status) VALUES
-(1, 'PO-2026-001', 1, 'ABC Suppliers', 'RFQ001', 480000.00, 'approved'),
-(2, 'PO-2026-002', 2, 'Tech Industries', 'RFQ002', 510000.00, 'pending');
-
-INSERT IGNORE INTO invoices (id, invoice_number, purchase_order_id, vendor_name, product, quantity, unit_price, subtotal, tax, total_amount, status) VALUES
-(1, 'INV-2026-001', 1, 'ABC Suppliers', 'Development Laptops', 50, 9600.00, 480000.00, 86400.00, 566400.00, 'generated');
+INSERT IGNORE INTO vendors (id, user_id, company_name, contact_person, email, phone, gst_number, address, tier, country, currency, status) VALUES
+(1, 4, 'ABC Global Suppliers', 'John Doe', 'abc@suppliers.com', '+1 (415) 555-0192', '29ABCDE1234F1Z5', '123 Industrial Estate, San Francisco, CA & Mumbai', 'tier1', 'United States', 'USD', 'active'),
+(2, NULL, 'Nordic Tech Industries', 'Astrid Lindqvist', 'contact@nordictech.eu', '+46 8 501 234 00', 'SE556012345601', 'Kista Science Tower, Stockholm, Sweden', 'tier1', 'Sweden', 'EUR', 'active'),
+(3, NULL, 'Apex Cloud Systems', 'Marcus Vance', 'sales@apexcloud.io', '+44 20 7946 0199', 'GB998123456', 'One Canada Square, Canary Wharf, London', 'tier2', 'United Kingdom', 'GBP', 'active'),
+(4, NULL, 'Sakura Precision Corp', 'Kenji Takahashi', 'supply@sakuraprecision.jp', '+81 3 5555 0148', 'JP-T4010001123456', 'Minato-ku, Tokyo, Japan', 'verified', 'Japan', 'JPY', 'active');

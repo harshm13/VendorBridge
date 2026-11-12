@@ -9,11 +9,11 @@ const { authenticateToken } = require('../middleware/auth');
 router.get('/analyze/:rfqId', authenticateToken, async (req, res, next) => {
     try {
         const rfqId = parseInt(req.params.rfqId, 10);
+        const currency = req.query.currency || 'USD';
         const quotes = await Quotation.getByRfqId(rfqId);
-        const [rfqRows] = await (require('../config/db')).query('SELECT * FROM rfqs WHERE id = ?', [rfqId]);
-        const rfq = rfqRows ? rfqRows[0] : null;
+        const rfq = await RFQ.getById(rfqId);
 
-        const analysis = await aiService.analyzeQuotations(rfq, quotes);
+        const analysis = await aiService.analyzeQuotations(rfq, quotes, currency);
         res.status(200).json({ success: true, analysis });
     } catch (error) {
         next(error);
@@ -23,9 +23,23 @@ router.get('/analyze/:rfqId', authenticateToken, async (req, res, next) => {
 // Estimate budget for a draft RFQ
 router.post('/estimate', authenticateToken, async (req, res, next) => {
     try {
-        const { title, quantity, description } = req.body;
-        const estimation = await aiService.estimateRfqBudget(title || '', quantity || 1, description || '');
+        const { title, quantity, description, currency } = req.body;
+        const estimation = await aiService.estimateRfqBudget(title || '', quantity || 1, description || '', currency || 'USD');
         res.status(200).json({ success: true, estimation });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Parse natural language prompt into structured RFQ + BoM
+router.post('/parse-prompt', authenticateToken, async (req, res, next) => {
+    try {
+        const { prompt, currency } = req.body;
+        if (!prompt || !prompt.trim()) {
+            return res.status(400).json({ success: false, message: 'Prompt text is required' });
+        }
+        const parsed = await aiService.parseRfqPrompt(prompt, currency || 'USD');
+        res.status(200).json({ success: true, parsed });
     } catch (error) {
         next(error);
     }

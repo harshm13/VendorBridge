@@ -15,6 +15,8 @@ function parseRfqItems(row) {
     }
     return {
         ...row,
+        category: row.category || 'IT Hardware & Infrastructure',
+        currency: row.currency || 'USD',
         description: cleanDesc,
         items: items
     };
@@ -35,16 +37,29 @@ const RFQ = {
         return rows && rows.length > 0 ? parseRfqItems(rows[0]) : null;
     },
     create: async (rfqData) => {
-        const { title, description, quantity, deadline, created_by, status, items } = rfqData;
+        const { title, description, category, quantity, currency, deadline, created_by, status, items } = rfqData;
         let formattedDesc = description || '';
         if (items && Array.isArray(items) && items.length > 0) {
             formattedDesc = `${formattedDesc}\n<!--BOM_ITEMS:${JSON.stringify(items)}-->`;
         }
         const [result] = await db.query(
-            'INSERT INTO rfqs (title, description, quantity, deadline, created_by, status) VALUES (?, ?, ?, ?, ?, ?)',
-            [title, formattedDesc, quantity, deadline, created_by || 1, status || 'open']
+            'INSERT INTO rfqs (title, description, category, quantity, currency, deadline, created_by, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+                title,
+                formattedDesc,
+                category || 'IT Hardware & Infrastructure',
+                quantity,
+                currency || 'USD',
+                deadline,
+                created_by || 1,
+                status || 'open'
+            ]
         );
         return result.insertId;
+    },
+    updateStatus: async (id, status) => {
+        const [result] = await db.query('UPDATE rfqs SET status = ? WHERE id = ?', [status, id]);
+        return result && result.affectedRows > 0;
     },
     countActive: async () => {
         const [rows] = await db.query("SELECT COUNT(*) as count FROM rfqs WHERE status = 'open'");
@@ -53,4 +68,3 @@ const RFQ = {
 };
 
 module.exports = RFQ;
-

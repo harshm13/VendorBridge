@@ -5,6 +5,10 @@ const User = {
         const [rows] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
         return rows[0];
     },
+    findById: async (id) => {
+        const [rows] = await db.query('SELECT * FROM users WHERE id = ?', [id]);
+        return rows[0];
+    },
     create: async (userData) => {
         const { name, email, password, role } = userData;
         const [result] = await db.query(
@@ -12,6 +16,10 @@ const User = {
             [name, email, password, role]
         );
         return result.insertId;
+    },
+    updateName: async (id, name) => {
+        const [result] = await db.query('UPDATE users SET name = ? WHERE id = ?', [name, id]);
+        return result && result.affectedRows > 0;
     },
     getAll: async () => {
         const [rows] = await db.query('SELECT id, name, email, role, created_at FROM users ORDER BY id DESC');

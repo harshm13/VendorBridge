@@ -1,41 +1,36 @@
 const http = require('http');
+const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
+const app = require('./server');
+const dbStore = require('./services/dbStore');
 
-const API_HOST = '127.0.0.1';
-const API_PORT = 5000;
+const DATA_FILE = path.join(__dirname, '../database/data.json');
 
-function makeRequest(path, method = 'GET', data = null, token = null) {
+function makeRequest(port, reqPath, method = 'GET', data = null, token = null) {
     return new Promise((resolve, reject) => {
         const options = {
-            hostname: API_HOST,
-            port: API_PORT,
-            path: path.startsWith('/api') ? path : `/api${path}`,
-            method: method,
-            headers: {
-                'Content-Type': 'application/json'
-            }
+            hostname: '127.0.0.1',
+            port,
+            path: reqPath.startsWith('/api') ? reqPath : `/api${reqPath}`,
+            method,
+            headers: { 'Content-Type': 'application/json' }
         };
-
-        if (token) {
-            options.headers['Authorization'] = `Bearer ${token}`;
-        }
+        if (token) options.headers['Authorization'] = `Bearer ${token}`;
 
         const req = http.request(options, (res) => {
             let body = '';
             res.on('data', chunk => body += chunk);
             res.on('end', () => {
                 try {
-                    const parsed = JSON.parse(body);
-                    resolve({ status: res.statusCode, body: parsed });
-                } catch (e) {
+                    resolve({ status: res.statusCode, body: JSON.parse(body) });
+                } catch {
                     resolve({ status: res.statusCode, body });
                 }
             });
         });
-
-        req.on('error', (e) => reject(e));
-        if (data) {
-            req.write(JSON.stringify(data));
-        }
+        req.on('error', reject);
+        if (data) req.write(JSON.stringify(data));
         req.end();
     });
 }
@@ -45,113 +40,173 @@ async function runE2ETests() {
     console.log(' VENDORBRIDGE ERP - FULL END-TO-END AUTOMATED TEST ');
     console.log('====================================================\n');
 
-    try {
-        // 1. Health Check
-        console.log('1. Testing GET /api/health...');
-        const health = await makeRequest('/health');
-        console.log(`   -> Status ${health.status}:`, health.body.message);
+    const backup = fs.existsSync(DATA_FILE) ? fs.readFileSync(DATA_FILE, 'utf8') : null;
+    const server = await new Promise((resolve) => {
+        const s = app.listen(0, '127.0.0.1', () => resolve(s));
+    });
+    const port = server.address().port;
 
-        // 2. User Login with Seed Account
-        console.log('\n2. Testing Admin Login...');
-        const adminLogin = await makeRequest('/auth/login', 'POST', {
+    try {
+        const health = await makeRequest(port, '/health');
+        assert.strictEqual(health.status, 200);
+        console.log(`1. [PASS] GET /api/health -> ${health.body.message}`);
+
+        const adminLogin = await makeRequest(port, '/auth/login', 'POST', {
             email: 'admin@vendorbridge.com',
             password: 'admin123',
             role: 'admin'
         });
-        console.log(`   -> Admin Login Status ${adminLogin.status}:`, adminLogin.body);
-        let adminToken = adminLogin.body.token;
+        assert.strictEqual(adminLogin.status, 200);
+        const adminToken = adminLogin.body.token;
+        console.log(`2. [PASS] Admin Login`);
 
-        // 3. Register New User & Login
-        console.log('\n3. Testing User Auth Register & Login...');
-        const newAccount = await makeRequest('/auth/register', 'POST', {
-            name: 'Test Manager',
-            email: 'newmanager@vendorbridge.com',
+        // Register unique test manager + login + update profile
+        const uniqueEmail = `e2e.manager.${Date.now()}@vendorbridge.com`;
+        const reg = await makeRequest(port, '/auth/register', 'POST', {
+            name: 'E2E Manager',
+            email: uniqueEmail,
             password: 'pass123',
             role: 'manager'
         });
-        console.log(`   -> Register Status ${newAccount.status}:`, newAccount.body);
+        assert.strictEqual(reg.status, 201);
 
-        const newLogin = await makeRequest('/auth/login', 'POST', {
-            email: 'newmanager@vendorbridge.com',
+        const newLogin = await makeRequest(port, '/auth/login', 'POST', {
+            email: uniqueEmail,
             password: 'pass123',
             role: 'manager'
         });
-        console.log(`   -> New User Login Status ${newLogin.status}:`, newLogin.body);
-        let managerToken = newLogin.body.token;
+        assert.strictEqual(newLogin.status, 200);
+        const managerToken = newLogin.body.token;
 
-        // 4. Add Vendor
-        console.log('\n4. Testing Vendor Creation...');
-        const vendor = await makeRequest('/vendors', 'POST', {
-            name: 'Apex Solutions',
-            email: 'contact@apexsolutions.com',
-            phone: '+91 9123456789',
-            company: 'Apex Solutions Pvt Ltd',
-            gst_number: '27APEXS1234F1Z9',
-            address: 'Tech Park, Hyderabad'
+        const profUpdate = await makeRequest(port, '/auth/profile', 'PUT', { name: 'E2E Updated Manager' }, managerToken);
+        assert.strictEqual(profUpdate.status, 200);
+        assert.strictEqual(profUpdate.body.user.name, 'E2E Updated Manager');
+        console.log(`3. [PASS] User Register, Login & Profile Persistence`);
+
+        // Vendor creation + update
+        const vendor = await makeRequest(port, '/vendors', 'POST', {
+            name: 'Global Freight Tech',
+            email: 'ops@globalfreight.io',
+            phone: '+1 212 555 0100',
+            company: 'Global Freight Tech Inc.',
+            gst_number: 'US-EIN-9920192',
+            address: 'Manhattan, NY',
+            tier: 'tier1',
+            country: 'United States',
+            currency: 'USD'
         }, adminToken);
-        console.log(`   -> Vendor Status ${vendor.status}:`, vendor.body.message);
+        assert.strictEqual(vendor.status, 201);
+        const vendorUpd = await makeRequest(port, `/vendors/${vendor.body.id}`, 'PUT', { tier: 'tier2' }, adminToken);
+        assert.strictEqual(vendorUpd.status, 200);
+        console.log(`4. [PASS] Vendor Creation & Tier Update`);
 
-        // 5. Create RFQ with Bill of Materials (BoM)
-        console.log('\n5. Testing RFQ Creation with BoM Line Items...');
-        const rfq = await makeRequest('/rfqs', 'POST', {
+        // RFQ creation with BoM
+        const rfq = await makeRequest(port, '/rfqs', 'POST', {
             title: 'Server Hardware Infrastructure',
             description: 'Enterprise rack servers with 128GB RAM',
+            category: 'Cloud & Data Center',
+            currency: 'USD',
             quantity: 10,
-            deadline: '2026-09-15',
+            deadline: '2026-12-20',
             items: [
-                { name: 'Enterprise 2U Rack Servers', unit: 'Units', qty: 6, target_price: 65000 },
-                { name: '48-Port PoE Managed Switches', unit: 'Units', qty: 4, target_price: 50000 }
+                { name: 'Enterprise 2U Rack Servers', unit: 'Units', qty: 6, target_price: 6500 },
+                { name: '48-Port PoE Managed Switches', unit: 'Units', qty: 4, target_price: 3000 }
             ]
         }, adminToken);
-        console.log(`   -> RFQ Status ${rfq.status}: Created RFQ ID #${rfq.body.id}`);
+        assert.strictEqual(rfq.status, 201);
+        const rfqId = rfq.body.id;
+        console.log(`5. [PASS] RFQ Creation with BoM (RFQ#${rfqId})`);
 
-        // 6. Submit Quotation with Itemized BoM Breakdown
-        console.log('\n6. Testing Quotation Submission with BoM Items...');
-        const quote = await makeRequest('/quotations', 'POST', {
-            rfq_id: rfq.body.id,
-            vendor_name: 'Apex Solutions Pvt Ltd',
-            amount: 590000.00,
+        // Submit Quotation as vendor role
+        const vendorLogin = await makeRequest(port, '/auth/login', 'POST', {
+            email: 'abc@suppliers.com',
+            password: 'vendor123',
+            role: 'vendor'
+        });
+        assert.strictEqual(vendorLogin.status, 200);
+        const vendorToken = vendorLogin.body.token;
+
+        const quote = await makeRequest(port, '/quotations', 'POST', {
+            rfq_id: rfqId,
+            vendor_name: 'ABC Global Suppliers',
+            amount: 51000,
+            currency: 'USD',
             delivery_days: 5,
-            notes: 'Includes 3 years enterprise SLA and support',
+            notes: 'Includes 3 years enterprise SLA',
             items: [
-                { name: 'Enterprise 2U Rack Servers', unit: 'Units', qty: 6, quoted_price: 65000 },
-                { name: '48-Port PoE Managed Switches', unit: 'Units', qty: 4, quoted_price: 50000 }
+                { name: 'Enterprise 2U Rack Servers', unit: 'Units', qty: 6, quoted_price: 6500 },
+                { name: '48-Port PoE Managed Switches', unit: 'Units', qty: 4, quoted_price: 3000 }
             ]
-        }, adminToken);
-        console.log(`   -> Quotation Status ${quote.status}: Submitted Quotation ID #${quote.body.id}`);
+        }, vendorToken);
+        assert.strictEqual(quote.status, 201);
+        console.log(`6. [PASS] Vendor Quotation Submission (QUOTE#${quote.body.id})`);
 
-        // 7. Approve Quotation Request
-        console.log('\n7. Testing Manager Approval...');
-        const approvalsList = await makeRequest('/approvals', 'GET', null, managerToken);
-        const latestApproval = approvalsList.body[0];
-        if (latestApproval) {
-            const approvalDecision = await makeRequest(`/approvals/${latestApproval.id}`, 'PUT', {
-                status: 'approved',
-                remarks: 'Approved by Senior Manager'
-            }, managerToken);
-            console.log(`   -> Approval Status ${approvalDecision.status}: Request APP#${latestApproval.id} Approved!`);
-        }
+        // AI Analysis
+        const ai = await makeRequest(port, `/ai/analyze/${rfqId}?currency=USD`, 'GET', null, adminToken);
+        assert.strictEqual(ai.status, 200);
+        assert.strictEqual(ai.body.analysis.bestQuoteId, quote.body.id);
+        console.log(`7. [PASS] AI Quote Analysis`);
 
-        // 8. Generate Invoice
-        console.log('\n8. Testing Invoice Generation...');
-        const invoice = await makeRequest('/invoices', 'POST', {
-            vendor_name: 'Apex Solutions Pvt Ltd',
-            product: 'Rack Servers 128GB',
-            quantity: 10,
-            unit_price: 75000.00
-        }, adminToken);
-        console.log(`   -> Invoice Status ${invoice.status}: Invoice ${invoice.body.invoice ? invoice.body.invoice.invoice_number : ''} Generated!`);
+        // Manager Approval -> Auto PO
+        const approvalsList = await makeRequest(port, '/approvals', 'GET', null, managerToken);
+        assert.strictEqual(approvalsList.status, 200);
+        const targetApproval = approvalsList.body.find(a => a.quotation_id === quote.body.id);
+        assert.ok(targetApproval, 'Auto-created approval ticket expected');
 
-        // 9. Fetch Updated Dashboard Metrics
-        console.log('\n9. Testing Dashboard Overview Metrics...');
-        const dashboard = await makeRequest('/dashboard', 'GET', null, adminToken);
-        console.log(`   -> Dashboard Metrics:`, dashboard.body.stats);
+        const approvalDecision = await makeRequest(port, `/approvals/${targetApproval.id}`, 'PUT', {
+            status: 'approved',
+            remarks: 'Approved by E2E Manager'
+        }, managerToken);
+        assert.strictEqual(approvalDecision.status, 200);
+        assert.ok(approvalDecision.body.po && approvalDecision.body.po.po_number);
+        const createdPoId = approvalDecision.body.po.id;
+
+        // Re-approving same ticket must return 409 Conflict (not 500!)
+        const duplicateDecision = await makeRequest(port, `/approvals/${targetApproval.id}`, 'PUT', {
+            status: 'approved',
+            remarks: 'Duplicate'
+        }, managerToken);
+        assert.strictEqual(duplicateDecision.status, 409);
+        console.log(`8. [PASS] Manager Approval + Auto PO (${approvalDecision.body.po.po_number}) + 409 Guard`);
+
+        // Vendor creates Invoice linked to PO + Mark Paid
+        const invoice = await makeRequest(port, '/invoices', 'POST', {
+            purchase_order_id: createdPoId,
+            vendor_name: 'ABC Global Suppliers',
+            product: 'Server Hardware Infrastructure',
+            quantity: 1,
+            unit_price: 51000,
+            tax_rate: 18,
+            tax_label: 'GST',
+            currency: 'USD'
+        }, vendorToken);
+        assert.strictEqual(invoice.status, 201);
+        const invId = invoice.body.invoice.id;
+
+        const invPaid = await makeRequest(port, `/invoices/${invId}/status`, 'PATCH', { status: 'paid' }, adminToken);
+        assert.strictEqual(invPaid.status, 200);
+        console.log(`9. [PASS] Vendor Invoice Generation & Settlement (${invoice.body.invoice.invoice_number})`);
+
+        // Close RFQ
+        const rfqClose = await makeRequest(port, `/rfqs/${rfqId}/status`, 'PATCH', { status: 'closed' }, adminToken);
+        assert.strictEqual(rfqClose.status, 200);
+
+        const dashboard = await makeRequest(port, '/dashboard', 'GET', null, adminToken);
+        assert.strictEqual(dashboard.status, 200);
+        console.log(`10. [PASS] RFQ Close & Dashboard Telemetry`);
 
         console.log('\n====================================================');
         console.log(' ALL E2E WORKFLOW TESTS PASSED PERFECTLY (100% OK) ');
         console.log('====================================================');
     } catch (err) {
         console.error('\nE2E Test Execution Error:', err);
+        process.exitCode = 1;
+    } finally {
+        server.close();
+        if (backup !== null) {
+            fs.writeFileSync(DATA_FILE, backup, 'utf8');
+            dbStore.reload();
+        }
     }
 }
 

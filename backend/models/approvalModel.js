@@ -13,15 +13,19 @@ const Approval = {
         const connection = await db.getConnection();
         try {
             await connection.beginTransaction();
-            
+
             const [approvals] = await connection.query('SELECT * FROM approvals WHERE id = ?', [id]);
             const approval = approvals[0];
-            
+
             if (!approval) {
-                throw new Error('Approval request not found');
+                const err = new Error('Approval request not found');
+                err.statusCode = 404;
+                throw err;
             }
             if (approval.status !== 'pending') {
-                throw new Error('Approval request has already been processed');
+                const err = new Error('Approval request has already been processed');
+                err.statusCode = 409;
+                throw err;
             }
 
             const [result] = await connection.query(
@@ -29,17 +33,19 @@ const Approval = {
                 [status, remarks || '', approved_by || 1, id]
             );
 
+            let createdPo = null;
             if (status === 'approved') {
                 const year = new Date().getFullYear();
                 const [[{ maxId }]] = await connection.query('SELECT MAX(id) as maxId FROM purchase_orders');
                 const nextId = (maxId || 0) + 1;
                 const poNumber = `PO-${year}-${String(nextId).padStart(6, '0')}`;
-                
-                await connection.query(
-                    'INSERT INTO purchase_orders (po_number, quotation_id, vendor_name, rfq_ref, total_amount, status) VALUES (?, ?, ?, ?, ?, "approved")',
-                    [poNumber, approval.quotation_id, approval.vendor_name, approval.rfq_title, approval.amount]
+
+                const [poRes] = await connection.query(
+                    'INSERT INTO purchase_orders (po_number, quotation_id, vendor_name, rfq_ref, total_amount, currency, status) VALUES (?, ?, ?, ?, ?, ?, "approved")',
+                    [poNumber, approval.quotation_id, approval.vendor_name, approval.rfq_title, approval.amount, 'USD']
                 );
-                
+                createdPo = { id: poRes.insertId, po_number: poNumber };
+
                 if (approval.quotation_id) {
                     await connection.query('UPDATE quotations SET status = "approved" WHERE id = ?', [approval.quotation_id]);
                 }
@@ -50,7 +56,11 @@ const Approval = {
             }
 
             await connection.commit();
-            return result && result.affectedRows > 0;
+            return {
+                updated: result && result.affectedRows > 0,
+                approval,
+                createdPo
+            };
         } catch (error) {
             await connection.rollback();
             throw error;

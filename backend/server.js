@@ -14,14 +14,17 @@ const poRoutes = require('./routes/poRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const aiRoutes = require('./routes/aiRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware       
 app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Prevent noisy browser 404 for favicon
+app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 // Serve frontend static files
 const frontendDir = path.join(__dirname, '../frontend');
@@ -56,24 +59,26 @@ app.use('/api/purchase-orders', poRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
     try {
         await db.query('SELECT 1');
-        res.status(200).json({ 
-            success: true, 
-            status: 'OK', 
+        res.status(200).json({
+            success: true,
+            status: 'OK',
+            message: 'VendorBridge Global ERP Mesh operational',
             database: 'connected',
             storageEngine: db.getMode(),
             timestamp: new Date().toISOString()
         });
     } catch (err) {
-        res.status(503).json({ 
-            success: false, 
-            status: 'ERROR', 
+        res.status(503).json({
+            success: false,
+            status: 'ERROR',
             database: 'disconnected',
-            error: err.message 
+            error: err.message
         });
     }
 });
@@ -91,10 +96,11 @@ app.get('*', (req, res) => {
 // Error handler
 app.use(errorHandler);
 
-// Start Express server
-const server = app.listen(PORT, () => {
-    console.log(`VendorBridge ERP Server listening on http://localhost:${PORT}`);
-    console.log(`Data Layer Storage Engine: [${db.getMode()}]`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`VendorBridge ERP Server listening on http://localhost:${PORT}`);
+        console.log(`Data Layer Storage Engine: [${db.getMode()}]`);
+    });
+}
 
 module.exports = app;

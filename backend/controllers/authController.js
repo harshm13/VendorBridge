@@ -17,7 +17,6 @@ exports.login = async (req, res, next) => {
             return res.status(401).json({ success: false, message: 'Invalid credentials. User not found.' });
         }
 
-        // Support both hashed passwords and initial plain-text seed passwords
         let isMatch = false;
         if (typeof user.password === 'string' && (user.password.startsWith('$2a$') || user.password.startsWith('$2b$'))) {
             isMatch = await bcrypt.compare(password, user.password);
@@ -29,14 +28,13 @@ exports.login = async (req, res, next) => {
             return res.status(401).json({ success: false, message: 'Invalid password.' });
         }
 
-        // Check role if role was requested
         if (role) {
             const requestedRole = role.toLowerCase().trim();
             const userRole = (user.role || '').toLowerCase().trim();
             if (userRole !== requestedRole) {
-                return res.status(401).json({ 
+                return res.status(401).json({
                     success: false,
-                    message: `Role mismatch. Your account is registered as "${userRole.replace('_', ' ').toUpperCase()}", not "${requestedRole.replace('_', ' ').toUpperCase()}".` 
+                    message: `Role mismatch. Your account is registered as "${userRole.replace('_', ' ').toUpperCase()}", not "${requestedRole.replace('_', ' ').toUpperCase()}".`
                 });
             }
         }
@@ -103,6 +101,9 @@ exports.register = async (req, res, next) => {
                 company: req.body.company || (name ? name.trim() : cleanEmail.split('@')[0]),
                 gst_number: req.body.gst_number || '',
                 address: req.body.address || '',
+                tier: 'verified',
+                country: req.body.country || 'Global',
+                currency: req.body.currency || 'USD',
                 user_id: userId
             });
         }
@@ -110,7 +111,7 @@ exports.register = async (req, res, next) => {
         res.status(201).json({
             success: true,
             message: 'User registered successfully',
-            user: { id: userId, email: cleanEmail, name: name || cleanEmail.split('@')[0], role: dbRole }
+            user: { id: userId, email: cleanEmail, name: name ? name.trim() : cleanEmail.split('@')[0], role: dbRole }
         });
     } catch (error) {
         next(error);
@@ -155,8 +156,10 @@ exports.updateProfile = async (req, res, next) => {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
 
-        if (name) {
-            user.name = name.trim();
+        if (name && name.trim()) {
+            const cleanName = name.trim();
+            await User.updateName(user.id, cleanName);
+            user.name = cleanName;
         }
 
         res.status(200).json({

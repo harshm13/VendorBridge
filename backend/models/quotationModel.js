@@ -15,6 +15,7 @@ function parseQuoteItems(row) {
     }
     return {
         ...row,
+        currency: row.currency || 'USD',
         notes: cleanNotes,
         items: items
     };
@@ -35,20 +36,19 @@ const Quotation = {
         return rows.map(parseQuoteItems);
     },
     create: async (quoteData) => {
-        const { rfq_id, vendor_id, vendor_name, amount, delivery_days, notes, items } = quoteData;
+        const { rfq_id, vendor_id, vendor_name, amount, currency, delivery_days, notes, items } = quoteData;
         let formattedNotes = notes || '';
         if (items && Array.isArray(items) && items.length > 0) {
             formattedNotes = `${formattedNotes}\n<!--BOM_QUOTE:${JSON.stringify(items)}-->`;
         }
 
         const [result] = await db.query(
-            'INSERT INTO quotations (rfq_id, vendor_id, vendor_name, amount, delivery_days, notes, status) VALUES (?, ?, ?, ?, ?, ?, "submitted")',
-            [rfq_id || null, vendor_id || null, vendor_name, amount, delivery_days, formattedNotes]
+            'INSERT INTO quotations (rfq_id, vendor_id, vendor_name, amount, currency, delivery_days, notes, status) VALUES (?, ?, ?, ?, ?, ?, ?, "submitted")',
+            [rfq_id || null, vendor_id || null, vendor_name, amount, currency || 'USD', delivery_days, formattedNotes]
         );
 
         const quoteId = result.insertId;
 
-        // Fetch actual RFQ title for rich approval display
         let rfqTitle = `RFQ#${rfq_id || 'General'}`;
         try {
             if (rfq_id) {
@@ -57,11 +57,8 @@ const Quotation = {
                     rfqTitle = `RFQ#${rfq_id} - ${rfqs[0].title}`;
                 }
             }
-        } catch (e) {
-            // Keep default fallback
-        }
+        } catch (e) {}
 
-        // Auto-create approval request for this quotation
         await db.query(
             'INSERT INTO approvals (quotation_id, rfq_title, vendor_name, amount, status, remarks) VALUES (?, ?, ?, ?, "pending", ?)',
             [quoteId, rfqTitle, vendor_name, amount, 'Pending manager review']
@@ -72,4 +69,3 @@ const Quotation = {
 };
 
 module.exports = Quotation;
-
