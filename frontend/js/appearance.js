@@ -1,282 +1,220 @@
 /**
- * VendorBridge ERP - Custom Appearance System & Persistent Theme Engine
+ * VendorBridge Appearance Studio Engine (appearance.js)
+ * Manages 5 Themes (Obsidian Dark, Clean Light, Midnight Slate, Deep Emerald, Warm Amber),
+ * 6 Accents, 3 Radius presets, 3 Density levels, and Glassmorphism toggle.
  */
-
 (function () {
-    const STORAGE_KEY = 'vb_appearance_settings';
+  const STORAGE_KEY = 'vb_appearance_settings';
+  const DEFAULTS = {
+    theme: 'dark',
+    accent: 'indigo',
+    radius: 'modern',
+    density: 'standard',
+    glass: true,
+  };
 
-    const defaultSettings = {
-        theme: 'dark',
-        accent: 'indigo',
-        radius: 'round',
-        density: 'standard',
-        glass: true
-    };
-
-    // Load saved settings or fallback to defaults
-    function getSettings() {
-        try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
-        } catch (e) {
-            return defaultSettings;
-        }
+  function getSettings() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return { ...DEFAULTS };
+      return { ...DEFAULTS, ...JSON.parse(raw) };
+    } catch {
+      return { ...DEFAULTS };
     }
+  }
 
-    // Save settings to localStorage
-    function saveSettings(settings) {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-        } catch (e) {
-            console.error('Failed to save appearance settings:', e);
-        }
+  function applySettings(settings) {
+    const s = { ...DEFAULTS, ...settings };
+    const root = document.documentElement;
+    root.setAttribute('data-theme', s.theme);
+    root.setAttribute('data-accent', s.accent);
+    root.setAttribute('data-radius', s.radius);
+    root.setAttribute('data-density', s.density);
+    root.setAttribute('data-glass', s.glass ? 'true' : 'false');
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+    } catch {
+      // ignore storage quota errors
     }
+    syncUI(s);
+    window.dispatchEvent(new CustomEvent('vb:theme-changed', { detail: s }));
+    return s;
+  }
 
-    // Apply settings to <html> tag attributes immediately
-    function applySettings(settings) {
-        const root = document.documentElement;
-        root.setAttribute('data-theme', settings.theme || 'light');
-        root.setAttribute('data-accent', settings.accent || 'indigo');
-        root.setAttribute('data-radius', settings.radius || 'modern');
-        root.setAttribute('data-density', settings.density || 'standard');
-        root.setAttribute('data-glass', settings.glass ? 'true' : 'false');
+  function syncUI(s) {
+    document.querySelectorAll('[data-set-theme]').forEach((el) => {
+      el.classList.toggle('active', el.getAttribute('data-set-theme') === s.theme);
+    });
+    document.querySelectorAll('[data-set-accent]').forEach((el) => {
+      el.classList.toggle('active', el.getAttribute('data-set-accent') === s.accent);
+    });
+    document.querySelectorAll('[data-set-radius]').forEach((el) => {
+      el.classList.toggle('active', el.getAttribute('data-set-radius') === s.radius);
+    });
+    document.querySelectorAll('[data-set-density]').forEach((el) => {
+      el.classList.toggle('active', el.getAttribute('data-set-density') === s.density);
+    });
+    const glassBtn = document.getElementById('glassToggleBtn');
+    if (glassBtn) {
+      glassBtn.classList.toggle('active', Boolean(s.glass));
+      glassBtn.setAttribute('aria-pressed', String(Boolean(s.glass)));
     }
+  }
 
-    // Apply saved settings immediately prior to full render to avoid FOUC
-    let currentSettings = getSettings();
-    applySettings(currentSettings);
+  function ensureDrawerMarkup() {
+    if (document.getElementById('appearanceDrawer')) return;
 
-    // Initialize UI components once DOM is ready
-    document.addEventListener('DOMContentLoaded', function () {
-        injectAppearanceUI();
-        bindEvents();
-        syncUIState(currentSettings);
+    const overlay = document.createElement('div');
+    overlay.id = 'appearanceOverlay';
+    overlay.className = 'appearance-overlay';
+
+    const drawer = document.createElement('aside');
+    drawer.id = 'appearanceDrawer';
+    drawer.className = 'appearance-drawer';
+    drawer.setAttribute('aria-label', 'Appearance Studio');
+    drawer.innerHTML = `
+      <div class="appearance-header">
+        <div>
+          <div style="font-weight:700;font-size:1rem;">Appearance Studio</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">Personalize workspace theme &amp; density</div>
+        </div>
+        <button type="button" class="appearance-close-btn" id="closeAppearanceBtn" aria-label="Close Appearance Studio">&times;</button>
+      </div>
+
+      <div class="appearance-section">
+        <div class="appearance-section-label">Theme Surface</div>
+        <div class="theme-grid">
+          <button type="button" class="theme-card" data-set-theme="dark"><span class="theme-preview" style="background:#09090b;"></span>Obsidian Dark</button>
+          <button type="button" class="theme-card" data-set-theme="light"><span class="theme-preview" style="background:#f8fafc;border-color:#94a3b8;"></span>Light Studio</button>
+          <button type="button" class="theme-card" data-set-theme="midnight"><span class="theme-preview" style="background:#020617;"></span>Midnight Blue</button>
+          <button type="button" class="theme-card" data-set-theme="emerald"><span class="theme-preview" style="background:#03110d;"></span>Deep Emerald</button>
+          <button type="button" class="theme-card" data-set-theme="amber"><span class="theme-preview" style="background:#110b05;"></span>Warm Amber</button>
+        </div>
+      </div>
+
+      <div class="appearance-section">
+        <div class="appearance-section-label">Brand Accent</div>
+        <div class="accent-grid">
+          <button type="button" class="accent-dot" data-set-accent="indigo" style="background:#6366f1;" title="Indigo"></button>
+          <button type="button" class="accent-dot" data-set-accent="emerald" style="background:#10b981;" title="Emerald"></button>
+          <button type="button" class="accent-dot" data-set-accent="blue" style="background:#3b82f6;" title="Azure Blue"></button>
+          <button type="button" class="accent-dot" data-set-accent="violet" style="background:#8b5cf6;" title="Violet"></button>
+          <button type="button" class="accent-dot" data-set-accent="rose" style="background:#f43f5e;" title="Rose"></button>
+          <button type="button" class="accent-dot" data-set-accent="amber" style="background:#f59e0b;" title="Amber"></button>
+        </div>
+      </div>
+
+      <div class="appearance-section">
+        <div class="appearance-section-label">Corner Geometry</div>
+        <div class="choice-row">
+          <button type="button" class="choice-btn" data-set-radius="sharp">Sharp</button>
+          <button type="button" class="choice-btn" data-set-radius="modern">Modern</button>
+          <button type="button" class="choice-btn" data-set-radius="round">Rounded</button>
+        </div>
+      </div>
+
+      <div class="appearance-section">
+        <div class="appearance-section-label">Table &amp; Card Density</div>
+        <div class="choice-row">
+          <button type="button" class="choice-btn" data-set-density="compact">Compact</button>
+          <button type="button" class="choice-btn" data-set-density="standard">Standard</button>
+          <button type="button" class="choice-btn" data-set-density="comfortable">Airy</button>
+        </div>
+      </div>
+
+      <div class="toggle-row">
+        <span>Glassmorphic Blur</span>
+        <button type="button" class="toggle-switch" id="glassToggleBtn" aria-label="Toggle Glassmorphism"></button>
+      </div>
+
+      <button type="button" class="reset-appearance-btn" id="resetAppearanceBtn">Reset to Default Obsidian</button>
+    `;
+
+    document.body.appendChild(overlay);
+    document.body.appendChild(drawer);
+
+    overlay.addEventListener('click', closeDrawer);
+    drawer.querySelector('#closeAppearanceBtn').addEventListener('click', closeDrawer);
+
+    drawer.querySelectorAll('[data-set-theme]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const s = getSettings();
+        s.theme = btn.getAttribute('data-set-theme');
+        applySettings(s);
+      });
     });
 
-    function injectAppearanceUI() {
-        if (document.getElementById('appearanceDrawer')) return;
+    drawer.querySelectorAll('[data-set-accent]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const s = getSettings();
+        s.accent = btn.getAttribute('data-set-accent');
+        applySettings(s);
+      });
+    });
 
-        // Floating Trigger Button
-        const floatBtn = document.createElement('button');
-        floatBtn.className = 'appearance-floating-btn';
-        floatBtn.id = 'openAppearanceBtn';
-        floatBtn.title = 'Customize Appearance';
-        floatBtn.setAttribute('aria-label', 'Customize Appearance');
-        floatBtn.innerHTML = '<i class="fa-solid fa-palette"></i>';
-        document.body.appendChild(floatBtn);
+    drawer.querySelectorAll('[data-set-radius]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const s = getSettings();
+        s.radius = btn.getAttribute('data-set-radius');
+        applySettings(s);
+      });
+    });
 
-        // Drawer Overlay & Modal Markup
-        const drawerMarkup = `
-            <div class="appearance-drawer-overlay" id="appearanceOverlay"></div>
-            <div class="appearance-drawer" id="appearanceDrawer">
-                <div class="appearance-drawer-header">
-                    <h3><i class="fa-solid fa-wand-magic-sparkles"></i> Custom Appearance</h3>
-                    <button class="appearance-close-btn" id="closeAppearanceBtn" title="Close"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-                <div class="appearance-drawer-body">
-                    
-                    <!-- Theme Mode Selection -->
-                    <div class="appearance-section">
-                        <label class="section-title">Theme Presets</label>
-                        <div class="theme-grid">
-                            <button class="theme-option-btn" data-theme-val="light">
-                                <i class="fa-solid fa-sun"></i> Light Mode
-                            </button>
-                            <button class="theme-option-btn" data-theme-val="dark">
-                                <i class="fa-solid fa-moon"></i> Dark Mode
-                            </button>
-                            <button class="theme-option-btn" data-theme-val="midnight">
-                                <i class="fa-solid fa-circle-nodes"></i> Midnight Glass
-                            </button>
-                            <button class="theme-option-btn" data-theme-val="emerald">
-                                <i class="fa-solid fa-leaf"></i> Emerald ERP
-                            </button>
-                            <button class="theme-option-btn" data-theme-val="amber">
-                                <i class="fa-solid fa-fire"></i> Warm Amber
-                            </button>
-                        </div>
-                    </div>
+    drawer.querySelectorAll('[data-set-density]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const s = getSettings();
+        s.density = btn.getAttribute('data-set-density');
+        applySettings(s);
+      });
+    });
 
-                    <!-- Accent Color Selection -->
-                    <div class="appearance-section">
-                        <label class="section-title">Accent Color Scheme</label>
-                        <div class="accent-grid">
-                            <div class="accent-dot accent-indigo" data-accent-val="indigo" title="Indigo"></div>
-                            <div class="accent-dot accent-emerald" data-accent-val="emerald" title="Emerald Green"></div>
-                            <div class="accent-dot accent-blue" data-accent-val="blue" title="Sapphire Blue"></div>
-                            <div class="accent-dot accent-violet" data-accent-val="violet" title="Royal Violet"></div>
-                            <div class="accent-dot accent-rose" data-accent-val="rose" title="Crimson Rose"></div>
-                            <div class="accent-dot accent-amber" data-accent-val="amber" title="Sunset Amber"></div>
-                        </div>
-                    </div>
+    drawer.querySelector('#glassToggleBtn').addEventListener('click', () => {
+      const s = getSettings();
+      s.glass = !s.glass;
+      applySettings(s);
+    });
 
-                    <!-- Border Radius Style -->
-                    <div class="appearance-section">
-                        <label class="section-title">Corner Roundness</label>
-                        <div class="choice-row">
-                            <button class="choice-btn" data-radius-val="sharp">Sharp (4px)</button>
-                            <button class="choice-btn" data-radius-val="modern">Modern (12px)</button>
-                            <button class="choice-btn" data-radius-val="round">Round (20px)</button>
-                        </div>
-                    </div>
+    drawer.querySelector('#resetAppearanceBtn').addEventListener('click', () => {
+      applySettings({ ...DEFAULTS });
+    });
+  }
 
-                    <!-- Layout Density -->
-                    <div class="appearance-section">
-                        <label class="section-title">Layout Spacing</label>
-                        <div class="choice-row">
-                            <button class="choice-btn" data-density-val="compact">Compact</button>
-                            <button class="choice-btn" data-density-val="standard">Standard</button>
-                            <button class="choice-btn" data-density-val="comfortable">Relaxed</button>
-                        </div>
-                    </div>
+  function openDrawer() {
+    ensureDrawerMarkup();
+    syncUI(getSettings());
+    const d = document.getElementById('appearanceDrawer');
+    const o = document.getElementById('appearanceOverlay');
+    if (d) d.classList.add('open');
+    if (o) o.classList.add('open');
+  }
 
-                    <!-- Glassmorphism Toggle -->
-                    <div class="appearance-section">
-                        <div class="toggle-switch-group">
-                            <label class="section-title" style="margin-bottom:0;">Glass Translucency</label>
-                            <input type="checkbox" id="glassToggle" style="width:20px; height:20px; cursor:pointer;">
-                        </div>
-                    </div>
+  function closeDrawer() {
+    const d = document.getElementById('appearanceDrawer');
+    const o = document.getElementById('appearanceOverlay');
+    if (d) d.classList.remove('open');
+    if (o) o.classList.remove('open');
+  }
 
-                </div>
-                <div class="appearance-drawer-footer">
-                    <button class="reset-appearance-btn" id="resetAppearanceBtn"><i class="fa-solid fa-rotate-left"></i> Reset to Defaults</button>
-                </div>
-            </div>
-        `;
+  // Apply saved theme immediately before first paint
+  applySettings(getSettings());
 
-        const wrapper = document.createElement('div');
-        wrapper.innerHTML = drawerMarkup;
-        document.body.appendChild(wrapper);
-    }
+  window.AppearanceEngine = {
+    getSettings,
+    applySettings,
+    openDrawer,
+    closeDrawer,
+    toggleTheme: () => {
+      const s = getSettings();
+      s.theme = s.theme === 'light' ? 'dark' : 'light';
+      return applySettings(s);
+    },
+  };
 
-    function bindEvents() {
-        const openBtn = document.getElementById('openAppearanceBtn');
-        const closeBtn = document.getElementById('closeAppearanceBtn');
-        const overlay = document.getElementById('appearanceOverlay');
-        const drawer = document.getElementById('appearanceDrawer');
-        const resetBtn = document.getElementById('resetAppearanceBtn');
-
-        // Open Drawer
-        function openDrawer() {
-            drawer.classList.add('active');
-            overlay.classList.add('active');
-        }
-
-        // Close Drawer
-        function closeDrawer() {
-            drawer.classList.remove('active');
-            overlay.classList.remove('active');
-        }
-
-        if (openBtn) openBtn.addEventListener('click', openDrawer);
-        if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
-        if (overlay) overlay.addEventListener('click', closeDrawer);
-
-        // Bind any navbar appearance trigger button
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('.appearance-nav-btn') || e.target.closest('#navAppearanceBtn')) {
-                e.preventDefault();
-                openDrawer();
-            }
-        });
-
-        // Theme Preset buttons
-        document.querySelectorAll('[data-theme-val]').forEach(btn => {
-            btn.addEventListener('click', function () {
-                currentSettings.theme = this.getAttribute('data-theme-val');
-                updateAppearance();
-            });
-        });
-
-        // Accent Dot buttons
-        document.querySelectorAll('[data-accent-val]').forEach(dot => {
-            dot.addEventListener('click', function () {
-                currentSettings.accent = this.getAttribute('data-accent-val');
-                updateAppearance();
-            });
-        });
-
-        // Radius Choice buttons
-        document.querySelectorAll('[data-radius-val]').forEach(btn => {
-            btn.addEventListener('click', function () {
-                currentSettings.radius = this.getAttribute('data-radius-val');
-                updateAppearance();
-            });
-        });
-
-        // Density Choice buttons
-        document.querySelectorAll('[data-density-val]').forEach(btn => {
-            btn.addEventListener('click', function () {
-                currentSettings.density = this.getAttribute('data-density-val');
-                updateAppearance();
-            });
-        });
-
-        // Glass Toggle
-        const glassToggle = document.getElementById('glassToggle');
-        if (glassToggle) {
-            glassToggle.addEventListener('change', function () {
-                currentSettings.glass = this.checked;
-                updateAppearance();
-            });
-        }
-
-        // Reset Settings
-        if (resetBtn) {
-            resetBtn.addEventListener('click', function () {
-                currentSettings = { ...defaultSettings };
-                updateAppearance();
-            });
-        }
-    }
-
-    function updateAppearance() {
-        applySettings(currentSettings);
-        saveSettings(currentSettings);
-        syncUIState(currentSettings);
-    }
-
-    function syncUIState(settings) {
-        // Active Theme Button
-        document.querySelectorAll('[data-theme-val]').forEach(btn => {
-            btn.classList.toggle('active', btn.getAttribute('data-theme-val') === settings.theme);
-        });
-
-        // Active Accent Dot
-        document.querySelectorAll('[data-accent-val]').forEach(dot => {
-            dot.classList.toggle('active', dot.getAttribute('data-accent-val') === settings.accent);
-        });
-
-        // Active Radius Button
-        document.querySelectorAll('[data-radius-val]').forEach(btn => {
-            btn.classList.toggle('active', btn.getAttribute('data-radius-val') === settings.radius);
-        });
-
-        // Active Density Button
-        document.querySelectorAll('[data-density-val]').forEach(btn => {
-            btn.classList.toggle('active', btn.getAttribute('data-density-val') === settings.density);
-        });
-
-        // Glass Switch Checkbox
-        const glassToggle = document.getElementById('glassToggle');
-        if (glassToggle) {
-            glassToggle.checked = !!settings.glass;
-        }
-    }
-
-    // Expose API for external script usage if needed
-    window.Appearance = {
-        getSettings,
-        saveSettings,
-        applySettings,
-        setTheme: function (theme) {
-            currentSettings.theme = theme;
-            updateAppearance();
-        },
-        setAccent: function (accent) {
-            currentSettings.accent = accent;
-            updateAppearance();
-        }
-    };
+  document.addEventListener('DOMContentLoaded', () => {
+    ensureDrawerMarkup();
+    syncUI(getSettings());
+    document.querySelectorAll('[data-open-appearance], #appearanceBtn').forEach((btn) => {
+      btn.addEventListener('click', openDrawer);
+    });
+  });
 })();

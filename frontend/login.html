@@ -1,149 +1,119 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | VendorBridge ERP</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/components.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="js/appearance.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — VendorBridge Global</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <script src="/js/appearance.js"></script>
 </head>
 <body>
+  <div class="ambient-grid"></div>
+  <div id="threeCanvasContainer"></div>
 
-    <!-- Three Canvas -->
-    <div id="threeCanvasContainer"></div>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="/" class="brand-mark">
+        <span class="brand-icon">VB</span>
+        <span>VendorBridge</span>
+        <span class="brand-badge">GLOBAL</span>
+      </a>
+      <div class="topbar-actions">
+        <button type="button" class="icon-btn" id="appearanceBtn" title="Appearance Studio">🎨</button>
+        <a href="/register" class="btn btn-secondary btn-sm">Create Account</a>
+      </div>
+    </div>
+  </header>
 
-    <div class="login-container">
-        <div class="login-card tilt-card">
-            <!-- Badge -->
-            <div class="motion-badge" style="margin-bottom: 12px;">
-                <div class="motion-badge-inner">
-                    <span class="pulse-dot"></span>
-                    <span class="motion-badge-text">Secure Identity Gateway</span>
-                </div>
-            </div>
+  <main class="auth-shell">
+    <div>
+      <div class="page-eyebrow">Enterprise Access Gateway</div>
+      <h1 class="page-title" style="font-size:clamp(2rem,3.6vw,2.9rem);margin-bottom:14px;">
+        Welcome back to your <span class="gradient-text">Procurement Core</span>
+      </h1>
+      <p style="font-size:0.96rem;margin-bottom:24px;max-width:500px;">
+        Authenticate with your role credentials or launch an instant sandbox session using the verified demo profiles below.
+      </p>
 
-            <div class="login-header">
-                <h1>VendorBridge</h1>
-                <p>Enterprise Procurement & Vendor Management ERP</p>
-            </div>
-
-            <div id="alertBox" class="alert-box"></div>
-
-            <form id="loginForm">
-                <div class="input-group">
-                    <label><i class="fa-solid fa-envelope"></i> Work Email Address</label>
-                    <input type="email" id="email" placeholder="name@company.com" required autocomplete="email">
-                </div>
-
-                <div class="input-group">
-                    <label><i class="fa-solid fa-lock"></i> Account Password</label>
-                    <div style="position: relative;">
-                        <input type="password" id="password" placeholder="Enter password" required autocomplete="current-password" style="padding-right: 40px;">
-                        <button type="button" onclick="togglePasswordVisibility()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; box-shadow: none;">
-                            <i class="fa-solid fa-eye" id="eyeIcon"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <label><i class="fa-solid fa-id-badge"></i> Access Role</label>
-                    <select id="role" required>
-                        <option value="">Choose Assigned Role</option>
-                        <option value="admin">System Administrator</option>
-                        <option value="manager">Approving Manager</option>
-                        <option value="procurement_officer">Procurement Officer</option>
-                        <option value="vendor">Vendor Partner</option>
-                    </select>
-                </div>
-
-                <button type="submit" class="btn-primary login-btn">
-                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In to Workspace
-                </button>
-            </form>
-
-            <!-- 1-Click Demo Accounts -->
-            <div class="quick-demo-section">
-                <span class="quick-demo-title"><i class="fa-solid fa-wand-magic-sparkles" style="color: #6366f1;"></i> 1-Click Instant Demo Credentials:</span>
-                <div class="demo-chip-grid">
-                    <div class="demo-chip" onclick="fillDemo('admin@vendorbridge.com', 'admin123', 'admin')">
-                        <i class="fa-solid fa-shield-halved" style="color: #10b981;"></i>
-                        <span>Admin</span>
-                    </div>
-                    <div class="demo-chip" onclick="fillDemo('manager@vendorbridge.com', 'manager123', 'manager')">
-                        <i class="fa-solid fa-user-check" style="color: #a855f7;"></i>
-                        <span>Manager</span>
-                    </div>
-                    <div class="demo-chip" onclick="fillDemo('procurement@vendorbridge.com', 'procurement123', 'procurement_officer')">
-                        <i class="fa-solid fa-briefcase" style="color: #38bdf8;"></i>
-                        <span>Officer</span>
-                    </div>
-                    <div class="demo-chip" onclick="fillDemo('abc@suppliers.com', 'vendor123', 'vendor')">
-                        <i class="fa-solid fa-truck" style="color: #f59e0b;"></i>
-                        <span>Vendor</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="divider">
-                <span>OR</span>
-            </div>
-
-            <button type="button" class="signup-btn" onclick="window.location.href='newaccount.html'">
-                <i class="fa-solid fa-user-plus"></i> Create New Account
-            </button>
-
-            <div class="footer-links">
-                <a href="index.html">← Back to Overview</a>
-            </div>
-        </div>
+      <div class="grid-2" style="gap:12px;">
+        <button type="button" class="role-card" onclick="Auth.quickLoginDemo('admin')">
+          <div style="font-weight:700;font-size:0.92rem;">Executive Admin</div>
+          <div class="mono" style="font-size:0.74rem;color:var(--text-muted);margin-top:4px;">admin@vendorbridge.com</div>
+        </button>
+        <button type="button" class="role-card" onclick="Auth.quickLoginDemo('manager')">
+          <div style="font-weight:700;font-size:0.92rem;">Finance Manager</div>
+          <div class="mono" style="font-size:0.74rem;color:var(--text-muted);margin-top:4px;">manager@vendorbridge.com</div>
+        </button>
+        <button type="button" class="role-card" onclick="Auth.quickLoginDemo('procurement')">
+          <div style="font-weight:700;font-size:0.92rem;">Procurement Officer</div>
+          <div class="mono" style="font-size:0.74rem;color:var(--text-muted);margin-top:4px;">procurement@vendorbridge.com</div>
+        </button>
+        <button type="button" class="role-card" onclick="Auth.quickLoginDemo('vendor')">
+          <div style="font-weight:700;font-size:0.92rem;">Global Vendor</div>
+          <div class="mono" style="font-size:0.74rem;color:var(--text-muted);margin-top:4px;">abc@suppliers.com</div>
+        </button>
+      </div>
     </div>
 
-    <!-- Client Scripts -->
-    <script src="js/api.js"></script>
-    <script src="js/three-scene.js"></script>
-    <script src="js/tilt.js"></script>
-    <script>
-        function fillDemo(email, pass, role) {
-            document.getElementById('email').value = email;
-            document.getElementById('password').value = pass;
-            document.getElementById('role').value = role;
-            showAlert(`Auto-filled ${role.replace('_', ' ').toUpperCase()} credentials. Click 'Sign In' to proceed.`, 'info');
-        }
+    <div class="card">
+      <h2 style="font-size:1.35rem;margin-bottom:6px;">Sign In</h2>
+      <p style="font-size:0.86rem;margin-bottom:20px;">Select your workspace role and enter your password.</p>
 
-        function togglePasswordVisibility() {
-            const passInput = document.getElementById('password');
-            const eyeIcon = document.getElementById('eyeIcon');
-            if (passInput.type === 'password') {
-                passInput.type = 'text';
-                eyeIcon.className = 'fa-solid fa-eye-slash';
-            } else {
-                passInput.type = 'password';
-                eyeIcon.className = 'fa-solid fa-eye';
-            }
-        }
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label" for="loginEmail">Work Email</label>
+          <input type="email" id="loginEmail" required placeholder="name@company.com" value="admin@vendorbridge.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" required placeholder="••••••••" value="password123">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="loginRole">Workspace Role</label>
+          <select id="loginRole">
+            <option value="admin">Admin</option>
+            <option value="manager">Finance Manager</option>
+            <option value="procurement_officer">Procurement Officer</option>
+            <option value="vendor">Supplier / Vendor</option>
+          </select>
+        </div>
 
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-            const role = document.getElementById('role').value;
+        <button type="submit" id="loginSubmitBtn" class="btn btn-primary" style="width:100%;margin-top:6px;">
+          Sign In to Workspace →
+        </button>
+      </form>
 
-            try {
-                showAlert('Authenticating with Enterprise Mesh...', 'info');
-                const res = await API.login(email, password, role);
-                Auth.setUser(res.user);
-                Auth.setToken(res.token);
-                showAlert('Authentication successful! Launching workspace...', 'success');
-                setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                }, 600);
-            } catch (err) {
-                showAlert(err.message || 'Login failed. Please verify your credentials and selected role.', 'danger');
-            }
+      <div style="margin-top:18px;text-align:center;font-size:0.84rem;color:var(--text-secondary);">
+        New to VendorBridge? <a href="/register" style="color:var(--accent);font-weight:600;">Create an account</a>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/three-scene.js"></script>
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('loginSubmitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Authenticating...';
+      try {
+        const res = await API.login({
+          email: document.getElementById('loginEmail').value.trim(),
+          password: document.getElementById('loginPassword').value,
+          role: document.getElementById('loginRole').value,
         });
-    </script>
+        Auth.setToken(res.token);
+        Auth.setUser(res.user);
+        showAlert(`Welcome back, ${res.user.name}`, 'success');
+        setTimeout(() => { window.location.href = '/dashboard'; }, 400);
+      } catch (err) {
+        showAlert(err.message || 'Sign in failed', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Sign In to Workspace →';
+      }
+    });
+  </script>
 </body>
 </html>

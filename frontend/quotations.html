@@ -1,588 +1,290 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quotations & AI Comparison | VendorBridge ERP</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/components.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="js/appearance.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quotations &amp; AI Bid Comparison — VendorBridge Global</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <script src="/js/appearance.js"></script>
 </head>
 <body>
+  <div class="ambient-grid"></div>
+  <div id="threeCanvasContainer"></div>
 
-    <!-- Three Canvas -->
-    <div id="threeCanvasContainer"></div>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="/" class="brand-mark">
+        <span class="brand-icon">VB</span>
+        <span>VendorBridge</span>
+        <span class="brand-badge">GLOBAL</span>
+      </a>
 
-    <!-- Navbar -->
-    <nav>
-        <div class="logo">
-            <a href="index.html">
-                <span class="logo-badge"><i class="fa-solid fa-cube"></i></span>
-                <h2>VendorBridge</h2>
-            </a>
-        </div>
-        <ul>
-            <li><a href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
-            <li><a href="vendor.html"><i class="fa-solid fa-building-user"></i> Vendors</a></li>
-            <li><a href="rfq.html"><i class="fa-solid fa-file-circle-plus"></i> RFQs</a></li>
-            <li><a href="quotations.html" class="active"><i class="fa-solid fa-scale-balanced"></i> Quotations</a></li>
-            <li><a href="approval.html"><i class="fa-solid fa-stamp"></i> Approvals</a></li>
-            <li><a href="purchase-order.html"><i class="fa-solid fa-file-invoice-dollar"></i> POs</a></li>
-            <li><a href="invoice.html"><i class="fa-solid fa-receipt"></i> Invoices</a></li>
-            <li>
-                <a href="#" class="notification-nav-btn" onclick="toggleNotificationDrawer(); return false;" title="Audit Notifications">
-                    <i class="fa-solid fa-bell"></i>
-                    <span class="notification-count-badge" id="navNotifBadge">4</span>
-                </a>
-            </li>
-            <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i></a></li>
-            <li><a href="#" onclick="Auth.logout(); return false;"><i class="fa-solid fa-power-off"></i></a></li>
-        </ul>
-    </nav>
+      <nav class="nav-links" id="mainNavLinks">
+        <a href="/dashboard" class="nav-link">Dashboard</a>
+        <a href="/vendors" class="nav-link">Vendors</a>
+        <a href="/rfqs" class="nav-link">RFQs</a>
+        <a href="/quotations" class="nav-link active">Quotations</a>
+        <a href="/approvals" class="nav-link">Approvals</a>
+        <a href="/purchase-orders" class="nav-link">Orders</a>
+        <a href="/invoices" class="nav-link">Invoices</a>
+      </nav>
 
-    <!-- Header -->
-    <section class="page-header">
-        <div class="motion-badge" style="margin-bottom: 10px;">
-            <div class="motion-badge-inner">
-                <span class="pulse-dot"></span>
-                <span class="motion-badge-text">Intelligent Bidding & Decision Engine</span>
-            </div>
-        </div>
-        <h1>Quotation Management & Comparison</h1>
-        <p>Evaluate competitive supplier proposals, compare turnaround vs. pricing, and leverage itemized BoM quotes.</p>
-    </section>
+      <div class="topbar-actions">
+        <button type="button" class="cmd-trigger" id="cmdTriggerBtn"><span>⌘</span><span class="cmd-label">Search</span><span class="kbd-chip">Ctrl+K</span></button>
+        <select id="currencySelector" class="currency-select" aria-label="Display Currency">
+          <option value="USD">USD $</option><option value="EUR">EUR €</option><option value="GBP">GBP £</option>
+          <option value="INR">INR ₹</option><option value="JPY">JPY ¥</option><option value="AED">AED</option><option value="SGD">SGD S$</option>
+        </select>
+        <button type="button" class="icon-btn" id="notifBtn" title="Activity &amp; Alerts">🔔<span class="notif-dot" id="notifBadgeDot" style="display:none;"></span></button>
+        <button type="button" class="icon-btn" id="appearanceBtn" title="Appearance Studio">🎨</button>
+        <div id="userPillContainer"></div>
+        <button type="button" class="icon-btn mobile-nav-toggle" id="mobileMenuBtn">☰</button>
+      </div>
+    </div>
+  </header>
 
-    <div style="padding: 0 6%;">
-        <div id="alertBox" class="alert-box"></div>
+  <main class="page-shell">
+    <div class="page-header">
+      <div>
+        <div class="page-eyebrow">Competitive Bidding &amp; AI Evaluation</div>
+        <h1 class="page-title">Supplier Quotations</h1>
+        <p class="page-subtitle">Compare multi-currency supplier bids and inspect weighted AI score breakdowns across price and delivery SLA.</p>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="btn btn-primary" id="openNewQuoteBtn">+ Submit Vendor Quote</button>
+      </div>
     </div>
 
-    <!-- AI Analysis Banner -->
-    <div style="padding: 0 6%;">
-        <div class="ai-insight-banner tilt-card" id="aiAnalysisCard">
-            <div class="ai-insight-left">
-                <div class="ai-insight-icon">
-                    <i class="fa-solid fa-brain"></i>
-                </div>
-                <div class="ai-insight-text">
-                    <h4 id="aiAnalysisHeading">AI Procurement Optimization Ready</h4>
-                    <p id="aiAnalysisBody">Select an RFQ below to trigger deep multi-factor algorithmic evaluation across price, delivery times, and vendor track records.</p>
-                </div>
-            </div>
-            <button type="button" class="btn-primary" onclick="triggerAiQuoteAnalysis()" style="padding: 9px 20px;">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> Evaluate Bids with AI
-            </button>
+    <!-- AI Analysis Control Panel -->
+    <div class="ai-banner">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;">
+        <div>
+          <div style="font-weight:700;font-size:0.96rem;">✦ AI Bid Ranking Engine</div>
+          <div style="font-size:0.83rem;color:var(--text-secondary);">Select any RFQ tender to evaluate competing bids with Price &amp; Delivery scoring.</div>
         </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select id="aiRfqSelector" style="min-width:240px;"></select>
+          <button type="button" class="btn btn-primary btn-sm" id="runAiRankBtn">Run AI Evaluation</button>
+        </div>
+      </div>
+      <div id="aiAnalysisResult" style="margin-top:14px;display:none;"></div>
     </div>
 
-    <!-- Side-by-Side Comparison Highlights -->
-    <section style="padding: 10px 6% 30px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h2>Key Bid Benchmarks</h2>
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <label style="margin: 0; font-size: 0.88rem;">Filter RFQ:</label>
-                <select id="rfqFilterSelect" onchange="filterQuotesByRfq()" style="width: auto; padding: 7px 14px;">
-                    <option value="all">All Requisitions</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="quote-comparison-matrix" id="comparisonMatrix">
-            <div class="quote-matrix-card tilt-card" id="cardBestPrice">
-                <span class="quote-matrix-badge" style="background: #10b981;"><i class="fa-solid fa-tag"></i> Lowest Price</span>
-                <h4 style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase;">Lowest Bid</h4>
-                <div class="quote-matrix-price" id="matrixLowestPrice">₹0</div>
-                <div class="quote-matrix-meta">
-                    <span id="matrixLowestVendor"><i class="fa-solid fa-store"></i> Calculating...</span>
-                    <span id="matrixLowestDays"><i class="fa-solid fa-clock"></i> -</span>
-                </div>
-            </div>
-
-            <div class="quote-matrix-card tilt-card is-best" id="cardAiRecommend">
-                <span class="quote-matrix-badge"><i class="fa-solid fa-crown"></i> AI Value Pick</span>
-                <h4 style="color: #a5b4fc; font-size: 0.85rem; text-transform: uppercase;">Optimal Balance</h4>
-                <div class="quote-matrix-price" id="matrixAiPrice">₹0</div>
-                <div class="quote-matrix-meta">
-                    <span id="matrixAiVendor" style="color: #ffffff; font-weight: 600;"><i class="fa-solid fa-store"></i> Calculating...</span>
-                    <span id="matrixAiScore" style="color: #38bdf8; font-weight: 700;"><i class="fa-solid fa-star"></i> AI Score: -</span>
-                </div>
-            </div>
-
-            <div class="quote-matrix-card tilt-card" id="cardFastest">
-                <span class="quote-matrix-badge" style="background: #06b6d4;"><i class="fa-solid fa-bolt"></i> Fastest Delivery</span>
-                <h4 style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase;">Speed Champion</h4>
-                <div class="quote-matrix-price" id="matrixFastestDays">0 Days</div>
-                <div class="quote-matrix-meta">
-                    <span id="matrixFastestVendor"><i class="fa-solid fa-store"></i> Calculating...</span>
-                    <span id="matrixFastestPrice"><i class="fa-solid fa-tag"></i> -</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Quotation Submission Form -->
-    <section style="padding: 10px 6% 30px;">
-        <div class="quotation-form-section tilt-card">
-            <h2><i class="fa-solid fa-file-lines" style="color: #6366f1;"></i> Submit Vendor Quotation</h2>
-            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">
-                Submit a competitive bid against active procurement RFQs. If the RFQ contains itemized line items, enter your unit rate per item.
-            </p>
-
-            <form id="quoteForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
-                <div class="input-group" style="margin-bottom: 0;">
-                    <label>Target RFQ</label>
-                    <select id="rfq_id" onchange="handleRfqSelectionChange()" required>
-                        <option value="">Select RFQ</option>
-                    </select>
-                </div>
-
-                <div class="input-group" style="margin-bottom: 0;">
-                    <label>Vendor / Supplier Company Name</label>
-                    <input type="text" id="vendor_name" placeholder="e.g. Apex Solutions Ltd" required>
-                </div>
-
-                <!-- Dynamic Itemized BoM Bidding Section -->
-                <div id="quoteBomSection" style="display: none; grid-column: 1 / -1; background: rgba(99, 102, 241, 0.04); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 12px; padding: 16px;">
-                    <h4 style="color: #a5b4fc; font-size: 0.95rem; margin: 0 0 10px;">
-                        <i class="fa-solid fa-boxes-stacked" style="color: #38bdf8;"></i> Itemized Bill of Materials Quote
-                    </h4>
-                    <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0 0 12px;">
-                        This requisition has specific line items. Provide your unit price for each item below to auto-calculate the total bid.
-                    </p>
-
-                    <div style="overflow-x: auto;">
-                        <table style="width: 100%; font-size: 0.85rem;">
-                            <thead>
-                                <tr>
-                                    <th>Item Name</th>
-                                    <th>Unit</th>
-                                    <th>Required Qty</th>
-                                    <th>Target Benchmark</th>
-                                    <th style="min-width: 150px;">Your Quoted Unit Price (₹)</th>
-                                    <th>Line Total (₹)</th>
-                                </tr>
-                            </thead>
-                            <tbody id="quoteBomTableBody">
-                                <!-- Populated dynamically based on RFQ items -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="input-group" style="margin-bottom: 0;">
-                    <label>Total Quoted Amount (₹)</label>
-                    <input type="number" id="amount" placeholder="e.g. 480000" min="1" step="0.01" required>
-                </div>
-
-                <div class="input-group" style="margin-bottom: 0;">
-                    <label>Fulfillment Timeline (Days)</label>
-                    <input type="number" id="delivery_days" placeholder="e.g. 7" min="1" required>
-                </div>
-
-                <div class="input-group" style="grid-column: 1 / -1; margin-bottom: 0;">
-                    <label>Commercial Terms, Warranty & Notes</label>
-                    <textarea id="notes" rows="2" placeholder="e.g. 3-year warranty included, complimentary on-site installation, payment net 30"></textarea>
-                </div>
-
-                <div style="grid-column: 1 / -1; margin-top: 8px;">
-                    <button type="submit" class="btn-primary" style="padding: 12px 28px;">
-                        <i class="fa-solid fa-check"></i> Submit Quotation Proposal
-                    </button>
-                </div>
-            </form>
-        </div>
-    </section>
-
-    <!-- Comparison Table -->
-    <section class="comparison-section" style="padding-bottom: 60px;">
-        <h2>All Submitted Quotations</h2>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div class="table-wrap" style="border:none;">
         <table>
-            <thead>
-                <tr>
-                    <th>Quote ID</th>
-                    <th>Target RFQ</th>
-                    <th>Vendor Partner</th>
-                    <th>Line Items Breakdown</th>
-                    <th>Price (₹)</th>
-                    <th>Delivery Speed</th>
-                    <th>Commercial Notes</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody id="quoteTable">
-                <tr><td colspan="8" style="text-align: center;">Loading quotations...</td></tr>
-            </tbody>
+          <thead>
+            <tr>
+              <th>RFQ Tender</th>
+              <th>Supplier</th>
+              <th>Quoted Amount</th>
+              <th>Lead Time</th>
+              <th>Status</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="quotesTableBody"></tbody>
         </table>
-    </section>
-
-    <!-- Inspect BoM Quote Modal -->
-    <div class="modal-overlay" id="viewQuoteBomModal">
-        <div class="modal-content" style="max-width: 700px;">
-            <div class="modal-header">
-                <div>
-                    <h3 id="quoteBomModalTitle"><i class="fa-solid fa-list-check" style="color: #6366f1;"></i> Supplier Quoted Line Items</h3>
-                    <p id="quoteBomModalSubtitle" style="font-size: 0.85rem; color: var(--text-muted); margin: 2px 0 0;">Itemized pricing breakdown</p>
-                </div>
-                <button class="modal-close-btn" onclick="closeQuoteBomModal()"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            
-            <div style="overflow-x: auto; margin: 16px 0;">
-                <table style="width: 100%; font-size: 0.88rem;">
-                    <thead>
-                        <tr>
-                            <th>Item Description</th>
-                            <th>Unit</th>
-                            <th>Qty</th>
-                            <th>Quoted Unit Rate</th>
-                            <th>Line Total</th>
-                        </tr>
-                    </thead>
-                    <tbody id="quoteBomModalTableBody">
-                        <!-- Filled by JS -->
-                    </tbody>
-                </table>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 12px 18px;">
-                <span style="color: #a7f3d0; font-size: 0.9rem;">Total Bid Grand Value:</span>
-                <strong id="quoteBomModalTotalCost" style="font-size: 1.25rem; color: #34d399; font-family: 'JetBrains Mono';">₹0</strong>
-            </div>
-        </div>
+      </div>
     </div>
+  </main>
 
-    <!-- Sliding Glass Activity & Notifications Drawer (Feature 5) -->
-    <div class="drawer-overlay" id="drawerOverlay" onclick="toggleNotificationDrawer()"></div>
-    <div class="notification-drawer" id="notificationDrawer">
-        <div class="drawer-header">
-            <div>
-                <h3><i class="fa-solid fa-bell" style="color: #6366f1;"></i> Procurement Telemetry</h3>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 2px 0 0;">Real-time audit log & system alerts</p>
-            </div>
-            <button class="modal-close-btn" onclick="toggleNotificationDrawer()"><i class="fa-solid fa-xmark"></i></button>
+  <!-- Submit Quotation Modal -->
+  <div class="modal-overlay" id="quoteModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">Submit Supplier Quotation</h3>
+        <button type="button" class="modal-close-btn" id="closeQuoteModal">&times;</button>
+      </div>
+      <form id="quoteForm">
+        <div class="form-group">
+          <label class="form-label" for="qRfqSelect">Open RFQ Tender</label>
+          <select id="qRfqSelect" required></select>
         </div>
-        <div class="drawer-content" id="drawerLogsList">
-            <!-- Dynamic notifications -->
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label" for="qVendorName">Supplier Name</label>
+            <input type="text" id="qVendorName" required placeholder="Apex Global Hardware">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="qCurrency">Quote Currency</label>
+            <select id="qCurrency">
+              <option value="USD">USD ($)</option><option value="EUR">EUR (€)</option><option value="GBP">GBP (£)</option>
+              <option value="INR">INR (₹)</option><option value="JPY">JPY (¥)</option><option value="AED">AED</option><option value="SGD">SGD (S$)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="qAmount">Total Bid Amount</label>
+            <input type="number" id="qAmount" min="1" step="0.01" required placeholder="45000">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="qDeliveryDays">Delivery Lead Time (Days)</label>
+            <input type="number" id="qDeliveryDays" min="1" value="7" required>
+          </div>
         </div>
+        <div class="form-group">
+          <label class="form-label" for="qNotes">Warranty, Freight &amp; SLA Notes</label>
+          <textarea id="qNotes" rows="2" placeholder="Includes DDP shipping and 3-year onsite SLA..."></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelQuoteModal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Submit Bid</button>
+        </div>
+      </form>
     </div>
+  </div>
 
-    <!-- Footer -->
-    <footer>
-        <p>© 2026 VendorBridge ERP. High-Performance Procurement Mesh.</p>
-    </footer>
+  <script src="/js/api.js"></script>
+  <script src="/js/tilt.js"></script>
+  <script src="/js/three-scene.js"></script>
+  <script>
+    let allRfqs = [];
+    let allQuotes = [];
+    let lastAnalysis = null;
 
-    <!-- Client Scripts -->
-    <script src="js/api.js"></script>
-    <script src="js/three-scene.js"></script>
-    <script src="js/tilt.js"></script>
-    <script>
-        let allQuotes = [];
-        let allRfqs = [];
-        let activeRfqItems = [];
+    async function loadData() {
+      try {
+        const [rfqs, quotes] = await Promise.all([API.getRfqs(), API.getQuotations()]);
+        allRfqs = rfqs;
+        allQuotes = quotes;
+        populateRfqSelectors();
+        renderQuotes();
+      } catch (err) {
+        showAlert(err.message || 'Failed to load quotations', 'error');
+      }
+    }
 
-        async function initPage() {
-            const user = Auth.requireAuth();
-            if (!user) return;
+    function populateRfqSelectors() {
+      const aiSel = document.getElementById('aiRfqSelector');
+      aiSel.innerHTML = allRfqs.length
+        ? allRfqs.map((r) => `<option value="${Number(r.id)}">RFQ-${Number(r.id)}: ${escapeHtml(r.title)}</option>`).join('')
+        : `<option value="">No RFQs found</option>`;
 
-            // Pre-fill vendor name if logged in user is a vendor
-            if (user.role === 'vendor' && user.name) {
-                const vendorField = document.getElementById("vendor_name");
-                if (vendorField) vendorField.value = user.name;
-            }
+      const params = new URLSearchParams(window.location.search);
+      const urlRfqId = params.get('rfqId');
+      if (urlRfqId && allRfqs.some((r) => String(r.id) === String(urlRfqId))) {
+        aiSel.value = urlRfqId;
+        runAiAnalysis(urlRfqId);
+      }
 
-            try {
-                allRfqs = await API.getRFQs();
-                const rfqSelect = document.getElementById("rfq_id");
-                const filterSelect = document.getElementById("rfqFilterSelect");
+      const openRfqs = allRfqs.filter((r) => r.status === 'open');
+      const submitSel = document.getElementById('qRfqSelect');
+      submitSel.innerHTML = openRfqs.length
+        ? openRfqs.map((r) => `<option value="${Number(r.id)}">RFQ-${Number(r.id)}: ${escapeHtml(r.title)}</option>`).join('')
+        : `<option value="">No open RFQs accepting bids</option>`;
+    }
 
-                rfqSelect.innerHTML = '<option value="">Select RFQ</option>' + 
-                    allRfqs.map(r => `<option value="${r.id}">RFQ#${r.id} — ${r.title}</option>`).join('');
+    async function runAiAnalysis(rfqId) {
+      if (!rfqId) return;
+      try {
+        const res = await API.analyzeRfq(rfqId, CurrencyEngine.getDisplayCurrency());
+        lastAnalysis = res.analysis;
+        renderAiAnalysis(lastAnalysis);
+      } catch (err) {
+        showAlert(err.message, 'error');
+      }
+    }
 
-                filterSelect.innerHTML = '<option value="all">All Requisitions</option>' + 
-                    allRfqs.map(r => `<option value="${r.id}">RFQ#${r.id} — ${r.title}</option>`).join('');
-
-                // Check URL parameter for RFQ pre-selection
-                const urlParams = new URLSearchParams(window.location.search);
-                const rfqParam = urlParams.get('rfq');
-                if (rfqParam) {
-                    rfqSelect.value = rfqParam;
-                    filterSelect.value = rfqParam;
-                    handleRfqSelectionChange();
-                }
-
-                await loadQuotations();
-                if (rfqParam) {
-                    triggerAiQuoteAnalysis(rfqParam);
-                }
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
-        function handleRfqSelectionChange() {
-            const selectedId = parseInt(document.getElementById("rfq_id").value, 10);
-            const rfq = allRfqs.find(r => r.id === selectedId);
-            const section = document.getElementById("quoteBomSection");
-            const tbody = document.getElementById("quoteBomTableBody");
-
-            if (rfq && rfq.items && Array.isArray(rfq.items) && rfq.items.length > 0) {
-                activeRfqItems = rfq.items.map(it => ({
-                    name: it.name,
-                    unit: it.unit || 'Pcs',
-                    qty: it.qty || 1,
-                    target_price: it.target_price || 0,
-                    quoted_price: it.target_price || 0
-                }));
-
-                tbody.innerHTML = activeRfqItems.map((it, idx) => `
-                    <tr>
-                        <td><strong>${it.name}</strong></td>
-                        <td><span class="badge">${it.unit}</span></td>
-                        <td><strong>${it.qty}</strong></td>
-                        <td style="font-family: 'JetBrains Mono'; color: var(--text-muted);">₹${(it.target_price || 0).toLocaleString()}</td>
-                        <td>
-                            <input type="number" class="bom-quote-input" data-idx="${idx}" value="${it.quoted_price || ''}" 
-                                placeholder="Unit Price" min="0" step="0.01" oninput="recalcBoMQuote(this)" style="padding: 5px 8px; font-size: 0.85rem;" required>
-                        </td>
-                        <td>
-                            <strong id="quoteLineTotal_${idx}" style="font-family: 'JetBrains Mono'; color: #34d399;">₹${((it.qty || 1) * (it.quoted_price || 0)).toLocaleString()}</strong>
-                        </td>
-                    </tr>
-                `).join('');
-
-                section.style.display = 'block';
-                updateGrandTotalFromBoM();
-            } else {
-                activeRfqItems = [];
-                section.style.display = 'none';
-                tbody.innerHTML = '';
-            }
-        }
-
-        function recalcBoMQuote(inputEl) {
-            const idx = parseInt(inputEl.getAttribute('data-idx'), 10);
-            const val = parseFloat(inputEl.value) || 0;
-            if (activeRfqItems[idx]) {
-                activeRfqItems[idx].quoted_price = val;
-                const total = (activeRfqItems[idx].qty || 1) * val;
-                document.getElementById(`quoteLineTotal_${idx}`).innerText = '₹' + total.toLocaleString();
-            }
-            updateGrandTotalFromBoM();
-        }
-
-        function updateGrandTotalFromBoM() {
-            if (activeRfqItems.length === 0) return;
-            const grandTotal = activeRfqItems.reduce((sum, it) => sum + ((it.qty || 1) * (it.quoted_price || 0)), 0);
-            document.getElementById("amount").value = grandTotal;
-        }
-
-        async function loadQuotations() {
-            try {
-                allQuotes = await API.getQuotations();
-                filterQuotesByRfq();
-            } catch (err) {
-                showAlert('Error loading quotations', 'danger');
-            }
-        }
-
-        function filterQuotesByRfq() {
-            const selectedRfq = document.getElementById("rfqFilterSelect").value;
-            let filtered = allQuotes;
-            if (selectedRfq !== 'all') {
-                filtered = allQuotes.filter(q => String(q.rfq_id) === String(selectedRfq));
-            }
-            renderQuotes(filtered);
-            updateMatrix(filtered);
-        }
-
-        function renderQuotes(quotes) {
-            const table = document.getElementById("quoteTable");
-            if (!quotes || quotes.length === 0) {
-                table.innerHTML = '<tr><td colspan="8" style="text-align: center;">No quotations found for this filter.</td></tr>';
-                return;
-            }
-            table.innerHTML = quotes.map(q => {
-                const hasBom = q.items && Array.isArray(q.items) && q.items.length > 0;
-                const bomBtn = hasBom 
-                    ? `<button type="button" class="btn-glass" onclick="openQuoteBomModal(${q.id})" style="padding: 3px 8px; font-size: 0.78rem; color: #a5b4fc;">
-                         <i class="fa-solid fa-boxes-stacked"></i> ${q.items.length} Lines
-                       </button>`
-                    : `<span style="color: var(--text-muted); font-size: 0.8rem;">Single Lot</span>`;
-
-                return `
-                <tr>
-                    <td><strong style="font-family: 'JetBrains Mono'; color: #a5b4fc;">QUOTE#${q.id}</strong></td>
-                    <td><strong style="color: #ffffff;">${q.rfq_title || 'RFQ#' + q.rfq_id}</strong></td>
-                    <td><span style="font-weight: 600;"><i class="fa-solid fa-store" style="color: #6366f1;"></i> ${q.vendor_name}</span></td>
-                    <td>${bomBtn}</td>
-                    <td><strong style="font-size: 1.05rem; color: #34d399;">₹${parseFloat(q.amount).toLocaleString()}</strong></td>
-                    <td><span style="font-family: 'JetBrains Mono'; font-size: 0.88rem;"><i class="fa-solid fa-truck"></i> ${q.delivery_days} Days</span></td>
-                    <td><span style="color: var(--text-muted); font-size: 0.85rem;">${q.notes || 'N/A'}</span></td>
-                    <td><span class="badge badge-${q.status}">${q.status}</span></td>
-                </tr>
-                `;
-            }).join('');
-
-            if (window.initTiltCards) window.initTiltCards();
-        }
-
-        // View Quote BoM Modal
-        function openQuoteBomModal(quoteId) {
-            const quote = allQuotes.find(q => q.id === quoteId);
-            if (!quote || !quote.items || quote.items.length === 0) return;
-
-            document.getElementById("quoteBomModalTitle").innerHTML = `<i class="fa-solid fa-list-check" style="color: #6366f1;"></i> Quote#${quote.id} — ${quote.vendor_name}`;
-            document.getElementById("quoteBomModalSubtitle").innerText = `Target: ${quote.rfq_title || 'RFQ#' + quote.rfq_id} | Turnaround: ${quote.delivery_days} Days`;
-
-            let totalEst = 0;
-            document.getElementById("quoteBomModalTableBody").innerHTML = quote.items.map(it => {
-                const lineTotal = (it.qty || 1) * (it.quoted_price || it.unit_price || 0);
-                totalEst += lineTotal;
-                return `
-                    <tr>
-                        <td><strong>${it.name || it.item_name}</strong></td>
-                        <td><span class="badge">${it.unit || 'Pcs'}</span></td>
-                        <td><strong>${it.qty}</strong></td>
-                        <td style="font-family: 'JetBrains Mono';">₹${(it.quoted_price || it.unit_price || 0).toLocaleString()}</td>
-                        <td style="font-family: 'JetBrains Mono'; color: #34d399; font-weight: 600;">₹${lineTotal.toLocaleString()}</td>
-                    </tr>
-                `;
-            }).join('');
-
-            document.getElementById("quoteBomModalTotalCost").innerText = '₹' + totalEst.toLocaleString();
-            document.getElementById("viewQuoteBomModal").classList.add("open");
-        }
-
-        function closeQuoteBomModal() {
-            document.getElementById("viewQuoteBomModal").classList.remove("open");
-        }
-
-        function updateMatrix(quotes) {
-            if (!quotes || quotes.length === 0) {
-                document.getElementById("matrixLowestPrice").innerText = '₹0';
-                document.getElementById("matrixLowestVendor").innerText = 'No bids';
-                document.getElementById("matrixAiPrice").innerText = '₹0';
-                document.getElementById("matrixAiVendor").innerText = 'No bids';
-                document.getElementById("matrixFastestDays").innerText = '0 Days';
-                document.getElementById("matrixFastestVendor").innerText = 'No bids';
-                return;
-            }
-
-            // Lowest Price
-            const sortedByPrice = [...quotes].sort((a, b) => parseFloat(a.amount) - parseFloat(b.amount));
-            const lowest = sortedByPrice[0];
-            document.getElementById("matrixLowestPrice").innerText = `₹${parseFloat(lowest.amount).toLocaleString()}`;
-            document.getElementById("matrixLowestVendor").innerHTML = `<i class="fa-solid fa-store"></i> ${lowest.vendor_name}`;
-            document.getElementById("matrixLowestDays").innerHTML = `<i class="fa-solid fa-clock"></i> ${lowest.delivery_days} Days turnaround`;
-
-            // Fastest
-            const sortedByDays = [...quotes].sort((a, b) => parseInt(a.delivery_days, 10) - parseInt(b.delivery_days, 10));
-            const fastest = sortedByDays[0];
-            document.getElementById("matrixFastestDays").innerText = `${fastest.delivery_days} Days`;
-            document.getElementById("matrixFastestVendor").innerHTML = `<i class="fa-solid fa-store"></i> ${fastest.vendor_name}`;
-            document.getElementById("matrixFastestPrice").innerHTML = `<i class="fa-solid fa-tag"></i> ₹${parseFloat(fastest.amount).toLocaleString()}`;
-
-            // AI Value Pick (Heuristic balance: 60% price, 40% delivery)
-            const minP = parseFloat(lowest.amount);
-            const minD = parseInt(fastest.delivery_days, 10);
-            let bestScore = -1;
-            let bestQuote = lowest;
-
-            quotes.forEach(q => {
-                const p = parseFloat(q.amount) || 1;
-                const d = parseInt(q.delivery_days, 10) || 1;
-                const score = (minP / p) * 60 + (minD / d) * 40;
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestQuote = q;
-                }
-            });
-
-            document.getElementById("matrixAiPrice").innerText = `₹${parseFloat(bestQuote.amount).toLocaleString()}`;
-            document.getElementById("matrixAiVendor").innerHTML = `<i class="fa-solid fa-store"></i> ${bestQuote.vendor_name}`;
-            document.getElementById("matrixAiScore").innerHTML = `<i class="fa-solid fa-star"></i> AI Confidence: ${Math.round(bestScore)}/100`;
-        }
-
-        async function triggerAiQuoteAnalysis(presetRfqId) {
-            const rfqId = presetRfqId || document.getElementById("rfqFilterSelect").value;
-            if (!rfqId || rfqId === 'all') {
-                showAlert('Please select a specific RFQ from the filter to analyze.', 'info');
-                return;
-            }
-
-            try {
-                showAlert('Analyzing multidimensional bidding patterns...', 'info');
-                const res = await API.analyzeQuotes(rfqId);
-                const ana = res.analysis;
-                document.getElementById('aiAnalysisHeading').innerText = `AI Decision Analysis for ${ana.rfq_title}`;
-                document.getElementById('aiAnalysisBody').innerText = ana.recommendation;
-                showAlert('Analysis complete! Recommendation updated.', 'success');
-            } catch (err) {
-                showAlert(err.message || 'AI evaluation failed', 'danger');
-            }
-        }
-
-        document.getElementById("quoteForm").addEventListener("submit", async function(e) {
-            e.preventDefault();
-            const quoteData = {
-                rfq_id: parseInt(document.getElementById("rfq_id").value, 10),
-                vendor_name: document.getElementById("vendor_name").value.trim(),
-                amount: parseFloat(document.getElementById("amount").value),
-                delivery_days: parseInt(document.getElementById("delivery_days").value, 10),
-                notes: document.getElementById("notes").value.trim(),
-                items: activeRfqItems
-            };
-
-            try {
-                await API.createQuotation(quoteData);
-                showAlert('Quotation submitted successfully! Manager approval ticket generated.', 'success');
-                document.getElementById("quoteForm").reset();
-                document.getElementById("quoteBomSection").style.display = 'none';
-                activeRfqItems = [];
-                initPage();
-            } catch (err) {
-                showAlert(err.message || 'Failed to submit quotation', 'danger');
-            }
-        });
-
-        // Notification Drawer (Feature 5)
-        function toggleNotificationDrawer() {
-            const drawer = document.getElementById('notificationDrawer');
-            const overlay = document.getElementById('drawerOverlay');
-            const isOpen = drawer.classList.contains('open');
-            if (isOpen) {
-                drawer.classList.remove('open');
-                overlay.classList.remove('open');
-            } else {
-                renderDrawerNotifications();
-                drawer.classList.add('open');
-                overlay.classList.add('open');
-            }
-        }
-
-        function renderDrawerNotifications() {
-            const list = document.getElementById('drawerLogsList');
-            const sampleLogs = [
-                { title: 'Quotation Submitted by ABC Suppliers', time: '10 mins ago', icon: 'fa-scale-balanced', color: '#10b981', desc: 'Amount ₹4,80,000 for 50 Units. Awaiting review.' },
-                { title: 'RFQ#1 Laptop Procurement Broadcasted', time: '1 hour ago', icon: 'fa-file-circle-plus', color: '#6366f1', desc: 'Dispatched to 3 registered Tier-1 suppliers.' },
-                { title: 'PO-2026-000001 Authenticity Stamped', time: '2 hours ago', icon: 'fa-shield-halved', color: '#06b6d4', desc: 'Cryptographic SHA-256 digital stamp verified.' },
-                { title: 'Invoice INV-2026-000001 Ready for 3-Way Match', time: '4 hours ago', icon: 'fa-receipt', color: '#eab308', desc: 'PO and GRN matched with 0% variance.' }
-            ];
-            list.innerHTML = sampleLogs.map(l => `
-                <div class="drawer-item">
-                    <div class="drawer-item-icon" style="background: ${l.color}20; color: ${l.color};">
-                        <i class="fa-solid ${l.icon}"></i>
-                    </div>
-                    <div class="drawer-item-content">
-                        <strong>${l.title}</strong>
-                        <p>${l.desc}</p>
-                        <span class="drawer-item-time">${l.time}</span>
-                    </div>
+    function renderAiAnalysis(analysis) {
+      const box = document.getElementById('aiAnalysisResult');
+      if (!analysis) return;
+      box.style.display = 'block';
+      const quotes = analysis.quotes || [];
+      box.innerHTML = `
+        <div class="card" style="margin-top:8px;">
+          <div style="font-weight:700;margin-bottom:6px;">${escapeHtml(analysis.rfq_title || 'Evaluation Summary')}</div>
+          <p style="font-size:0.86rem;margin-bottom:12px;">${escapeHtml(analysis.recommendation || '')}</p>
+          <div class="grid-3">
+            ${quotes
+              .map(
+                (q) => `
+              <div class="card" style="padding:14px;border-color:${q.isRecommended ? 'var(--success)' : 'var(--border)'};">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                  <strong>${escapeHtml(q.vendor_name)}</strong>
+                  ${q.isRecommended ? `<span class="badge badge-approved">★ Top Pick</span>` : `<span class="badge badge-neutral">Score ${Number(q.score)}</span>`}
                 </div>
-            `).join('');
-        }
+                <div class="mono" style="font-size:1.1rem;font-weight:700;margin-bottom:6px;">${escapeHtml(CurrencyEngine.format(q.amount, q.currency || 'USD'))}</div>
+                <div style="font-size:0.76rem;color:var(--text-secondary);">
+                  Price Score: <strong class="mono">${Number(q.priceScore || 0)}</strong> · Delivery Score: <strong class="mono">${Number(q.deliveryScore || 0)}</strong> (${Number(q.delivery_days)}d)
+                </div>
+              </div>`
+              )
+              .join('')}
+          </div>
+        </div>`;
+    }
 
-        window.onload = initPage;
-    </script>
+    function renderQuotes() {
+      const tbody = document.getElementById('quotesTableBody');
+      if (!allQuotes.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:28px;">No supplier quotations submitted yet.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = allQuotes
+        .map(
+          (q) => `
+        <tr>
+          <td><div class="cell-primary">RFQ-${Number(q.rfq_id)} · ${escapeHtml(q.rfq_title || 'Tender')}</div></td>
+          <td>${escapeHtml(q.vendor_name)}</td>
+          <td class="mono">${escapeHtml(CurrencyEngine.format(q.amount, q.currency || 'USD'))} <span style="color:var(--text-muted);font-size:0.72rem;">(${escapeHtml(q.currency || 'USD')})</span></td>
+          <td class="mono">${Number(q.delivery_days)} days</td>
+          <td><span class="badge badge-${escapeHtml(q.status)}">${escapeHtml(q.status)}</span></td>
+          <td style="max-width:260px;color:var(--text-secondary);font-size:0.82rem;">${escapeHtml(q.notes || '—')}</td>
+        </tr>`
+        )
+        .join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!Auth.requireAuth()) return;
+      const user = Auth.getUser() || {};
+      if (!['admin', 'vendor'].includes(user.role)) {
+        document.getElementById('openNewQuoteBtn').style.display = 'none';
+      }
+
+      const modal = document.getElementById('quoteModal');
+      const closeModal = () => modal.classList.remove('open');
+      document.getElementById('openNewQuoteBtn').addEventListener('click', () => {
+        document.getElementById('qVendorName').value = user.role === 'vendor' ? user.name : '';
+        document.getElementById('qCurrency').value = CurrencyEngine.getDisplayCurrency();
+        modal.classList.add('open');
+      });
+      document.getElementById('closeQuoteModal').addEventListener('click', closeModal);
+      document.getElementById('cancelQuoteModal').addEventListener('click', closeModal);
+
+      document.getElementById('runAiRankBtn').addEventListener('click', () => {
+        runAiAnalysis(document.getElementById('aiRfqSelector').value);
+      });
+
+      window.addEventListener('vb:currency-changed', () => {
+        renderQuotes();
+        if (lastAnalysis) renderAiAnalysis(lastAnalysis);
+      });
+
+      document.getElementById('quoteForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const rfqId = Number(document.getElementById('qRfqSelect').value);
+        if (!rfqId) return showAlert('No open RFQ selected', 'error');
+        try {
+          await API.createQuotation({
+            rfq_id: rfqId,
+            vendor_name: document.getElementById('qVendorName').value.trim(),
+            currency: document.getElementById('qCurrency').value,
+            amount: Number(document.getElementById('qAmount').value),
+            delivery_days: Number(document.getElementById('qDeliveryDays').value),
+            notes: document.getElementById('qNotes').value.trim(),
+          });
+          showAlert('Quotation submitted and routed to governance approval', 'success');
+          closeModal();
+          loadData();
+        } catch (err) {
+          showAlert(err.message, 'error');
+        }
+      });
+
+      loadData();
+    });
+  </script>
 </body>
 </html>

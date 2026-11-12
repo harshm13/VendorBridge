@@ -1,331 +1,244 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Approval Workflow | VendorBridge ERP</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/components.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="js/appearance.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Governance Approvals — VendorBridge Global</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <script src="/js/appearance.js"></script>
 </head>
 <body>
+  <div class="ambient-grid"></div>
+  <div id="threeCanvasContainer"></div>
 
-    <!-- Three Canvas -->
-    <div id="threeCanvasContainer"></div>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="/" class="brand-mark">
+        <span class="brand-icon">VB</span>
+        <span>VendorBridge</span>
+        <span class="brand-badge">GLOBAL</span>
+      </a>
 
-    <!-- Navbar -->
-    <nav>
-        <div class="logo">
-            <a href="index.html">
-                <span class="logo-badge"><i class="fa-solid fa-cube"></i></span>
-                <h2>VendorBridge</h2>
-            </a>
-        </div>
-        <ul>
-            <li><a href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
-            <li><a href="vendor.html"><i class="fa-solid fa-building-user"></i> Vendors</a></li>
-            <li><a href="rfq.html"><i class="fa-solid fa-file-circle-plus"></i> RFQs</a></li>
-            <li><a href="quotations.html"><i class="fa-solid fa-scale-balanced"></i> Quotations</a></li>
-            <li><a href="approval.html" class="active"><i class="fa-solid fa-stamp"></i> Approvals</a></li>
-            <li><a href="purchase-order.html"><i class="fa-solid fa-file-invoice-dollar"></i> POs</a></li>
-            <li><a href="invoice.html"><i class="fa-solid fa-receipt"></i> Invoices</a></li>
-            <li>
-                <a href="#" class="notification-nav-btn" onclick="toggleNotificationDrawer(); return false;" title="Audit Notifications">
-                    <i class="fa-solid fa-bell"></i>
-                    <span class="notification-count-badge" id="navNotifBadge">4</span>
-                </a>
-            </li>
-            <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i></a></li>
-            <li><a href="#" onclick="Auth.logout(); return false;"><i class="fa-solid fa-power-off"></i></a></li>
-        </ul>
-    </nav>
+      <nav class="nav-links" id="mainNavLinks">
+        <a href="/dashboard" class="nav-link">Dashboard</a>
+        <a href="/vendors" class="nav-link">Vendors</a>
+        <a href="/rfqs" class="nav-link">RFQs</a>
+        <a href="/quotations" class="nav-link">Quotations</a>
+        <a href="/approvals" class="nav-link active">Approvals</a>
+        <a href="/purchase-orders" class="nav-link">Orders</a>
+        <a href="/invoices" class="nav-link">Invoices</a>
+      </nav>
 
-    <!-- Header -->
-    <section class="page-header">
-        <div class="motion-badge" style="margin-bottom: 10px;">
-            <div class="motion-badge-inner">
-                <span class="pulse-dot"></span>
-                <span class="motion-badge-text">Management Authorization Desk</span>
-            </div>
-        </div>
-        <h1>Procurement Approvals</h1>
-        <p>Authorize or reject vendor bids. Approving an item automatically issues an official Purchase Order.</p>
-    </section>
+      <div class="topbar-actions">
+        <button type="button" class="cmd-trigger" id="cmdTriggerBtn"><span>⌘</span><span class="cmd-label">Search</span><span class="kbd-chip">Ctrl+K</span></button>
+        <select id="currencySelector" class="currency-select" aria-label="Display Currency">
+          <option value="USD">USD $</option><option value="EUR">EUR €</option><option value="GBP">GBP £</option>
+          <option value="INR">INR ₹</option><option value="JPY">JPY ¥</option><option value="AED">AED</option><option value="SGD">SGD S$</option>
+        </select>
+        <button type="button" class="icon-btn" id="notifBtn" title="Activity &amp; Alerts">🔔<span class="notif-dot" id="notifBadgeDot" style="display:none;"></span></button>
+        <button type="button" class="icon-btn" id="appearanceBtn" title="Appearance Studio">🎨</button>
+        <div id="userPillContainer"></div>
+        <button type="button" class="icon-btn mobile-nav-toggle" id="mobileMenuBtn">☰</button>
+      </div>
+    </div>
+  </header>
 
-    <div style="padding: 0 6%;">
-        <div id="alertBox" class="alert-box"></div>
+  <main class="page-shell">
+    <div class="page-header">
+      <div>
+        <div class="page-eyebrow">Executive Sign-Off &amp; Spend Control</div>
+        <h1 class="page-title">Approval Queue</h1>
+        <p class="page-subtitle">Authorize supplier quotations to atomically mint Purchase Orders with cryptographic audit stamps.</p>
+      </div>
     </div>
 
-    <!-- Statistics -->
-    <section class="approval-stats">
-        <div class="stat-card tilt-card">
-            <h3 id="pendingCount" style="color: #f59e0b;">0</h3>
-            <p>Pending Approvals</p>
-            <span class="stat-trend" style="color: #f59e0b;"><i class="fa-solid fa-bell"></i> Action Required</span>
-        </div>
-        <div class="stat-card tilt-card">
-            <h3 id="approvedCount" style="color: #10b981;">0</h3>
-            <p>Approved Requests</p>
-            <span class="stat-trend"><i class="fa-solid fa-circle-check"></i> POs Issued</span>
-        </div>
-        <div class="stat-card tilt-card">
-            <h3 id="rejectedCount" style="color: #ef4444;">0</h3>
-            <p>Rejected Proposals</p>
-            <span class="stat-trend" style="color: #ef4444;"><i class="fa-solid fa-ban"></i> Dismissed</span>
-        </div>
+    <section class="kpi-grid">
+      <div class="stat-card"><span class="stat-label">Total Submissions</span><span class="stat-value mono" id="statTotalApp">0</span><span class="stat-delta">Cumulative approval ledger</span></div>
+      <div class="stat-card"><span class="stat-label">Pending Review</span><span class="stat-value mono" id="statPendingApp">0</span><span class="stat-delta"><span class="delta-warn">Awaiting</span> finance sign-off</span></div>
+      <div class="stat-card"><span class="stat-label">Approved &amp; Issued</span><span class="stat-value mono" id="statApprovedApp">0</span><span class="stat-delta"><span class="delta-up">PO Generated</span></span></div>
+      <div class="stat-card"><span class="stat-label">Rejected Bids</span><span class="stat-value mono" id="statRejectedApp">0</span><span class="stat-delta">Archived governance decisions</span></div>
     </section>
 
-    <!-- Approval Requests Table -->
-    <section class="approval-table-section" style="padding-bottom: 40px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 16px;">
-            <h2>Authorization Tickets</h2>
-            <div class="filter-pills-container" style="margin-bottom: 0;">
-                <button type="button" class="filter-pill-btn active" onclick="filterApprovals('all', this)">All</button>
-                <button type="button" class="filter-pill-btn" onclick="filterApprovals('pending', this)">Pending</button>
-                <button type="button" class="filter-pill-btn" onclick="filterApprovals('approved', this)">Approved</button>
-                <button type="button" class="filter-pill-btn" onclick="filterApprovals('rejected', this)">Rejected</button>
-            </div>
-        </div>
+    <div class="toolbar-row">
+      <div class="filter-capsule" id="approvalFilters">
+        <button type="button" class="filter-pill-btn active" data-status="all">All Decisions</button>
+        <button type="button" class="filter-pill-btn" data-status="pending">Pending</button>
+        <button type="button" class="filter-pill-btn" data-status="approved">Approved</button>
+        <button type="button" class="filter-pill-btn" data-status="rejected">Rejected</button>
+      </div>
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="approvalSearchInput" placeholder="Search tender or supplier...">
+      </div>
+    </div>
 
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div class="table-wrap" style="border:none;">
         <table>
-            <thead>
-                <tr>
-                    <th>Ticket ID</th>
-                    <th>RFQ Requisition</th>
-                    <th>Vendor Partner</th>
-                    <th>Total Value (₹)</th>
-                    <th>Manager Remarks</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="approvalTable">
-                <tr><td colspan="7" style="text-align: center;">Loading approval requests...</td></tr>
-            </tbody>
+          <thead>
+            <tr>
+              <th>Approval ID</th>
+              <th>RFQ Tender &amp; Supplier</th>
+              <th>Quote Value</th>
+              <th>Status</th>
+              <th>Remarks</th>
+              <th>Governance Action</th>
+            </tr>
+          </thead>
+          <tbody id="approvalsTableBody"></tbody>
         </table>
-    </section>
-
-    <!-- Lifecycle Stepper Visual -->
-    <section style="padding: 10px 6% 60px;">
-        <h2>Procurement Governance Policy</h2>
-        <div style="background: var(--bg-card); border: var(--border-card); border-radius: var(--radius-card); padding: 28px; margin-top: 16px; backdrop-filter: blur(18px);">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
-                <div style="display: flex; gap: 12px; align-items: flex-start;">
-                    <span style="font-size: 1.2rem; color: #6366f1;"><i class="fa-solid fa-shield-halved"></i></span>
-                    <div>
-                        <strong style="color: #fff;">Dual-Control Verification</strong>
-                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 3px;">Procurement proposals above baseline require authorized Manager or Admin sign-off.</p>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 12px; align-items: flex-start;">
-                    <span style="font-size: 1.2rem; color: #06b6d4;"><i class="fa-solid fa-bolt"></i></span>
-                    <div>
-                        <strong style="color: #fff;">Zero-Touch PO Issuance</strong>
-                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 3px;">Approved tickets immediately dispatch an official Purchase Order into the ERP ledger.</p>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 12px; align-items: flex-start;">
-                    <span style="font-size: 1.2rem; color: #10b981;"><i class="fa-solid fa-receipt"></i></span>
-                    <div>
-                        <strong style="color: #fff;">Invoice Settlement</strong>
-                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 3px;">Vendors can bill directly against issued POs with statutory GST calculations.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Decision Remarks Modal -->
-    <div class="modal-overlay" id="decisionModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalDecisionTitle"><i class="fa-solid fa-stamp" style="color: #6366f1;"></i> Review Decision</h3>
-                <button class="modal-close-btn" onclick="closeDecisionModal()"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <p id="modalDecisionSubtitle" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">
-                Enter authorization remarks for this procurement proposal.
-            </p>
-            <div class="input-group">
-                <label>Audit Notes / Remarks</label>
-                <textarea id="modalRemarks" rows="3" placeholder="e.g. Approved within quarterly infrastructure budget. Delivery terms accepted."></textarea>
-            </div>
-            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 16px;">
-                <button type="button" class="btn-glass" onclick="closeDecisionModal()">Cancel</button>
-                <button type="button" id="confirmDecisionBtn" class="btn-primary" onclick="submitDecision()">
-                    Confirm Decision
-                </button>
-            </div>
-        </div>
+      </div>
     </div>
+  </main>
 
-    <!-- Sliding Glass Activity & Notifications Drawer (Feature 5) -->
-    <div class="drawer-overlay" id="drawerOverlay" onclick="toggleNotificationDrawer()"></div>
-    <div class="notification-drawer" id="notificationDrawer">
-        <div class="drawer-header">
-            <div>
-                <h3><i class="fa-solid fa-bell" style="color: #6366f1;"></i> Procurement Telemetry</h3>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 2px 0 0;">Real-time audit log & system alerts</p>
-            </div>
-            <button class="modal-close-btn" onclick="toggleNotificationDrawer()"><i class="fa-solid fa-xmark"></i></button>
+  <!-- Decision Modal -->
+  <div class="modal-overlay" id="decisionModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title" id="decisionTitle">Authorize Governance Decision</h3>
+        <button type="button" class="modal-close-btn" id="closeDecisionModal">&times;</button>
+      </div>
+      <form id="decisionForm">
+        <input type="hidden" id="decisionAppId">
+        <input type="hidden" id="decisionTargetStatus">
+        <p id="decisionPromptText" style="margin-bottom:14px;font-size:0.9rem;"></p>
+        <div class="form-group">
+          <label class="form-label" for="decisionRemarks">Audit Remarks / Justification</label>
+          <textarea id="decisionRemarks" rows="3" required placeholder="Verified SLA compliance and competitive unit cost..."></textarea>
         </div>
-        <div class="drawer-content" id="drawerLogsList">
-            <!-- Dynamic notifications -->
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelDecisionBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="confirmDecisionBtn">Confirm Decision</button>
         </div>
+      </form>
     </div>
+  </div>
 
-    <!-- Footer -->
-    <footer>
-        <p>© 2026 VendorBridge ERP. High-Performance Procurement Mesh.</p>
-    </footer>
+  <script src="/js/api.js"></script>
+  <script src="/js/tilt.js"></script>
+  <script src="/js/three-scene.js"></script>
+  <script>
+    let allApprovals = [];
+    let activeStatus = 'all';
 
-    <!-- Client Scripts -->
-    <script src="js/api.js"></script>
-    <script src="js/three-scene.js"></script>
-    <script src="js/tilt.js"></script>
-    <script>
-        let allApprovals = [];
-        let activeApprovalId = null;
-        let activeDecisionStatus = null;
+    async function loadApprovals() {
+      try {
+        allApprovals = await API.getApprovals();
+        updateGlobalStats();
+        renderApprovals();
+      } catch (err) {
+        showAlert(err.message || 'Failed to load approvals', 'error');
+      }
+    }
 
-        async function loadApprovals() {
-            if (!Auth.requireAuth()) return;
-            try {
-                allApprovals = await API.getApprovals();
-                renderApprovals(allApprovals);
-            } catch (err) {
-                showAlert('Error loading approvals', 'danger');
-            }
+    function updateGlobalStats() {
+      document.getElementById('statTotalApp').textContent = allApprovals.length;
+      document.getElementById('statPendingApp').textContent = allApprovals.filter((a) => a.status === 'pending').length;
+      document.getElementById('statApprovedApp').textContent = allApprovals.filter((a) => a.status === 'approved').length;
+      document.getElementById('statRejectedApp').textContent = allApprovals.filter((a) => a.status === 'rejected').length;
+    }
+
+    function renderApprovals() {
+      const q = (document.getElementById('approvalSearchInput').value || '').trim().toLowerCase();
+      const filtered = allApprovals.filter((a) => {
+        const statusOk = activeStatus === 'all' || a.status === activeStatus;
+        const text = `${a.rfq_title} ${a.vendor_name} ${a.remarks}`.toLowerCase();
+        return statusOk && (!q || text.includes(q));
+      });
+
+      const tbody = document.getElementById('approvalsTableBody');
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:28px;">No approvals match this filter.</td></tr>`;
+        return;
+      }
+
+      const user = Auth.getUser() || {};
+      const canDecide = ['admin', 'manager'].includes(user.role);
+
+      tbody.innerHTML = filtered
+        .map((a) => {
+          const isPending = a.status === 'pending';
+          return `
+          <tr>
+            <td class="mono">APP-${String(a.id).padStart(4, '0')}</td>
+            <td>
+              <div class="cell-primary">${escapeHtml(a.rfq_title || `Quote #${a.quotation_id}`)}</div>
+              <div class="cell-sub">${escapeHtml(a.vendor_name || 'Vendor')}</div>
+            </td>
+            <td class="mono">${escapeHtml(CurrencyEngine.format(a.amount || 0, a.currency || 'USD'))}</td>
+            <td><span class="badge badge-${escapeHtml(a.status)}">${escapeHtml(a.status)}</span></td>
+            <td style="max-width:240px;font-size:0.82rem;color:var(--text-secondary);">${escapeHtml(a.remarks || '—')}</td>
+            <td>
+              ${
+                isPending && canDecide
+                  ? `<div style="display:flex;gap:6px;">
+                      <button type="button" class="btn btn-sm btn-success" onclick="openDecision(${Number(a.id)}, 'approved')">Approve &amp; Mint PO</button>
+                      <button type="button" class="btn btn-sm btn-danger" onclick="openDecision(${Number(a.id)}, 'rejected')">Reject</button>
+                     </div>`
+                  : `<span style="font-size:0.78rem;color:var(--text-muted);">${isPending ? 'Manager/Admin role required' : 'Finalized'}</span>`
+              }
+            </td>
+          </tr>`;
+        })
+        .join('');
+    }
+
+    window.openDecision = function (id, status) {
+      const app = allApprovals.find((a) => Number(a.id) === Number(id));
+      if (!app) return;
+      document.getElementById('decisionAppId').value = id;
+      document.getElementById('decisionTargetStatus').value = status;
+      document.getElementById('decisionTitle').textContent = status === 'approved' ? 'Approve Bid & Auto-Generate PO' : 'Reject Quotation';
+      document.getElementById('decisionPromptText').textContent = `${app.vendor_name} — ${app.rfq_title} (${CurrencyEngine.format(app.amount || 0, app.currency || 'USD')})`;
+      document.getElementById('decisionRemarks').value = status === 'approved' ? 'Approved under Q4 compliance budget.' : 'Pricing exceeds target SLA threshold.';
+      const confirmBtn = document.getElementById('confirmDecisionBtn');
+      confirmBtn.className = status === 'approved' ? 'btn btn-success' : 'btn btn-danger';
+      confirmBtn.textContent = status === 'approved' ? 'Approve & Issue PO' : 'Confirm Rejection';
+      document.getElementById('decisionModal').classList.add('open');
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!Auth.requireAuth()) return;
+
+      document.querySelectorAll('#approvalFilters [data-status]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#approvalFilters [data-status]').forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+          activeStatus = btn.getAttribute('data-status');
+          renderApprovals();
+        });
+      });
+
+      document.getElementById('approvalSearchInput').addEventListener('input', renderApprovals);
+      window.addEventListener('vb:currency-changed', renderApprovals);
+
+      const modal = document.getElementById('decisionModal');
+      const closeModal = () => modal.classList.remove('open');
+      document.getElementById('closeDecisionModal').addEventListener('click', closeModal);
+      document.getElementById('cancelDecisionBtn').addEventListener('click', closeModal);
+
+      document.getElementById('decisionForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('decisionAppId').value;
+        const status = document.getElementById('decisionTargetStatus').value;
+        const remarks = document.getElementById('decisionRemarks').value.trim();
+        try {
+          const res = await API.updateApproval(id, { status, remarks });
+          closeModal();
+          if (status === 'approved' && res.po) {
+            showAlert(`Approved! Purchase Order ${res.po.po_number} minted automatically.`, 'success', 5000);
+          } else {
+            showAlert(`Approval #${id} marked as ${status}.`, 'info');
+          }
+          loadApprovals();
+        } catch (err) {
+          showAlert(err.message, 'error');
         }
+      });
 
-        function renderApprovals(approvals) {
-            const table = document.getElementById("approvalTable");
-            if (!approvals || approvals.length === 0) {
-                table.innerHTML = '<tr><td colspan="7" style="text-align: center;">No approval tickets found.</td></tr>';
-                return;
-            }
-
-            const pending = allApprovals.filter(a => a.status === 'pending').length;
-            const approved = allApprovals.filter(a => a.status === 'approved').length;
-            const rejected = allApprovals.filter(a => a.status === 'rejected').length;
-
-            document.getElementById("pendingCount").innerText = pending;
-            document.getElementById("approvedCount").innerText = approved;
-            document.getElementById("rejectedCount").innerText = rejected;
-
-            table.innerHTML = approvals.map(a => `
-                <tr>
-                    <td><strong style="font-family: 'JetBrains Mono'; color: #818cf8;">APP#${a.id}</strong></td>
-                    <td><strong style="color: #ffffff;">${a.rfq_title || 'General Requisition'}</strong></td>
-                    <td><span style="font-weight: 600;"><i class="fa-solid fa-store" style="color: #6366f1;"></i> ${a.vendor_name}</span></td>
-                    <td><strong style="font-size: 1.05rem; color: #34d399;">₹${parseFloat(a.amount).toLocaleString()}</strong></td>
-                    <td><span style="color: var(--text-muted); font-size: 0.85rem;">${a.remarks || 'None'}</span></td>
-                    <td><span class="badge badge-${a.status}">${a.status}</span></td>
-                    <td>
-                        ${a.status === 'pending' ? `
-                            <div style="display: flex; gap: 6px;">
-                                <button class="btn-approve" onclick="openDecisionModal(${a.id}, 'approved')"><i class="fa-solid fa-check"></i> Approve</button>
-                                <button class="btn-reject" onclick="openDecisionModal(${a.id}, 'rejected')"><i class="fa-solid fa-xmark"></i> Reject</button>
-                            </div>
-                        ` : `<span style="color: var(--text-dim); font-size: 0.82rem; font-family: 'JetBrains Mono';"><i class="fa-solid fa-lock"></i> Processed</span>`}
-                    </td>
-                </tr>
-            `).join('');
-
-            if (window.initTiltCards) window.initTiltCards();
-        }
-
-        function filterApprovals(status, btn) {
-            document.querySelectorAll('.filter-pill-btn').forEach(b => b.classList.remove('active'));
-            if (btn) btn.classList.add('active');
-
-            if (status === 'all') {
-                renderApprovals(allApprovals);
-            } else {
-                renderApprovals(allApprovals.filter(a => a.status === status));
-            }
-        }
-
-        function openDecisionModal(id, status) {
-            activeApprovalId = id;
-            activeDecisionStatus = status;
-
-            const isApproved = (status === 'approved');
-            document.getElementById('modalDecisionTitle').innerHTML = isApproved 
-                ? '<i class="fa-solid fa-circle-check" style="color: #10b981;"></i> Authorize Proposal' 
-                : '<i class="fa-solid fa-circle-xmark" style="color: #ef4444;"></i> Reject Proposal';
-            
-            document.getElementById('modalDecisionSubtitle').innerText = isApproved
-                ? `Authorizing APP#${id} will immediately generate a formal Purchase Order and mark the quotation approved.`
-                : `Rejecting APP#${id} will mark the quotation rejected in the registry.`;
-
-            document.getElementById('modalRemarks').value = isApproved ? 'Approved by Manager. Meets procurement benchmarks.' : 'Proposal rejected due to pricing or timeline mismatch.';
-            
-            const confirmBtn = document.getElementById('confirmDecisionBtn');
-            confirmBtn.className = isApproved ? 'btn-approve' : 'btn-reject';
-            confirmBtn.style.padding = '10px 20px';
-            confirmBtn.innerText = isApproved ? 'Authorize & Issue PO' : 'Reject Proposal';
-
-            document.getElementById('decisionModal').classList.add('open');
-        }
-
-        function closeDecisionModal() {
-            document.getElementById('decisionModal').classList.remove('open');
-        }
-
-        async function submitDecision() {
-            if (!activeApprovalId || !activeDecisionStatus) return;
-            const remarks = document.getElementById('modalRemarks').value.trim();
-
-            try {
-                await API.updateApproval(activeApprovalId, activeDecisionStatus, remarks);
-                closeDecisionModal();
-                showAlert(`Ticket APP#${activeApprovalId} ${activeDecisionStatus} successfully!${activeDecisionStatus === 'approved' ? ' Purchase Order created automatically.' : ''}`, 'success');
-                loadApprovals();
-            } catch (err) {
-                showAlert(err.message || 'Action failed', 'danger');
-            }
-        }
-
-        // Notification Drawer (Feature 5)
-        function toggleNotificationDrawer() {
-            const drawer = document.getElementById('notificationDrawer');
-            const overlay = document.getElementById('drawerOverlay');
-            const isOpen = drawer.classList.contains('open');
-            if (isOpen) {
-                drawer.classList.remove('open');
-                overlay.classList.remove('open');
-            } else {
-                renderDrawerNotifications();
-                drawer.classList.add('open');
-                overlay.classList.add('open');
-            }
-        }
-
-        function renderDrawerNotifications() {
-            const list = document.getElementById('drawerLogsList');
-            const sampleLogs = [
-                { title: 'Pending Approval for Laptop RFQ', time: '5 mins ago', icon: 'fa-stamp', color: '#f59e0b', desc: 'Quotation by ABC Suppliers for ₹4,80,000 awaiting manager authorization.' },
-                { title: 'Invoice INV-2026-000001 Reconciled', time: '30 mins ago', icon: 'fa-receipt', color: '#10b981', desc: '3-Way Match verified with PO and GRN (0% variance).' },
-                { title: 'ABC Suppliers Achieved Tier-1 Platinum', time: '2 hours ago', icon: 'fa-crown', color: '#fbbf24', desc: 'Fulfillment reliability maintained at 98.4% across 14 orders.' },
-                { title: 'PO-2026-000001 Authenticity Stamped', time: '3 hours ago', icon: 'fa-shield-halved', color: '#06b6d4', desc: 'Cryptographic SHA-256 digital stamp verified.' }
-            ];
-            list.innerHTML = sampleLogs.map(l => `
-                <div class="drawer-item">
-                    <div class="drawer-item-icon" style="background: ${l.color}20; color: ${l.color};">
-                        <i class="fa-solid ${l.icon}"></i>
-                    </div>
-                    <div class="drawer-item-content">
-                        <strong>${l.title}</strong>
-                        <p>${l.desc}</p>
-                        <span class="drawer-item-time">${l.time}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        window.onload = loadApprovals;
-    </script>
+      loadApprovals();
+    });
+  </script>
 </body>
 </html>

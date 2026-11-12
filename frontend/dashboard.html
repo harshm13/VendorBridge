@@ -1,501 +1,302 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard & Spend Analytics | VendorBridge ERP</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/components.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="js/appearance.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Executive Dashboard — VendorBridge Global</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <script src="/js/appearance.js"></script>
 </head>
 <body>
+  <div class="ambient-grid"></div>
+  <div id="threeCanvasContainer"></div>
 
-    <!-- ThreeUI Background 3D Particle Constellation Canvas -->
-    <div id="threeCanvasContainer"></div>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="/" class="brand-mark">
+        <span class="brand-icon">VB</span>
+        <span>VendorBridge</span>
+        <span class="brand-badge">GLOBAL</span>
+      </a>
 
-    <!-- Navbar -->
-    <nav>
-        <div class="logo">
-            <a href="index.html">
-                <span class="logo-badge"><i class="fa-solid fa-cube"></i></span>
-                <h2>VendorBridge</h2>
-            </a>
+      <nav class="nav-links" id="mainNavLinks">
+        <a href="/dashboard" class="nav-link active">Dashboard</a>
+        <a href="/vendors" class="nav-link">Vendors</a>
+        <a href="/rfqs" class="nav-link">RFQs</a>
+        <a href="/quotations" class="nav-link">Quotations</a>
+        <a href="/approvals" class="nav-link">Approvals</a>
+        <a href="/purchase-orders" class="nav-link">Orders</a>
+        <a href="/invoices" class="nav-link">Invoices</a>
+      </nav>
+
+      <div class="topbar-actions">
+        <button type="button" class="cmd-trigger" id="cmdTriggerBtn"><span>⌘</span><span class="cmd-label">Search</span><span class="kbd-chip">Ctrl+K</span></button>
+        <select id="currencySelector" class="currency-select" aria-label="Display Currency">
+          <option value="USD">USD $</option><option value="EUR">EUR €</option><option value="GBP">GBP £</option>
+          <option value="INR">INR ₹</option><option value="JPY">JPY ¥</option><option value="AED">AED</option><option value="SGD">SGD S$</option>
+        </select>
+        <button type="button" class="icon-btn" id="notifBtn" title="Activity &amp; Alerts">🔔<span class="notif-dot" id="notifBadgeDot" style="display:none;"></span></button>
+        <button type="button" class="icon-btn" id="appearanceBtn" title="Appearance Studio">🎨</button>
+        <div id="userPillContainer"></div>
+        <button type="button" class="icon-btn mobile-nav-toggle" id="mobileMenuBtn">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <div class="page-header">
+      <div>
+        <div class="page-eyebrow">Procurement Command Center</div>
+        <h1 class="page-title">Executive Telemetry &amp; Spend Velocity</h1>
+        <p class="page-subtitle">Real-time cross-border spend analytics, SLA compliance, and active sourcing pipeline.</p>
+      </div>
+      <div class="header-actions">
+        <div class="filter-capsule" id="periodSwitcher">
+          <button type="button" class="filter-pill-btn active" data-period="6m">6 Months</button>
+          <button type="button" class="filter-pill-btn" data-period="quarter">Quarter</button>
+          <button type="button" class="filter-pill-btn" data-period="ytd">YTD</button>
         </div>
-        <ul>
-            <li><a href="dashboard.html" class="active"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
-            <li><a href="vendor.html"><i class="fa-solid fa-building-user"></i> Vendors</a></li>
-            <li><a href="rfq.html"><i class="fa-solid fa-file-circle-plus"></i> RFQs</a></li>
-            <li><a href="quotations.html"><i class="fa-solid fa-scale-balanced"></i> Quotations</a></li>
-            <li><a href="approval.html"><i class="fa-solid fa-stamp"></i> Approvals</a></li>
-            <li><a href="purchase-order.html"><i class="fa-solid fa-file-invoice-dollar"></i> POs</a></li>
-            <li><a href="invoice.html"><i class="fa-solid fa-receipt"></i> Invoices</a></li>
-            <li>
-                <a href="#" class="notification-nav-btn" onclick="toggleNotificationDrawer(); return false;" title="Audit Notifications">
-                    <i class="fa-solid fa-bell"></i>
-                    <span class="notification-count-badge" id="navNotifBadge">4</span>
-                </a>
-            </li>
-            <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i></a></li>
-            <li><a href="#" onclick="Auth.logout(); return false;" title="Logout"><i class="fa-solid fa-power-off"></i></a></li>
-        </ul>
-    </nav>
-
-    <!-- Header -->
-    <section class="dashboard-header">
-        <div class="motion-badge" style="margin-bottom: 10px;">
-            <div class="motion-badge-inner">
-                <span class="pulse-dot"></span>
-                <span class="motion-badge-text">Real-Time Procurement Telemetry</span>
-            </div>
-        </div>
-        <h1 id="welcomeUserMsg">Procurement Command Center</h1>
-        <p>Monitor live vendor requisitions, spend analytics, approval turnaround, and transaction flows in real time.</p>
-    </section>
-
-    <!-- AI Procurement Insight Banner -->
-    <div style="padding: 0 6%;">
-        <div class="ai-insight-banner tilt-card">
-            <div class="ai-insight-left">
-                <div class="ai-insight-icon">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i>
-                </div>
-                <div class="ai-insight-text">
-                    <h4>AI Optimization Engine Active</h4>
-                    <p id="aiInsightText">Quotations algorithm ready. 1-click comparison available across all active procurement streams.</p>
-                </div>
-            </div>
-            <a href="quotations.html" class="btn-primary" style="padding: 9px 18px; font-size: 0.88rem;">
-                <i class="fa-solid fa-chart-pie"></i> Compare Quotes
-            </a>
-        </div>
+        <button type="button" class="btn btn-secondary" id="openProfileBtn">Account Profile</button>
+        <a href="/rfqs" class="btn btn-primary">+ Launch RFQ</a>
+      </div>
     </div>
 
-    <!-- Analytics Cards (3D Tilt Cards) -->
-    <section class="dashboard-cards">
-        <div class="stat-card tilt-card">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <h2 id="totalVendors">0</h2>
-                <span style="font-size: 1.3rem; color: #6366f1; background: rgba(99, 102, 241, 0.15); padding: 8px 12px; border-radius: 12px;"><i class="fa-solid fa-users"></i></span>
-            </div>
-            <p>Active Vendors</p>
-            <span class="stat-trend"><i class="fa-solid fa-arrow-trend-up"></i> +12.5% this quarter</span>
-        </div>
-
-        <div class="stat-card tilt-card">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <h2 id="activeRfqs">0</h2>
-                <span style="font-size: 1.3rem; color: #06b6d4; background: rgba(6, 182, 212, 0.15); padding: 8px 12px; border-radius: 12px;"><i class="fa-solid fa-folder-open"></i></span>
-            </div>
-            <p>Open RFQs</p>
-            <span class="stat-trend" style="color: #06b6d4;"><i class="fa-solid fa-clock"></i> Active bidding</span>
-        </div>
-
-        <div class="stat-card tilt-card">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <h2 id="pendingApprovals">0</h2>
-                <span style="font-size: 1.3rem; color: #f59e0b; background: rgba(245, 158, 11, 0.15); padding: 8px 12px; border-radius: 12px;"><i class="fa-solid fa-hourglass-half"></i></span>
-            </div>
-            <p>Pending Approvals</p>
-            <span class="stat-trend" style="color: #f59e0b;"><i class="fa-solid fa-bolt"></i> Needs manager action</span>
-        </div>
-
-        <div class="stat-card tilt-card">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <h2 id="invoicesGenerated">0</h2>
-                <span style="font-size: 1.3rem; color: #10b981; background: rgba(16, 185, 129, 0.15); padding: 8px 12px; border-radius: 12px;"><i class="fa-solid fa-receipt"></i></span>
-            </div>
-            <p>Invoices Settled</p>
-            <span class="stat-trend" style="color: #10b981;"><i class="fa-solid fa-check"></i> Reconciled</span>
-        </div>
+    <section class="kpi-grid">
+      <div class="stat-card">
+        <div class="stat-top"><span class="stat-label">Committed Spend</span><span class="stat-icon">$</span></div>
+        <div class="stat-value mono" id="kpiTotalSpend">—</div>
+        <div class="stat-delta"><span class="delta-up" id="kpiPoCount">0 POs</span> active across ledger</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top"><span class="stat-label">AI Estimated Savings</span><span class="stat-icon">✦</span></div>
+        <div class="stat-value mono" id="kpiSavings">—</div>
+        <div class="stat-delta"><span class="delta-up" id="kpiCompliance">99%</span> 3-Way Match rate</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top"><span class="stat-label">Open RFQs &amp; Quotes</span><span class="stat-icon">◈</span></div>
+        <div class="stat-value mono" id="kpiActiveRfqs">—</div>
+        <div class="stat-delta"><span class="delta-warn" id="kpiPendingApprovals">0 pending</span> approvals</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top"><span class="stat-label">Global Suppliers</span><span class="stat-icon">🌐</span></div>
+        <div class="stat-value mono" id="kpiVendors">—</div>
+        <div class="stat-delta"><span class="delta-up" id="kpiOnTime">96%</span> on-time SLA</div>
+      </div>
     </section>
 
-    <!-- NEW FEATURE: VISUAL SPEND ANALYTICS & INTERACTIVE GLOWING CHARTS -->
-    <section style="padding: 10px 6% 30px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
-            <div>
-                <h2>Enterprise Spend Analytics & Forecasting</h2>
-                <p style="color: var(--text-muted); font-size: 0.92rem;">Visual procurement budget runway, category allocations, and supplier distribution.</p>
-            </div>
-            <div class="filter-pills-container" style="margin-bottom: 0;">
-                <button type="button" class="filter-pill-btn active" onclick="switchChartPeriod('6m', this)">Last 6 Months</button>
-                <button type="button" class="filter-pill-btn" onclick="switchChartPeriod('quarter', this)">This Quarter</button>
-                <button type="button" class="filter-pill-btn" onclick="switchChartPeriod('ytd', this)">YTD</button>
-            </div>
+    <section class="grid-asym" style="margin-bottom:20px;">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div>
+            <h2 style="font-size:1.1rem;">Monthly Procurement Velocity</h2>
+            <p style="font-size:0.8rem;" id="chartPeriodCaption">Period: Trailing 6 Months</p>
+          </div>
+          <span class="badge badge-accent" id="avgApprovalBadge">Avg Approval: —</span>
         </div>
+        <div class="monthly-chart" id="monthlyChart"></div>
+      </div>
 
-        <!-- KPI Metrics Ribbon -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
-            <div class="stat-card tilt-card" style="padding: 18px 20px;">
-                <span style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Avg Approval Cycle</span>
-                <div style="font-size: 1.6rem; font-weight: 800; color: #38bdf8; margin: 4px 0;" id="kpiCycleTime">4.2 Hours</div>
-                <span style="font-size: 0.78rem; color: #10b981;"><i class="fa-solid fa-arrow-trend-down"></i> 38% faster turnaround</span>
-            </div>
-            <div class="stat-card tilt-card" style="padding: 18px 20px;">
-                <span style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Audit Compliance Rate</span>
-                <div style="font-size: 1.6rem; font-weight: 800; color: #10b981; margin: 4px 0;" id="kpiCompliance">98.4%</div>
-                <span style="font-size: 0.78rem; color: #10b981;"><i class="fa-solid fa-shield-check"></i> Certified Audit Ready</span>
-            </div>
-            <div class="stat-card tilt-card" style="padding: 18px 20px;">
-                <span style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">On-Time SLA Delivery</span>
-                <div style="font-size: 1.6rem; font-weight: 800; color: #a855f7; margin: 4px 0;" id="kpiSla">96.2%</div>
-                <span style="font-size: 0.78rem; color: #38bdf8;"><i class="fa-solid fa-medal"></i> Top Tier Reliability</span>
-            </div>
-        </div>
-
-        <!-- Main Charts Grid -->
-        <div style="display: grid; grid-template-columns: 2fr 1.2fr; gap: 24px; align-items: stretch;" id="chartsContainer">
-            <!-- Spend Trend Area Chart -->
-            <div class="tilt-card" style="background: var(--bg-card); border: var(--border-card); border-radius: var(--radius-card); padding: 26px; backdrop-filter: blur(18px);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
-                    <div>
-                        <h3 style="font-size: 1.15rem;">Procurement Spend vs. Budget Runway</h3>
-                        <p style="color: var(--text-muted); font-size: 0.82rem;">Monthly actual expenditures compared to allocated departmental ceiling</p>
-                    </div>
-                    <span style="font-family: 'JetBrains Mono'; color: #34d399; font-size: 0.85rem; font-weight: 700;" id="totalSpendSummary">₹0 Spend</span>
-                </div>
-                <div style="height: 280px; position: relative;">
-                    <canvas id="monthlySpendChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Category Doughnut Chart -->
-            <div class="tilt-card" style="background: var(--bg-card); border: var(--border-card); border-radius: var(--radius-card); padding: 26px; backdrop-filter: blur(18px);">
-                <div style="margin-bottom: 18px;">
-                    <h3 style="font-size: 1.15rem;">Spend by Procurement Category</h3>
-                    <p style="color: var(--text-muted); font-size: 0.82rem;">Relative allocation across core business divisions</p>
-                </div>
-                <div style="height: 220px; position: relative;">
-                    <canvas id="categoryChart"></canvas>
-                </div>
-                <div id="categoryLegend" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; font-size: 0.82rem;"></div>
-            </div>
-        </div>
+      <div class="card">
+        <h2 style="font-size:1.1rem;margin-bottom:14px;">Spend by Category</h2>
+        <div id="categoryBars"></div>
+      </div>
     </section>
 
-    <!-- Quick Actions Bar -->
-    <section class="quick-actions">
-        <h2>Quick Operations</h2>
-        <div class="action-buttons">
-            <a href="rfq.html"><button class="btn-primary"><i class="fa-solid fa-plus"></i> Create RFQ</button></a>
-            <a href="vendor.html"><button class="btn-glass"><i class="fa-solid fa-user-plus"></i> Add Vendor</button></a>    
-            <a href="quotations.html"><button class="btn-glass"><i class="fa-solid fa-scale-balanced"></i> Compare Quotes</button></a>
-            <a href="approval.html"><button class="btn-glass"><i class="fa-solid fa-check-double"></i> Review Approvals</button></a>
-            <a href="invoice.html"><button class="btn-glass"><i class="fa-solid fa-file-invoice"></i> Generate Invoice</button></a>
+    <section class="grid-2">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <h2 style="font-size:1.1rem;">Top Global Suppliers</h2>
+          <a href="/vendors" class="btn btn-sm btn-secondary">Manage Directory →</a>
         </div>
-    </section>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Supplier</th><th>Committed Spend</th><th>Orders</th></tr></thead>
+            <tbody id="topVendorsBody"></tbody>
+          </table>
+        </div>
+      </div>
 
-    <!-- Recent RFQs Table -->
-    <section class="recent-section">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h2>Recent RFQ Pipeline</h2>
-            <a href="rfq.html" style="color: var(--accent-primary); font-size: 0.9rem; font-weight: 600;">View All RFQs →</a>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <h2 style="font-size:1.1rem;">Recent Audit Activity</h2>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="NotificationEngine.open()">Full Stream →</button>
         </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>RFQ ID</th>
-                    <th>Title</th>
-                    <th>Quantity</th>
-                    <th>Deadline</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="recentRfqTable">
-                <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading recent RFQs...</td></tr>
-            </tbody>
-        </table>
+        <div id="activityStreamList" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
     </section>
+  </main>
 
-    <!-- Recent Purchase Orders Table -->
-    <section class="recent-section">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h2>Recent Purchase Orders</h2>
-            <a href="purchase-order.html" style="color: var(--accent-primary); font-size: 0.9rem; font-weight: 600;">View All POs →</a>
+  <!-- Profile Modal -->
+  <div class="modal-overlay" id="profileModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">Workspace Profile Settings</h3>
+        <button type="button" class="modal-close-btn" id="closeProfileModal">&times;</button>
+      </div>
+      <form id="profileForm">
+        <div class="form-group">
+          <label class="form-label" for="profileNameInput">Display Name</label>
+          <input type="text" id="profileNameInput" required>
         </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>PO Number</th>
-                    <th>Vendor Partner</th>
-                    <th>Total Value</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="recentPoTable">
-                <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Loading recent purchase orders...</td></tr>
-            </tbody>
-        </table>
-    </section>
-
-    <!-- Sliding Glass Activity & Notifications Drawer (Feature 5) -->
-    <div class="drawer-overlay" id="drawerOverlay" onclick="toggleNotificationDrawer()"></div>
-    <div class="notification-drawer" id="notificationDrawer">
-        <div class="drawer-header">
-            <div>
-                <h3><i class="fa-solid fa-bell" style="color: #6366f1;"></i> Procurement Telemetry</h3>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 2px 0 0;">Real-time audit log & system alerts</p>
-            </div>
-            <button class="modal-close-btn" onclick="toggleNotificationDrawer()"><i class="fa-solid fa-xmark"></i></button>
+        <div class="form-group">
+          <label class="form-label" for="profileEmailInput">Registered Email</label>
+          <input type="email" id="profileEmailInput" disabled>
         </div>
-        <div class="drawer-content" id="drawerLogsList">
-            <!-- Dynamic notifications -->
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelProfileBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
         </div>
+      </form>
     </div>
+  </div>
 
-    <!-- Footer -->
-    <footer>
-        <p>© 2026 VendorBridge ERP. High-Performance Procurement Mesh.</p>
-    </footer>
+  <script src="/js/api.js"></script>
+  <script src="/js/tilt.js"></script>
+  <script src="/js/three-scene.js"></script>
+  <script>
+    let currentPeriod = '6m';
+    let lastDashboardData = null;
 
-    <!-- Client Scripts -->
-    <script src="js/api.js"></script>
-    <script src="js/three-scene.js"></script>
-    <script src="js/tilt.js"></script>
-    <script>
-        let spendChartInstance = null;
-        let categoryChartInstance = null;
+    async function loadDashboard(period = currentPeriod) {
+      currentPeriod = period;
+      try {
+        const data = await API.getDashboard(period);
+        lastDashboardData = data;
+        renderDashboard(data);
+      } catch (err) {
+        showAlert(err.message || 'Failed to load dashboard telemetry', 'error');
+      }
+    }
 
-        async function loadDashboard() {
-            const currentUser = Auth.requireAuth();
-            if (!currentUser) return;
+    function renderDashboard(data) {
+      if (!data) return;
+      const s = data.stats || {};
+      const a = data.analytics || {};
 
-            const welcomeMsg = document.getElementById('welcomeUserMsg');
-            if (welcomeMsg && currentUser.name) {
-                const roleFormatted = (currentUser.role || 'user').replace('_', ' ').toUpperCase();
-                welcomeMsg.innerText = `Welcome back, ${currentUser.name} (${roleFormatted})`;
-            }
+      animateNumber(document.getElementById('kpiTotalSpend'), s.totalSpend || 0, (v) => CurrencyEngine.format(v, 'USD'));
+      animateNumber(document.getElementById('kpiSavings'), s.estimatedSavings || 0, (v) => CurrencyEngine.format(v, 'USD'));
+      animateNumber(document.getElementById('kpiActiveRfqs'), s.activeRfqs || 0);
+      animateNumber(document.getElementById('kpiVendors'), s.totalVendors || 0);
 
-            try {
-                const data = await API.getDashboard();
-                
-                document.getElementById('totalVendors').innerText = data.stats.totalVendors || 0;
-                document.getElementById('activeRfqs').innerText = data.stats.activeRfqs || 0;
-                document.getElementById('pendingApprovals').innerText = data.stats.pendingApprovals || 0;
-                document.getElementById('invoicesGenerated').innerText = data.stats.invoicesGenerated || 0;
+      document.getElementById('kpiPoCount').textContent = `${s.totalPos || 0} POs`;
+      document.getElementById('kpiPendingApprovals').textContent = `${s.pendingApprovals || 0} pending`;
+      document.getElementById('kpiCompliance').textContent = `${a.complianceRate || 98}%`;
+      document.getElementById('kpiOnTime').textContent = `${a.onTimeDelivery || 96}%`;
+      document.getElementById('avgApprovalBadge').textContent = `Avg Approval: ${a.avgApprovalHours || 3.2}h`;
 
-                const rfqTable = document.getElementById('recentRfqTable');
-                if (data.recentRfqs && data.recentRfqs.length > 0) {
-                    rfqTable.innerHTML = data.recentRfqs.map(r => `
-                        <tr>
-                            <td><strong style="font-family: 'JetBrains Mono'; color: #a5b4fc;">RFQ#${r.id}</strong></td>
-                            <td>${r.title}</td>
-                            <td>${r.quantity} Units</td>
-                            <td>${r.deadline ? r.deadline.split('T')[0] : 'N/A'}</td>
-                            <td><span class="badge badge-${r.status}">${r.status}</span></td>
-                            <td>
-                                <a href="quotations.html?rfq=${r.id}" class="btn-glass" style="padding: 4px 12px; font-size: 0.8rem;">
-                                    View Quotes
-                                </a>
-                            </td>
-                        </tr>
-                    `).join('');
-                } else {
-                    rfqTable.innerHTML = '<tr><td colspan="6" style="text-align: center;">No active RFQs found.</td></tr>';
-                }
+      const labels = { '6m': 'Trailing 6 Months', quarter: 'Current Quarter', ytd: 'Year-to-Date' };
+      document.getElementById('chartPeriodCaption').textContent = `Period: ${labels[currentPeriod] || currentPeriod}`;
 
-                const poTable = document.getElementById('recentPoTable');
-                if (data.recentPos && data.recentPos.length > 0) {
-                    poTable.innerHTML = data.recentPos.map(p => `
-                        <tr>
-                            <td><strong style="font-family: 'JetBrains Mono'; color: #34d399;">${p.po_number}</strong></td>
-                            <td>${p.vendor_name}</td>
-                            <td><strong>₹${parseFloat(p.total_amount).toLocaleString()}</strong></td>
-                            <td><span class="badge badge-${p.status}">${p.status}</span></td>
-                            <td>
-                                <a href="purchase-order.html" class="btn-glass" style="padding: 4px 12px; font-size: 0.8rem;">
-                                    Details
-                                </a>
-                            </td>
-                        </tr>
-                    `).join('');
-                } else {
-                    poTable.innerHTML = '<tr><td colspan="5" style="text-align: center;">No purchase orders found.</td></tr>';
-                }
+      // Monthly Chart
+      const monthly = a.monthlySpend || [];
+      const maxM = Math.max(1, ...monthly.map((m) => Number(m.amount) || 0));
+      document.getElementById('monthlyChart').innerHTML = monthly.length
+        ? monthly
+            .map((m) => {
+              const pct = Math.max(10, Math.round(((Number(m.amount) || 0) / maxM) * 145));
+              return `
+              <div class="month-col" title="${escapeHtml(m.month)}: ${escapeHtml(CurrencyEngine.format(m.amount, 'USD'))}">
+                <span class="mono" style="font-size:0.68rem;color:var(--text-secondary);">${escapeHtml(CurrencyEngine.format(m.amount, 'USD'))}</span>
+                <div class="month-bar" style="height:${pct}px;"></div>
+                <span class="month-label">${escapeHtml(m.month)}</span>
+              </div>`;
+            })
+            .join('')
+        : `<div style="color:var(--text-muted);font-size:0.86rem;">No monthly spend points recorded yet.</div>`;
 
-                // Render Chart.js Glowing Visuals
-                if (data.analytics) {
-                    renderSpendAnalytics(data.analytics, data.stats);
-                }
-
-                if (window.initTiltCards) window.initTiltCards();
-            } catch (err) {
-                console.error('Failed to load dashboard:', err);
-            }
-        }
-
-        function renderSpendAnalytics(analytics, stats) {
-            if (typeof Chart === 'undefined') return;
-
-            document.getElementById('totalSpendSummary').innerText = `₹${(stats.totalSpend || 1740000).toLocaleString()} Total Volume`;
-            document.getElementById('kpiCycleTime').innerText = `${analytics.avgApprovalHours || 4.2} Hours`;
-            document.getElementById('kpiCompliance').innerText = `${analytics.complianceRate || 98.4}%`;
-            document.getElementById('kpiSla').innerText = `${analytics.onTimeDelivery || 96.2}%`;
-
-            // 1. Monthly Spend Area Chart
-            const ctxMonthly = document.getElementById('monthlySpendChart').getContext('2d');
-            const months = analytics.monthlySpend.map(m => m.month);
-            const spendData = analytics.monthlySpend.map(m => m.spend);
-            const budgetData = analytics.monthlySpend.map(m => m.budget);
-
-            const gradientSpend = ctxMonthly.createLinearGradient(0, 0, 0, 280);
-            gradientSpend.addColorStop(0, 'rgba(99, 102, 241, 0.45)');
-            gradientSpend.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
-
-            const gradientBudget = ctxMonthly.createLinearGradient(0, 0, 0, 280);
-            gradientBudget.addColorStop(0, 'rgba(6, 182, 212, 0.3)');
-            gradientBudget.addColorStop(1, 'rgba(6, 182, 212, 0.0)');
-
-            if (spendChartInstance) spendChartInstance.destroy();
-
-            spendChartInstance = new Chart(ctxMonthly, {
-                type: 'line',
-                data: {
-                    labels: months,
-                    datasets: [
-                        {
-                            label: 'Procurement Spend (₹)',
-                            data: spendData,
-                            borderColor: '#818cf8',
-                            backgroundColor: gradientSpend,
-                            fill: true,
-                            tension: 0.4,
-                            borderWidth: 3,
-                            pointBackgroundColor: '#ffffff',
-                            pointBorderColor: '#6366f1',
-                            pointRadius: 4,
-                            pointHoverRadius: 6
-                        },
-                        {
-                            label: 'Allocated Budget (₹)',
-                            data: budgetData,
-                            borderColor: 'rgba(6, 182, 212, 0.7)',
-                            backgroundColor: gradientBudget,
-                            fill: true,
-                            borderDash: [5, 5],
-                            tension: 0.4,
-                            borderWidth: 2,
-                            pointRadius: 0
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            labels: { color: '#cbd5e1', font: { family: 'Plus Jakarta Sans', size: 12 } }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: ctx => ` ${ctx.dataset.label}: ₹${ctx.parsed.y.toLocaleString()}`
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { color: '#94a3b8' }
-                        },
-                        y: {
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: {
-                                color: '#94a3b8',
-                                callback: val => `₹${(val / 1000)}k`
-                            }
-                        }
-                    }
-                }
-            });
-
-            // 2. Category Doughnut Chart
-            const ctxCat = document.getElementById('categoryChart').getContext('2d');
-            const catLabels = analytics.categorySpend.map(c => c.category);
-            const catData = analytics.categorySpend.map(c => c.amount);
-            const catColors = analytics.categorySpend.map(c => c.color);
-
-            if (categoryChartInstance) categoryChartInstance.destroy();
-
-            categoryChartInstance = new Chart(ctxCat, {
-                type: 'doughnut',
-                data: {
-                    labels: catLabels,
-                    datasets: [{
-                        data: catData,
-                        backgroundColor: catColors,
-                        borderWidth: 0,
-                        hoverOffset: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '72%',
-                    plugins: {
-                        legend: { display: false }
-                    }
-                }
-            });
-
-            // Render custom category legend
-            const legendBox = document.getElementById('categoryLegend');
-            legendBox.innerHTML = analytics.categorySpend.map(c => `
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="width: 10px; height: 10px; border-radius: 50%; background: ${c.color}; flex-shrink: 0;"></span>
-                    <span style="color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${c.category} (${c.percentage}%)</span>
+      // Category Spend
+      const cats = a.categorySpend || [];
+      const maxCat = Math.max(1, ...cats.map((c) => Number(c.amount) || 0));
+      document.getElementById('categoryBars').innerHTML = cats.length
+        ? cats
+            .map((c) => {
+              const w = Math.max(6, Math.round(((Number(c.amount) || 0) / maxCat) * 100));
+              return `
+              <div class="bar-row">
+                <div class="bar-meta">
+                  <span style="font-weight:600;color:var(--text-main);">${escapeHtml(c.category)}</span>
+                  <span class="mono">${escapeHtml(CurrencyEngine.format(c.amount, 'USD'))}</span>
                 </div>
-            `).join('');
-        }
+                <div class="bar-track"><div class="bar-fill" style="width:${w}%;"></div></div>
+              </div>`;
+            })
+            .join('')
+        : `<div style="color:var(--text-muted);font-size:0.86rem;">No category breakdown available.</div>`;
 
-        function switchChartPeriod(period, btn) {
-            document.querySelectorAll('.filter-pill-btn').forEach(b => b.classList.remove('active'));
-            if (btn) btn.classList.add('active');
-            // Re-render chart with period scale
-            loadDashboard();
-        }
+      // Top Vendors
+      const topVendors = a.topVendors || [];
+      document.getElementById('topVendorsBody').innerHTML = topVendors.length
+        ? topVendors
+            .map(
+              (v) => `
+          <tr>
+            <td class="cell-primary">${escapeHtml(v.name)}</td>
+            <td class="mono">${escapeHtml(CurrencyEngine.format(v.spend, 'USD'))}</td>
+            <td><span class="badge badge-accent">${escapeHtml(v.orders)} orders</span></td>
+          </tr>`
+            )
+            .join('')
+        : `<tr><td colspan="3" style="color:var(--text-muted);text-align:center;">No vendor spend recorded yet.</td></tr>`;
 
-        // Notification Drawer (Feature 5)
-        function toggleNotificationDrawer() {
-            const drawer = document.getElementById('notificationDrawer');
-            const overlay = document.getElementById('drawerOverlay');
-            const isOpen = drawer.classList.contains('open');
-            if (isOpen) {
-                drawer.classList.remove('open');
-                overlay.classList.remove('open');
-            } else {
-                renderDrawerNotifications();
-                drawer.classList.add('open');
-                overlay.classList.add('open');
-            }
-        }
+      // Activity Logs
+      const logs = data.activityLogs || [];
+      document.getElementById('activityStreamList').innerHTML = logs.length
+        ? logs
+            .slice(0, 6)
+            .map(
+              (log) => `
+          <div class="notif-item">
+            <div class="notif-title">${escapeHtml(log.action || 'Workflow Event')}</div>
+            <div class="notif-msg">${escapeHtml(log.details || '')}</div>
+            <div class="notif-time">${escapeHtml(log.created_at ? new Date(log.created_at).toLocaleString() : '')}</div>
+          </div>`
+            )
+            .join('')
+        : `<div style="color:var(--text-muted);font-size:0.86rem;">No recent audit events.</div>`;
+    }
 
-        function renderDrawerNotifications() {
-            const list = document.getElementById('drawerLogsList');
-            const sampleLogs = [
-                { title: 'Visual Spend Telemetry Updated', time: 'Just now', icon: 'fa-chart-line', color: '#6366f1', desc: 'Real-time category spending and turnarounds synced.' },
-                { title: 'Invoice INV-2026-000001 Reconciled', time: '10 mins ago', icon: 'fa-receipt', color: '#10b981', desc: '3-Way Match verified with PO and GRN (0% variance).' },
-                { title: 'ABC Suppliers Achieved Tier-1 Platinum', time: '1 hour ago', icon: 'fa-crown', color: '#fbbf24', desc: 'Fulfillment reliability maintained at 98.4% across 14 orders.' },
-                { title: 'PO-2026-000001 Authenticity Stamped', time: '2 hours ago', icon: 'fa-shield-halved', color: '#06b6d4', desc: 'Cryptographic SHA-256 digital stamp verified.' }
-            ];
-            list.innerHTML = sampleLogs.map(l => `
-                <div class="drawer-item">
-                    <div class="drawer-item-icon" style="background: ${l.color}20; color: ${l.color};">
-                        <i class="fa-solid ${l.icon}"></i>
-                    </div>
-                    <div class="drawer-item-content">
-                        <strong>${l.title}</strong>
-                        <p>${l.desc}</p>
-                        <span class="drawer-item-time">${l.time}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!Auth.requireAuth()) return;
 
-        window.onload = loadDashboard;
-    </script>
+      document.querySelectorAll('#periodSwitcher [data-period]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#periodSwitcher [data-period]').forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+          loadDashboard(btn.getAttribute('data-period'));
+        });
+      });
+
+      window.addEventListener('vb:currency-changed', () => {
+        if (lastDashboardData) renderDashboard(lastDashboardData);
+      });
+
+      // Profile Modal
+      const modal = document.getElementById('profileModal');
+      const closeModal = () => modal.classList.remove('open');
+      document.getElementById('openProfileBtn').addEventListener('click', () => {
+        const u = Auth.getUser() || {};
+        document.getElementById('profileNameInput').value = u.name || '';
+        document.getElementById('profileEmailInput').value = u.email || '';
+        modal.classList.add('open');
+      });
+      document.getElementById('closeProfileModal').addEventListener('click', closeModal);
+      document.getElementById('cancelProfileBtn').addEventListener('click', closeModal);
+      document.getElementById('profileForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          const res = await API.updateProfile({ name: document.getElementById('profileNameInput').value.trim() });
+          if (res.user) Auth.setUser(res.user);
+          Auth.renderUserPill();
+          closeModal();
+          showAlert('Profile updated permanently', 'success');
+        } catch (err) {
+          showAlert(err.message, 'error');
+        }
+      });
+
+      loadDashboard('6m');
+    });
+  </script>
 </body>
 </html>

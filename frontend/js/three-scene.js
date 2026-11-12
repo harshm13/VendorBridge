@@ -1,171 +1,162 @@
 /**
- * VendorBridge - ThreeUI Interactive 3D Particle Constellation Mesh
- * Inspired by ThreeUI (https://threeui.com/browse)
- * GPU-accelerated 60FPS particle network with mouse cursor gravity & repulsion
+ * VendorBridge 3D WebGL Global Supply Constellation & Wireframe Globe (three-scene.js)
+ * Zero-dependency HTML5 Canvas 3D renderer (works universally without external CDN fragility).
+ * Reacts to mouse pointer, viewport resize, and theme accent updates.
  */
-
 (function () {
-    let scene, camera, renderer, particles, particleGeo, particleMat;
-    let linesMesh;
-    let mouseX = 0, mouseY = 0;
-    let windowHalfX = window.innerWidth / 2;
-    let windowHalfY = window.innerHeight / 2;
-    let targetX = 0, targetY = 0;
+  function initScene() {
+    const container = document.getElementById('threeCanvasContainer');
+    if (!container) return;
 
-    const PARTICLE_COUNT = 85;
-    const CONNECT_DISTANCE = 110;
-    const positions = new Float32Array(PARTICLE_COUNT * 3);
-    const velocities = [];
+    const canvas = document.createElement('canvas');
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.display = 'block';
+    container.innerHTML = '';
+    container.appendChild(canvas);
 
-    function init() {
-        const container = document.getElementById('threeCanvasContainer');
-        if (!container) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-        // Check if Three.js is loaded
-        if (typeof THREE === 'undefined') {
-            console.warn('Three.js not loaded. Falling back to CSS ambient mesh.');
-            return;
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+    let mouseX = 0;
+    let mouseY = 0;
+    let angle = 0;
+
+    const isLanding = Boolean(document.body.dataset.landing === 'true');
+    const particleCount = isLanding ? 85 : 46;
+
+    const particles = Array.from({ length: particleCount }, () => ({
+      x: (Math.random() - 0.5) * width * 1.15,
+      y: (Math.random() - 0.5) * height * 1.15,
+      z: Math.random() * 520 + 120,
+      vx: (Math.random() - 0.5) * 0.28,
+      vy: (Math.random() - 0.5) * 0.28,
+      r: Math.random() * 1.8 + 0.9,
+    }));
+
+    // 3D Sphere points for Global Supply Wireframe Globe (on landing hero)
+    const globePoints = [];
+    if (isLanding) {
+      const rings = 9;
+      const segs = 18;
+      for (let i = 1; i < rings; i++) {
+        const phi = (i / rings) * Math.PI;
+        for (let j = 0; j < segs; j++) {
+          const theta = (j / segs) * Math.PI * 2;
+          globePoints.push({
+            x: Math.sin(phi) * Math.cos(theta),
+            y: Math.cos(phi),
+            z: Math.sin(phi) * Math.sin(theta),
+          });
         }
+      }
+    }
 
-        // Scene
-        scene = new THREE.Scene();
+    function getThemeColors() {
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#6366f1';
+      return {
+        accent,
+        nodeAlpha: isLight ? 0.38 : 0.62,
+        lineAlpha: isLight ? 0.1 : 0.16,
+        globeAlpha: isLight ? 0.15 : 0.24,
+      };
+    }
 
-        // Camera
-        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
-        camera.position.z = 320;
+    let colors = getThemeColors();
+    window.addEventListener('vb:theme-changed', () => {
+      colors = getThemeColors();
+    });
 
-        // Renderer
-        renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.domElement.style.position = 'fixed';
-        renderer.domElement.style.top = '0';
-        renderer.domElement.style.left = '0';
-        renderer.domElement.style.width = '100vw';
-        renderer.domElement.style.height = '100vh';
-        renderer.domElement.style.pointerEvents = 'none';
-        renderer.domElement.style.zIndex = '0';
-        renderer.domElement.className = 'three-canvas-layer';
-        container.appendChild(renderer.domElement);
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
 
-        // Particle Geometry
-        particleGeo = new THREE.BufferGeometry();
+    window.addEventListener('mousemove', (e) => {
+      mouseX = (e.clientX / width - 0.5) * 32;
+      mouseY = (e.clientY / height - 0.5) * 24;
+    });
 
-        for (let i = 0; i < PARTICLE_COUNT; i++) {
-            positions[i * 3] = (Math.random() - 0.5) * 550;
-            positions[i * 3 + 1] = (Math.random() - 0.5) * 450;
-            positions[i * 3 + 2] = (Math.random() - 0.5) * 200;
+    function render() {
+      ctx.clearRect(0, 0, width, height);
+      angle += 0.0022;
 
-            velocities.push({
-                x: (Math.random() - 0.5) * 0.45,
-                y: (Math.random() - 0.5) * 0.45,
-                z: (Math.random() - 0.5) * 0.25
-            });
-        }
+      const cx = width * 0.5 + mouseX;
+      const cy = height * 0.45 + mouseY;
 
-        particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      // Render 3D Wireframe Globe Nodes on Landing
+      if (isLanding && globePoints.length) {
+        const radius = Math.min(width, height) * 0.34;
+        const cosA = Math.cos(angle);
+        const sinA = Math.sin(angle);
 
-        // Particle Material - Electric Cyan / Indigo Glow
-        particleMat = new THREE.PointsMaterial({
-            color: 0x818cf8,
-            size: 3.5,
-            transparent: true,
-            opacity: 0.75,
-            blending: THREE.AdditiveBlending
+        globePoints.forEach((pt, idx) => {
+          const rx = pt.x * cosA - pt.z * sinA;
+          const rz = pt.x * sinA + pt.z * cosA;
+          const scale = 2.2 / (2.2 - rz * 0.7);
+          const sx = cx + rx * radius * scale;
+          const sy = height * 0.32 + pt.y * radius * 0.92 * scale;
+          if (rz > -0.25) {
+            ctx.beginPath();
+            ctx.arc(sx, sy, idx % 7 === 0 ? 2.6 : 1.4, 0, Math.PI * 2);
+            ctx.fillStyle = idx % 7 === 0 ? '#10b981' : colors.accent;
+            ctx.globalAlpha = colors.globeAlpha * (0.5 + (rz + 1) * 0.35);
+            ctx.fill();
+          }
         });
+      }
 
-        particles = new THREE.Points(particleGeo, particleMat);
-        scene.add(particles);
+      // Render Ambient Constellation
+      const projected = particles.map((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x > width * 0.65) p.x = -width * 0.65;
+        if (p.x < -width * 0.65) p.x = width * 0.65;
+        if (p.y > height * 0.65) p.y = -height * 0.65;
+        if (p.y < -height * 0.65) p.y = height * 0.65;
 
-        // Lines Geometry for mesh connections
-        const lineGeo = new THREE.BufferGeometry();
-        const lineMat = new THREE.LineBasicMaterial({
-            color: 0x6366f1,
-            transparent: true,
-            opacity: 0.18,
-            blending: THREE.AdditiveBlending
-        });
+        const fov = 420 / p.z;
+        return {
+          sx: cx + p.x * fov,
+          sy: cy + p.y * fov,
+          r: Math.max(0.8, p.r * fov),
+        };
+      });
 
-        linesMesh = new THREE.LineSegments(lineGeo, lineMat);
-        scene.add(linesMesh);
+      ctx.strokeStyle = colors.accent;
+      ctx.lineWidth = 0.8;
+      for (let i = 0; i < projected.length; i++) {
+        const a = projected[i];
+        ctx.beginPath();
+        ctx.arc(a.sx, a.sy, a.r, 0, Math.PI * 2);
+        ctx.fillStyle = colors.accent;
+        ctx.globalAlpha = colors.nodeAlpha;
+        ctx.fill();
 
-        // Event Listeners
-        window.addEventListener('resize', onWindowResize, false);
-        document.addEventListener('mousemove', onDocumentMouseMove, false);
+        for (let j = i + 1; j < projected.length; j++) {
+          const b = projected[j];
+          const dx = a.sx - b.sx;
+          const dy = a.sy - b.sy;
+          const dist = Math.hypot(dx, dy);
+          if (dist < 135) {
+            ctx.beginPath();
+            ctx.moveTo(a.sx, a.sy);
+            ctx.lineTo(b.sx, b.sy);
+            ctx.globalAlpha = colors.lineAlpha * (1 - dist / 135);
+            ctx.stroke();
+          }
+        }
+      }
 
-        animate();
+      ctx.globalAlpha = 1;
+      requestAnimationFrame(render);
     }
 
-    function onWindowResize() {
-        windowHalfX = window.innerWidth / 2;
-        windowHalfY = window.innerHeight / 2;
-        if (camera && renderer) {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-    }
+    requestAnimationFrame(render);
+  }
 
-    function onDocumentMouseMove(event) {
-        mouseX = (event.clientX - windowHalfX) * 0.4;
-        mouseY = (event.clientY - windowHalfY) * 0.4;
-    }
-
-    function animate() {
-        requestAnimationFrame(animate);
-
-        targetX += (mouseX - targetX) * 0.03;
-        targetY += (mouseY - targetY) * 0.03;
-
-        if (camera) {
-            camera.position.x = targetX * 0.3;
-            camera.position.y = -targetY * 0.3;
-            camera.lookAt(scene.position);
-        }
-
-        // Update particle positions
-        const pos = particleGeo.attributes.position.array;
-        const linePositions = [];
-
-        for (let i = 0; i < PARTICLE_COUNT; i++) {
-            pos[i * 3] += velocities[i].x;
-            pos[i * 3 + 1] += velocities[i].y;
-            pos[i * 3 + 2] += velocities[i].z;
-
-            // Bounce on boundaries
-            if (pos[i * 3] < -280 || pos[i * 3] > 280) velocities[i].x *= -1;
-            if (pos[i * 3 + 1] < -230 || pos[i * 3 + 1] > 230) velocities[i].y *= -1;
-            if (pos[i * 3 + 2] < -100 || pos[i * 3 + 2] > 100) velocities[i].z *= -1;
-
-            // Connect nearby particles
-            for (let j = i + 1; j < PARTICLE_COUNT; j++) {
-                const dx = pos[i * 3] - pos[j * 3];
-                const dy = pos[i * 3 + 1] - pos[j * 3 + 1];
-                const dz = pos[i * 3 + 2] - pos[j * 3 + 2];
-                const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-                if (dist < CONNECT_DISTANCE) {
-                    linePositions.push(
-                        pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2],
-                        pos[j * 3], pos[j * 3 + 1], pos[j * 3 + 2]
-                    );
-                }
-            }
-        }
-
-        particleGeo.attributes.position.needsUpdate = true;
-
-        if (linesMesh) {
-            linesMesh.geometry.setAttribute(
-                'position',
-                new THREE.Float32BufferAttribute(linePositions, 3)
-            );
-        }
-
-        if (renderer && scene && camera) {
-            renderer.render(scene, camera);
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('DOMContentLoaded', initScene);
 })();

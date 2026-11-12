@@ -1,48 +1,39 @@
 /**
- * VendorBridge 3D Tilt & Specular Sheen Engine
- * Inspired by ThreeUI (https://threeui.com/browse) & MotionSites
+ * VendorBridge Interactive Card Tilt Engine (tilt.js)
+ * Safely binds subtle 3D perspective tilt without duplicate listener leaks.
  */
-
 (function () {
-    function initTiltCards() {
-        const cards = document.querySelectorAll('.tilt-card, .stat-card, .card, .role-card');
+  const boundCards = new WeakSet();
 
-        cards.forEach(card => {
-            // Ensure card has sheen container
-            if (!card.querySelector('.card-sheen')) {
-                const sheen = document.createElement('div');
-                sheen.className = 'card-sheen';
-                card.appendChild(sheen);
-            }
-
-            card.addEventListener('mousemove', e => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-
-                const rotateX = ((y - centerY) / centerY) * -7; // max 7 deg
-                const rotateY = ((x - centerX) / centerX) * 7;
-
-                card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateZ(6px)`;
-                card.style.setProperty('--mouse-x', `${x}px`);
-                card.style.setProperty('--mouse-y', `${y}px`);
-            });
-
-            card.addEventListener('mouseleave', () => {
-                card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
-                card.style.transition = 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)';
-            });
-
-            card.addEventListener('mouseenter', () => {
-                card.style.transition = 'none';
-            });
-        });
+  function initTiltCards() {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+    if ('ontouchstart' in window && window.innerWidth < 768) {
+      return;
     }
 
-    document.addEventListener('DOMContentLoaded', initTiltCards);
-    // Also re-init if dynamic content updates
-    window.initTiltCards = initTiltCards;
+    const cards = document.querySelectorAll('.tilt-card, .stat-card, .role-card, .bento-card');
+    cards.forEach((card) => {
+      if (boundCards.has(card)) return;
+      boundCards.add(card);
+
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        const x = (e.clientX - rect.left) / rect.width - 0.5;
+        const y = (e.clientY - rect.top) / rect.height - 0.5;
+        const rotateX = (-y * 4.2).toFixed(2);
+        const rotateY = (x * 4.2).toFixed(2);
+        card.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-2px)`;
+      });
+
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = '';
+      });
+    });
+  }
+
+  window.initTiltCards = initTiltCards;
+  document.addEventListener('DOMContentLoaded', initTiltCards);
 })();

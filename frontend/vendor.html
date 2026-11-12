@@ -1,386 +1,345 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vendor Directory & Supplier Scorecards | VendorBridge ERP</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/components.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="js/appearance.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Global Supplier Network — VendorBridge Global</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <script src="/js/appearance.js"></script>
 </head>
 <body>
+  <div class="ambient-grid"></div>
+  <div id="threeCanvasContainer"></div>
 
-    <!-- Three Canvas -->
-    <div id="threeCanvasContainer"></div>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="/" class="brand-mark">
+        <span class="brand-icon">VB</span>
+        <span>VendorBridge</span>
+        <span class="brand-badge">GLOBAL</span>
+      </a>
 
-    <!-- Navbar -->
-    <nav>
-        <div class="logo">
-            <a href="index.html">
-                <span class="logo-badge"><i class="fa-solid fa-cube"></i></span>
-                <h2>VendorBridge</h2>
-            </a>
-        </div>
-        <ul>
-            <li><a href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
-            <li><a href="vendor.html" class="active"><i class="fa-solid fa-building-user"></i> Vendors</a></li>
-            <li><a href="rfq.html"><i class="fa-solid fa-file-circle-plus"></i> RFQs</a></li>
-            <li><a href="quotations.html"><i class="fa-solid fa-scale-balanced"></i> Quotations</a></li>
-            <li><a href="approval.html"><i class="fa-solid fa-stamp"></i> Approvals</a></li>
-            <li><a href="purchase-order.html"><i class="fa-solid fa-file-invoice-dollar"></i> POs</a></li>
-            <li><a href="invoice.html"><i class="fa-solid fa-receipt"></i> Invoices</a></li>
-            <li>
-                <a href="#" class="notification-nav-btn" onclick="toggleNotificationDrawer(); return false;" title="Audit Notifications">
-                    <i class="fa-solid fa-bell"></i>
-                    <span class="notification-count-badge" id="navNotifBadge">4</span>
-                </a>
-            </li>
-            <li><a href="#" class="appearance-nav-btn" title="Customize Appearance"><i class="fa-solid fa-palette"></i></a></li>
-            <li><a href="#" onclick="Auth.logout(); return false;"><i class="fa-solid fa-power-off"></i></a></li>
-        </ul>
-    </nav>
+      <nav class="nav-links" id="mainNavLinks">
+        <a href="/dashboard" class="nav-link">Dashboard</a>
+        <a href="/vendors" class="nav-link active">Vendors</a>
+        <a href="/rfqs" class="nav-link">RFQs</a>
+        <a href="/quotations" class="nav-link">Quotations</a>
+        <a href="/approvals" class="nav-link">Approvals</a>
+        <a href="/purchase-orders" class="nav-link">Orders</a>
+        <a href="/invoices" class="nav-link">Invoices</a>
+      </nav>
 
-    <!-- Header -->
-    <section class="page-header">
-        <div class="motion-badge" style="margin-bottom: 10px;">
-            <div class="motion-badge-inner">
-                <span class="pulse-dot"></span>
-                <span class="motion-badge-text">Supplier Network & KYC Performance Hub</span>
-            </div>
-        </div>
-        <h1>Vendor Directory & Scorecards</h1>
-        <p>Manage verified suppliers, evaluate fulfillment reliability %, inspect KYC tier badges, and drill into granular performance analytics.</p>
+      <div class="topbar-actions">
+        <button type="button" class="cmd-trigger" id="cmdTriggerBtn"><span>⌘</span><span class="cmd-label">Search</span><span class="kbd-chip">Ctrl+K</span></button>
+        <select id="currencySelector" class="currency-select" aria-label="Display Currency">
+          <option value="USD">USD $</option><option value="EUR">EUR €</option><option value="GBP">GBP £</option>
+          <option value="INR">INR ₹</option><option value="JPY">JPY ¥</option><option value="AED">AED</option><option value="SGD">SGD S$</option>
+        </select>
+        <button type="button" class="icon-btn" id="notifBtn" title="Activity &amp; Alerts">🔔<span class="notif-dot" id="notifBadgeDot" style="display:none;"></span></button>
+        <button type="button" class="icon-btn" id="appearanceBtn" title="Appearance Studio">🎨</button>
+        <div id="userPillContainer"></div>
+        <button type="button" class="icon-btn mobile-nav-toggle" id="mobileMenuBtn">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <div class="page-header">
+      <div>
+        <div class="page-eyebrow">Supplier Registry &amp; KYC</div>
+        <h1 class="page-title">Global Vendor Directory</h1>
+        <p class="page-subtitle">Manage verified partners, SLA scorecards, tax IDs, and supplier tiers across North America, EMEA, and APAC.</p>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="btn btn-primary" id="openNewVendorBtn">+ Onboard Supplier</button>
+      </div>
+    </div>
+
+    <section class="kpi-grid">
+      <div class="stat-card"><span class="stat-label">Total Suppliers</span><span class="stat-value mono" id="statTotalVendors">0</span><span class="stat-delta">Verified global network</span></div>
+      <div class="stat-card"><span class="stat-label">Strategic Tier</span><span class="stat-value mono" id="statStrategicVendors">0</span><span class="stat-delta">Primary SLA partners</span></div>
+      <div class="stat-card"><span class="stat-label">Active Compliance</span><span class="stat-value mono" id="statActiveVendors">0</span><span class="stat-delta"><span class="delta-up">KYC Verified</span></span></div>
+      <div class="stat-card"><span class="stat-label">Avg On-Time SLA</span><span class="stat-value mono" id="statAvgSla">0%</span><span class="stat-delta">Weighted delivery score</span></div>
     </section>
 
-    <div style="padding: 0 6%;">
-        <div id="alertBox" class="alert-box"></div>
+    <div class="toolbar-row">
+      <div class="filter-capsule" id="tierFilters">
+        <button type="button" class="filter-pill-btn active" data-tier="all">All Tiers</button>
+        <button type="button" class="filter-pill-btn" data-tier="Strategic">Strategic</button>
+        <button type="button" class="filter-pill-btn" data-tier="Preferred">Preferred</button>
+        <button type="button" class="filter-pill-btn" data-tier="Standard">Standard</button>
+      </div>
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="vendorSearchInput" placeholder="Search company, country, or Tax ID...">
+      </div>
     </div>
 
-    <!-- Vendor Operations Grid -->
-    <section class="vendor-section">
-        <!-- Add Vendor Form -->
-        <div class="vendor-form-card tilt-card">
-            <h3><i class="fa-solid fa-user-plus" style="color: #6366f1;"></i> Onboard Supplier Partner</h3>
-            
-            <form id="vendorForm">
-                <div class="input-group">
-                    <label>Company Legal Name</label>
-                    <input type="text" id="company" placeholder="e.g. Acme Tech Solutions Pvt Ltd" required>
-                </div>
-
-                <div class="input-group">
-                    <label>Authorized Contact Person</label>
-                    <input type="text" id="name" placeholder="e.g. Sarah Jenkins" required>
-                </div>
-
-                <div class="input-group">
-                    <label>Corporate Email Address</label>
-                    <input type="email" id="email" placeholder="vendor@acmetech.com" required>
-                </div>
-
-                <div class="input-group">
-                    <label>Contact Phone Number</label>
-                    <input type="text" id="phone" placeholder="+91 98765 43210" required>
-                </div>
-
-                <div class="input-group">
-                    <label>KYC Certification Tier</label>
-                    <select id="tier">
-                        <option value="tier1">Tier 1 Platinum (Verified Core Supplier)</option>
-                        <option value="tier2">Tier 2 Gold (Qualified Commercial Partner)</option>
-                        <option value="verified">Verified Supplier (Standard)</option>
-                    </select>
-                </div>
-
-                <div class="input-group">
-                    <label>GST Identification Number (GSTIN)</label>
-                    <input type="text" id="gst_number" placeholder="27ABCDE1234F1Z5">
-                </div>
-
-                <div class="input-group">
-                    <label>Registered Office Address</label>
-                    <textarea id="address" rows="2" placeholder="Suite 400, Industrial Cyber City, Mumbai"></textarea>
-                </div>
-
-                <button type="submit" class="btn-primary" style="width: 100%; padding: 13px;">
-                    <i class="fa-solid fa-plus-circle"></i> Onboard & Issue KYC Pass
-                </button>
-            </form>
-        </div>
-
-        <!-- Registered Vendors List -->
-        <div class="vendor-list-card tilt-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
-                <h3>Active Supplier Directory</h3>
-                <input type="text" id="vendorSearch" placeholder="Search by name, company, or GST..." oninput="searchVendors()" style="width: 250px; padding: 8px 14px; font-size: 0.85rem;">
-            </div>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>Company & Tier</th>
-                        <th>Contact Representative</th>
-                        <th>Email & Phone</th>
-                        <th>Rating & Reliability</th>
-                        <th>Scorecard</th>
-                    </tr>
-                </thead>
-                <tbody id="vendorTable">
-                    <tr><td colspan="5" style="text-align: center;">Loading suppliers from database...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <!-- Supplier Performance Scorecard Modal (Feature 4) -->
-    <div class="modal-overlay" id="vendorScorecardModal">
-        <div class="modal-content" style="max-width: 680px;">
-            <div class="modal-header">
-                <div>
-                    <h3 id="scorecardCompanyName"><i class="fa-solid fa-id-card-clip" style="color: #6366f1;"></i> Supplier Performance Scorecard</h3>
-                    <p id="scorecardCompanyMeta" style="font-size: 0.85rem; color: var(--text-muted); margin: 2px 0 0;">Authorized Vendor Partner</p>
-                </div>
-                <button class="modal-close-btn" onclick="closeScorecardModal()"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 16px; margin-bottom: 18px;">
-                <div>
-                    <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Overall Performance Index</span>
-                    <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 2px;">
-                        <span id="scorecardOverallRating" style="font-size: 1.8rem; font-weight: 800; color: #fbbf24; font-family: 'JetBrains Mono';">4.9</span>
-                        <span style="color: #f59e0b; font-size: 1.1rem;">★★★★★</span>
-                    </div>
-                </div>
-                <div style="text-align: right;">
-                    <span id="scorecardTierPill" class="tier-badge tier-tier1">Tier 1 Platinum</span>
-                    <div style="font-size: 0.78rem; color: #34d399; margin-top: 4px; font-weight: 600;"><i class="fa-solid fa-circle-check"></i> GSTIN & KYC Audited</div>
-                </div>
-            </div>
-
-            <!-- Granular Metric Grid -->
-            <div class="scorecard-metric-grid">
-                <div class="scorecard-metric-card">
-                    <h5>On-Time Delivery</h5>
-                    <strong id="metricOnTime" style="color: #10b981;">98.4%</strong>
-                </div>
-                <div class="scorecard-metric-card">
-                    <h5>Quality Acceptance</h5>
-                    <strong id="metricQuality" style="color: #38bdf8;">99.2%</strong>
-                </div>
-                <div class="scorecard-metric-card">
-                    <h5>Avg. Response Speed</h5>
-                    <strong id="metricResponse" style="color: #c084fc;">< 3 hrs</strong>
-                </div>
-            </div>
-
-            <!-- Compliance Checklist -->
-            <div style="margin-top: 20px; background: rgba(0,0,0,0.2); border-radius: 10px; padding: 14px; border: 1px solid var(--border-subtle);">
-                <h5 style="font-size: 0.82rem; color: #cbd5e1; text-transform: uppercase; margin: 0 0 8px;">Active Credentials & Compliance Badges</h5>
-                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                    <span class="badge" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16,185,129,0.3); color: #34d399;">
-                        <i class="fa-solid fa-check"></i> ISO 9001:2015 Quality Certified
-                    </span>
-                    <span class="badge" style="background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99,102,241,0.3); color: #a5b4fc;">
-                        <i class="fa-solid fa-shield"></i> MSME Registered
-                    </span>
-                    <span class="badge" style="background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6,182,212,0.3); color: #67e8f9;">
-                        <i class="fa-solid fa-certificate"></i> Verified Bank Settlement Mandate
-                    </span>
-                </div>
-            </div>
-
-            <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
-                <button type="button" class="btn-primary" onclick="closeScorecardModal()">Close Scorecard</button>
-            </div>
-        </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div class="table-wrap" style="border:none;">
+        <table>
+          <thead>
+            <tr>
+              <th>Company &amp; Contact</th>
+              <th>Region &amp; Currency</th>
+              <th>Tax / GST / VAT ID</th>
+              <th>Tier</th>
+              <th>SLA Rating</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="vendorsTableBody"></tbody>
+        </table>
+      </div>
     </div>
+  </main>
 
-    <!-- Sliding Glass Activity & Notifications Drawer (Feature 5) -->
-    <div class="drawer-overlay" id="drawerOverlay" onclick="toggleNotificationDrawer()"></div>
-    <div class="notification-drawer" id="notificationDrawer">
-        <div class="drawer-header">
-            <div>
-                <h3><i class="fa-solid fa-bell" style="color: #6366f1;"></i> Procurement Telemetry</h3>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 2px 0 0;">Real-time audit log & system alerts</p>
-            </div>
-            <button class="modal-close-btn" onclick="toggleNotificationDrawer()"><i class="fa-solid fa-xmark"></i></button>
+  <!-- Onboard / Edit Vendor Modal -->
+  <div class="modal-overlay" id="vendorFormModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title" id="vendorModalTitle">Onboard Global Supplier</h3>
+        <button type="button" class="modal-close-btn" id="closeVendorFormModal">&times;</button>
+      </div>
+      <form id="vendorForm">
+        <input type="hidden" id="editVendorId">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label" for="vCompany">Company Legal Name</label>
+            <input type="text" id="vCompany" required placeholder="Kuroda Precision Robotics">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="vContact">Primary Contact</label>
+            <input type="text" id="vContact" required placeholder="Kenji Takahashi">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="vEmail">Business Email</label>
+            <input type="email" id="vEmail" required placeholder="supply@vendor.io">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="vPhone">Phone</label>
+            <input type="text" id="vPhone" required placeholder="+1-415-555-0192">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="vCountry">Country Code</label>
+            <input type="text" id="vCountry" value="US" maxlength="8" placeholder="US, DE, GB, IN, JP">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="vCurrency">Billing Currency</label>
+            <select id="vCurrency">
+              <option value="USD">USD ($)</option><option value="EUR">EUR (€)</option><option value="GBP">GBP (£)</option>
+              <option value="INR">INR (₹)</option><option value="JPY">JPY (¥)</option><option value="AED">AED</option><option value="SGD">SGD (S$)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="vTier">Supplier Tier</label>
+            <select id="vTier">
+              <option value="Standard">Standard</option>
+              <option value="Preferred">Preferred</option>
+              <option value="Strategic">Strategic</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="vGst">Tax / VAT / GST ID</label>
+            <input type="text" id="vGst" placeholder="US-EIN-94-332190">
+          </div>
+          <div class="form-group full">
+            <label class="form-label" for="vAddress">Registered HQ Address</label>
+            <input type="text" id="vAddress" placeholder="742 Evergreen Way, San Francisco, CA">
+          </div>
         </div>
-        <div class="drawer-content" id="drawerLogsList">
-            <!-- Dynamic notifications -->
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelVendorFormBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveVendorBtn">Save Supplier</button>
         </div>
+      </form>
     </div>
+  </div>
 
-    <!-- Footer -->
-    <footer>
-        <p>© 2026 VendorBridge ERP. High-Performance Procurement Mesh.</p>
-    </footer>
+  <!-- Vendor Scorecard Modal (ID-referenced, XSS-safe) -->
+  <div class="modal-overlay" id="scorecardModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title" id="scorecardTitle">Supplier Scorecard</h3>
+        <button type="button" class="modal-close-btn" id="closeScorecardModal">&times;</button>
+      </div>
+      <div id="scorecardBody"></div>
+    </div>
+  </div>
 
-    <!-- Client Scripts -->
-    <script src="js/api.js"></script>
-    <script src="js/three-scene.js"></script>
-    <script src="js/tilt.js"></script>
-    <script>
-        let allVendors = [];
+  <script src="/js/api.js"></script>
+  <script src="/js/tilt.js"></script>
+  <script src="/js/three-scene.js"></script>
+  <script>
+    let allVendors = [];
+    let activeTier = 'all';
 
-        async function loadVendors() {
-            if (!Auth.requireAuth()) return;
-            try {
-                allVendors = await API.getVendors();
-                renderVendors(allVendors);
-            } catch (err) {
-                showAlert('Error loading vendors', 'danger');
-            }
-        }
+    async function loadVendors() {
+      try {
+        allVendors = await API.getVendors();
+        updateGlobalStats();
+        renderVendors();
+      } catch (err) {
+        showAlert(err.message || 'Failed to load suppliers', 'error');
+      }
+    }
 
-        function getTierBadgeHtml(tier) {
-            if (tier === 'tier1') {
-                return '<span class="tier-badge tier-tier1"><i class="fa-solid fa-crown"></i> Tier 1 Platinum</span>';
-            } else if (tier === 'tier2') {
-                return '<span class="tier-badge tier-tier2"><i class="fa-solid fa-medal"></i> Tier 2 Gold</span>';
-            }
-            return '<span class="tier-badge tier-verified"><i class="fa-solid fa-shield-check"></i> Verified</span>';
-        }
+    function updateGlobalStats() {
+      document.getElementById('statTotalVendors').textContent = allVendors.length;
+      document.getElementById('statStrategicVendors').textContent = allVendors.filter((v) => v.tier === 'Strategic').length;
+      document.getElementById('statActiveVendors').textContent = allVendors.filter((v) => (v.status || 'active') === 'active').length;
+      const avg = allVendors.length
+        ? Math.round(allVendors.reduce((acc, v) => acc + Number(v.scorecard?.on_time_rate || 95), 0) / allVendors.length)
+        : 0;
+      document.getElementById('statAvgSla').textContent = `${avg}%`;
+    }
 
-        function renderVendors(vendors) {
-            const table = document.getElementById("vendorTable");
-            if (!vendors || vendors.length === 0) {
-                table.innerHTML = '<tr><td colspan="5" style="text-align: center;">No registered suppliers found.</td></tr>';
-                return;
-            }
+    function renderVendors() {
+      const q = (document.getElementById('vendorSearchInput').value || '').trim().toLowerCase();
+      const filtered = allVendors.filter((v) => {
+        const tierOk = activeTier === 'all' || (v.tier || 'Standard') === activeTier;
+        const text = `${v.company_name} ${v.contact_person} ${v.country} ${v.gst_number} ${v.email}`.toLowerCase();
+        return tierOk && (!q || text.includes(q));
+      });
 
-            table.innerHTML = vendors.map(v => {
-                const sc = v.scorecard || { rating: 4.8, on_time_rate: '97.5%', tier: 'tier1' };
-                const tierBadge = getTierBadgeHtml(v.tier || sc.tier);
+      const tbody = document.getElementById('vendorsTableBody');
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:28px;">No suppliers match the current filter.</td></tr>`;
+        return;
+      }
 
-                return `
-                <tr>
-                    <td>
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                            <strong style="color: #ffffff; font-size: 0.98rem;">${v.company_name || 'N/A'}</strong>
-                            ${tierBadge}
-                        </div>
-                        <p style="color: var(--text-dim); font-size: 0.8rem; margin: 0;">GSTIN: <span style="font-family: 'JetBrains Mono'; color: #38bdf8;">${v.gst_number || '27ABCDE1234F1Z5'}</span></p>
-                    </td>
-                    <td><span style="font-weight: 600; color: #cbd5e1;"><i class="fa-solid fa-user-tie" style="color: #6366f1;"></i> ${v.contact_person || 'Representative'}</span></td>
-                    <td>
-                        <div style="display: flex; flex-direction: column; gap: 2px;">
-                            <span style="font-size: 0.85rem; color: #a5b4fc;"><i class="fa-solid fa-envelope"></i> ${v.email || 'N/A'}</span>
-                            <span style="font-family: 'JetBrains Mono'; font-size: 0.78rem; color: var(--text-muted);"><i class="fa-solid fa-phone"></i> ${v.phone || 'N/A'}</span>
-                        </div>
-                    </td>
-                    <td>
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <strong style="color: #fbbf24; font-size: 0.95rem;"><i class="fa-solid fa-star"></i> ${sc.rating || 4.8}</strong>
-                            <span style="color: #10b981; font-size: 0.8rem; font-family: 'JetBrains Mono';">(${sc.on_time_rate || '98%'} On-Time)</span>
-                        </div>
-                    </td>
-                    <td>
-                        <button class="btn-glass" onclick='openScorecardModal(${JSON.stringify(v)})' style="padding: 4px 12px; font-size: 0.8rem; border-color: rgba(99,102,241,0.35); color: #c7d2fe;">
-                            <i class="fa-solid fa-chart-pie"></i> Scorecard
-                        </button>
-                    </td>
-                </tr>
-                `;
-            }).join('');
+      const user = Auth.getUser() || {};
+      const canEdit = ['admin', 'procurement_officer'].includes(user.role);
 
-            if (window.initTiltCards) window.initTiltCards();
-        }
+      tbody.innerHTML = filtered
+        .map((v) => {
+          const sc = v.scorecard || {};
+          const tier = v.tier || sc.tier || 'Standard';
+          const tierCls = tier === 'Strategic' ? 'badge-strategic' : tier === 'Preferred' ? 'badge-preferred' : 'badge-neutral';
+          return `
+          <tr>
+            <td>
+              <div class="cell-primary">${escapeHtml(v.company_name)}</div>
+              <div class="cell-sub">${escapeHtml(v.contact_person)} · ${escapeHtml(v.email)}</div>
+            </td>
+            <td><span class="mono">${escapeHtml(v.country || 'US')} · ${escapeHtml(v.currency || 'USD')}</span></td>
+            <td class="mono">${escapeHtml(v.gst_number || '—')}</td>
+            <td><span class="badge ${tierCls}">${escapeHtml(tier)}</span></td>
+            <td class="mono">★ ${escapeHtml(sc.rating || '4.8')} (${escapeHtml(sc.on_time_rate || 96)}% SLA)</td>
+            <td><span class="badge badge-active">${escapeHtml(v.status || 'active')}</span></td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button type="button" class="btn btn-sm btn-secondary" onclick="openScorecardModal(${Number(v.id)})">Scorecard</button>
+                ${canEdit ? `<button type="button" class="btn btn-sm btn-outline" onclick="openEditVendorModal(${Number(v.id)})">Edit</button>` : ''}
+              </div>
+            </td>
+          </tr>`;
+        })
+        .join('');
+    }
 
-        function searchVendors() {
-            const query = (document.getElementById("vendorSearch").value || '').toLowerCase();
-            const filtered = allVendors.filter(v => 
-                (v.company_name || '').toLowerCase().includes(query) ||
-                (v.contact_person || '').toLowerCase().includes(query) ||
-                (v.email || '').toLowerCase().includes(query) ||
-                (v.gst_number || '').toLowerCase().includes(query)
-            );
-            renderVendors(filtered);
-        }
+    window.openScorecardModal = function (vendorId) {
+      const v = allVendors.find((item) => Number(item.id) === Number(vendorId));
+      if (!v) return;
+      const sc = v.scorecard || {};
+      document.getElementById('scorecardTitle').textContent = `${v.company_name} — SLA Scorecard`;
+      document.getElementById('scorecardBody').innerHTML = `
+        <div class="grid-2" style="margin-bottom:16px;">
+          <div class="card"><div class="stat-label">On-Time Delivery</div><div class="stat-value mono">${escapeHtml(sc.on_time_rate || 96)}%</div></div>
+          <div class="card"><div class="stat-label">Quality Index</div><div class="stat-value mono">${escapeHtml(sc.quality_score || 97)} / 100</div></div>
+          <div class="card"><div class="stat-label">Response SLA</div><div class="stat-value mono">${escapeHtml(sc.response_time || '3.2 hrs')}</div></div>
+          <div class="card"><div class="stat-label">KYC &amp; Audit</div><div class="stat-value" style="font-size:1.1rem;color:var(--success);">${escapeHtml(sc.kyc_status || 'Verified')}</div></div>
+        </div>
+        <div style="font-size:0.86rem;color:var(--text-secondary);">
+          <div><strong>Address:</strong> ${escapeHtml(v.address || 'N/A')}</div>
+          <div style="margin-top:6px;"><strong>Certifications:</strong> ${escapeHtml((sc.certifications || ['ISO-9001', 'SOC2']).join(', '))}</div>
+        </div>
+      `;
+      document.getElementById('scorecardModal').classList.add('open');
+    };
 
-        // Scorecard Modal
-        function openScorecardModal(vendor) {
-            const sc = vendor.scorecard || { rating: 4.8, on_time_rate: '98.2%', quality_score: '99.1%', response_time: '< 4 hrs', tier: 'tier1' };
-            document.getElementById('scorecardCompanyName').innerHTML = `<i class="fa-solid fa-id-card-clip" style="color: #6366f1;"></i> ${vendor.company_name}`;
-            document.getElementById('scorecardCompanyMeta').innerText = `Contact: ${vendor.contact_person} | Email: ${vendor.email}`;
-            document.getElementById('scorecardOverallRating').innerText = sc.rating || 4.8;
-            document.getElementById('metricOnTime').innerText = sc.on_time_rate || '98.2%';
-            document.getElementById('metricQuality').innerText = sc.quality_score || '99.1%';
-            document.getElementById('metricResponse').innerText = sc.response_time || '< 3 hrs';
+    window.openEditVendorModal = function (vendorId) {
+      const v = allVendors.find((item) => Number(item.id) === Number(vendorId));
+      if (!v) return;
+      document.getElementById('vendorModalTitle').textContent = `Edit Supplier — ${v.company_name}`;
+      document.getElementById('editVendorId').value = v.id;
+      document.getElementById('vCompany').value = v.company_name || '';
+      document.getElementById('vContact').value = v.contact_person || '';
+      document.getElementById('vEmail').value = v.email || '';
+      document.getElementById('vPhone').value = v.phone || '';
+      document.getElementById('vCountry').value = v.country || 'US';
+      document.getElementById('vCurrency').value = v.currency || 'USD';
+      document.getElementById('vTier').value = v.tier || 'Standard';
+      document.getElementById('vGst').value = v.gst_number || '';
+      document.getElementById('vAddress').value = v.address || '';
+      document.getElementById('vendorFormModal').classList.add('open');
+    };
 
-            const pill = document.getElementById('scorecardTierPill');
-            const tier = vendor.tier || sc.tier || 'tier1';
-            pill.className = `tier-badge tier-${tier}`;
-            pill.innerText = tier === 'tier1' ? 'Tier 1 Platinum' : (tier === 'tier2' ? 'Tier 2 Gold' : 'Verified Supplier');
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!Auth.requireAuth()) return;
+      const user = Auth.getUser() || {};
+      if (!['admin', 'procurement_officer'].includes(user.role)) {
+        document.getElementById('openNewVendorBtn').style.display = 'none';
+      }
 
-            document.getElementById('vendorScorecardModal').classList.add('open');
-        }
-
-        function closeScorecardModal() {
-            document.getElementById('vendorScorecardModal').classList.remove('open');
-        }
-
-        document.getElementById("vendorForm").addEventListener("submit", async function(e) {
-            e.preventDefault();
-            const vendorData = {
-                name: document.getElementById("name").value.trim(),
-                email: document.getElementById("email").value.trim(),
-                phone: document.getElementById("phone").value.trim(),
-                company: document.getElementById("company").value.trim(),
-                gst_number: document.getElementById("gst_number").value.trim(),
-                address: document.getElementById("address").value.trim(),
-                tier: document.getElementById("tier").value
-            };
-
-            try {
-                await API.createVendor(vendorData);
-                showAlert('Vendor onboarded successfully into the master registry with KYC tier status!', 'success');
-                document.getElementById("vendorForm").reset();
-                loadVendors();
-            } catch (err) {
-                showAlert(err.message || 'Failed to onboard vendor', 'danger');
-            }
+      document.querySelectorAll('#tierFilters [data-tier]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#tierFilters [data-tier]').forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+          activeTier = btn.getAttribute('data-tier');
+          renderVendors();
         });
+      });
 
-        // Notification Drawer (Feature 5)
-        function toggleNotificationDrawer() {
-            const drawer = document.getElementById('notificationDrawer');
-            const overlay = document.getElementById('drawerOverlay');
-            const isOpen = drawer.classList.contains('open');
-            if (isOpen) {
-                drawer.classList.remove('open');
-                overlay.classList.remove('open');
-            } else {
-                renderDrawerNotifications();
-                drawer.classList.add('open');
-                overlay.classList.add('open');
-            }
+      document.getElementById('vendorSearchInput').addEventListener('input', renderVendors);
+
+      const formModal = document.getElementById('vendorFormModal');
+      const closeForm = () => formModal.classList.remove('open');
+      document.getElementById('openNewVendorBtn').addEventListener('click', () => {
+        document.getElementById('vendorModalTitle').textContent = 'Onboard Global Supplier';
+        document.getElementById('editVendorId').value = '';
+        document.getElementById('vendorForm').reset();
+        formModal.classList.add('open');
+      });
+      document.getElementById('closeVendorFormModal').addEventListener('click', closeForm);
+      document.getElementById('cancelVendorFormBtn').addEventListener('click', closeForm);
+      document.getElementById('closeScorecardModal').addEventListener('click', () => {
+        document.getElementById('scorecardModal').classList.remove('open');
+      });
+
+      document.getElementById('vendorForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const editId = document.getElementById('editVendorId').value;
+        const payload = {
+          company: document.getElementById('vCompany').value.trim(),
+          name: document.getElementById('vContact').value.trim(),
+          email: document.getElementById('vEmail').value.trim(),
+          phone: document.getElementById('vPhone').value.trim(),
+          country: document.getElementById('vCountry').value.trim().toUpperCase() || 'US',
+          currency: document.getElementById('vCurrency').value,
+          tier: document.getElementById('vTier').value,
+          gst_number: document.getElementById('vGst').value.trim(),
+          address: document.getElementById('vAddress').value.trim(),
+        };
+        try {
+          if (editId) {
+            await API.updateVendor(editId, payload);
+            showAlert('Supplier updated successfully', 'success');
+          } else {
+            await API.createVendor(payload);
+            showAlert('Global supplier onboarded', 'success');
+          }
+          closeForm();
+          loadVendors();
+        } catch (err) {
+          showAlert(err.message, 'error');
         }
+      });
 
-        function renderDrawerNotifications() {
-            const list = document.getElementById('drawerLogsList');
-            const sampleLogs = [
-                { title: 'ABC Suppliers Achieved Tier-1 Platinum', time: '15 mins ago', icon: 'fa-crown', color: '#fbbf24', desc: 'Fulfillment reliability maintained at 98.4% across 14 orders.' },
-                { title: 'PO-2026-000001 Authenticity Stamped', time: '1 hour ago', icon: 'fa-shield-halved', color: '#06b6d4', desc: 'Cryptographic SHA-256 digital stamp verified.' },
-                { title: 'Quotation Submitted by ABC Suppliers', time: '2 hours ago', icon: 'fa-scale-balanced', color: '#10b981', desc: 'Amount ₹4,80,000 for 50 Units. Awaiting review.' },
-                { title: 'RFQ#1 Laptop Procurement Broadcasted', time: '4 hours ago', icon: 'fa-file-circle-plus', color: '#6366f1', desc: 'Dispatched to 3 registered Tier-1 suppliers.' }
-            ];
-            list.innerHTML = sampleLogs.map(l => `
-                <div class="drawer-item">
-                    <div class="drawer-item-icon" style="background: ${l.color}20; color: ${l.color};">
-                        <i class="fa-solid ${l.icon}"></i>
-                    </div>
-                    <div class="drawer-item-content">
-                        <strong>${l.title}</strong>
-                        <p>${l.desc}</p>
-                        <span class="drawer-item-time">${l.time}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        window.onload = loadVendors;
-    </script>
+      loadVendors();
+    });
+  </script>
 </body>
 </html>
