@@ -94,13 +94,13 @@ VendorBridge/
 │   │   └── e2e.test.js           # End-to-end procurement lifecycle test runner
 │   ├── .env.example              # Environment configuration template
 │   ├── package.json              # Backend dependencies & test scripts
+│   ├── seed.js                   # Database migration & seed utility
 │   ├── server.js                 # Express server & static route handlers
 │   ├── test-api.js               # Direct API testing script
 │   └── test-e2e.js               # Direct E2E testing script
 ├── database/
 │   ├── data.json                 # Seed and persistent storage data store
-│   ├── schema.sql                # Production MySQL relational schema
-│   └── seed.js                   # Database migration & seed utility
+│   └── schema.sql                # Production MySQL relational schema
 ├── frontend/
 │   ├── css/
 │   │   ├── style.css             # Core design system tokens, themes & layout
