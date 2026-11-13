@@ -95,9 +95,7 @@ VendorBridge/
 │   ├── .env.example              # Environment configuration template
 │   ├── package.json              # Backend dependencies & test scripts
 │   ├── seed.js                   # Database migration & seed utility
-│   ├── server.js                 # Express server & static route handlers
-│   ├── test-api.js               # Direct API testing script
-│   └── test-e2e.js               # Direct E2E testing script
+│   └── server.js                 # Express server & static route handlers
 ├── database/
 │   ├── data.json                 # Seed and persistent storage data store
 │   └── schema.sql                # Production MySQL relational schema
