@@ -12,37 +12,7 @@
   <div class="ambient-grid"></div>
   <div id="threeCanvasContainer"></div>
 
-  <header class="topbar">
-    <div class="topbar-inner">
-      <a href="/" class="brand-mark">
-        <span class="brand-icon">VB</span>
-        <span>VendorBridge</span>
-        <span class="brand-badge">GLOBAL</span>
-      </a>
-
-      <nav class="nav-links" id="mainNavLinks">
-        <a href="/dashboard" class="nav-link">Dashboard</a>
-        <a href="/vendors" class="nav-link">Vendors</a>
-        <a href="/rfqs" class="nav-link">RFQs</a>
-        <a href="/quotations" class="nav-link">Quotations</a>
-        <a href="/approvals" class="nav-link active">Approvals</a>
-        <a href="/purchase-orders" class="nav-link">Orders</a>
-        <a href="/invoices" class="nav-link">Invoices</a>
-      </nav>
-
-      <div class="topbar-actions">
-        <button type="button" class="cmd-trigger" id="cmdTriggerBtn"><span>⌘</span><span class="cmd-label">Search</span><span class="kbd-chip">Ctrl+K</span></button>
-        <select id="currencySelector" class="currency-select" aria-label="Display Currency">
-          <option value="USD">USD $</option><option value="EUR">EUR €</option><option value="GBP">GBP £</option>
-          <option value="INR">INR ₹</option><option value="JPY">JPY ¥</option><option value="AED">AED</option><option value="SGD">SGD S$</option>
-        </select>
-        <button type="button" class="icon-btn" id="notifBtn" title="Activity &amp; Alerts">🔔<span class="notif-dot" id="notifBadgeDot" style="display:none;"></span></button>
-        <button type="button" class="icon-btn" id="appearanceBtn" title="Appearance Studio">🎨</button>
-        <div id="userPillContainer"></div>
-        <button type="button" class="icon-btn mobile-nav-toggle" id="mobileMenuBtn">☰</button>
-      </div>
-    </div>
-  </header>
+  <header class="topbar" id="appHeader" data-nav="approvals"></header>
 
   <main class="page-shell">
     <div class="page-header">
@@ -115,130 +85,10 @@
     </div>
   </div>
 
+  <script src="/js/layout.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/tilt.js"></script>
   <script src="/js/three-scene.js"></script>
-  <script>
-    let allApprovals = [];
-    let activeStatus = 'all';
-
-    async function loadApprovals() {
-      try {
-        allApprovals = await API.getApprovals();
-        updateGlobalStats();
-        renderApprovals();
-      } catch (err) {
-        showAlert(err.message || 'Failed to load approvals', 'error');
-      }
-    }
-
-    function updateGlobalStats() {
-      document.getElementById('statTotalApp').textContent = allApprovals.length;
-      document.getElementById('statPendingApp').textContent = allApprovals.filter((a) => a.status === 'pending').length;
-      document.getElementById('statApprovedApp').textContent = allApprovals.filter((a) => a.status === 'approved').length;
-      document.getElementById('statRejectedApp').textContent = allApprovals.filter((a) => a.status === 'rejected').length;
-    }
-
-    function renderApprovals() {
-      const q = (document.getElementById('approvalSearchInput').value || '').trim().toLowerCase();
-      const filtered = allApprovals.filter((a) => {
-        const statusOk = activeStatus === 'all' || a.status === activeStatus;
-        const text = `${a.rfq_title} ${a.vendor_name} ${a.remarks}`.toLowerCase();
-        return statusOk && (!q || text.includes(q));
-      });
-
-      const tbody = document.getElementById('approvalsTableBody');
-      if (!filtered.length) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:28px;">No approvals match this filter.</td></tr>`;
-        return;
-      }
-
-      const user = Auth.getUser() || {};
-      const canDecide = ['admin', 'manager'].includes(user.role);
-
-      tbody.innerHTML = filtered
-        .map((a) => {
-          const isPending = a.status === 'pending';
-          return `
-          <tr>
-            <td class="mono">APP-${String(a.id).padStart(4, '0')}</td>
-            <td>
-              <div class="cell-primary">${escapeHtml(a.rfq_title || `Quote #${a.quotation_id}`)}</div>
-              <div class="cell-sub">${escapeHtml(a.vendor_name || 'Vendor')}</div>
-            </td>
-            <td class="mono">${escapeHtml(CurrencyEngine.format(a.amount || 0, a.currency || 'USD'))}</td>
-            <td><span class="badge badge-${escapeHtml(a.status)}">${escapeHtml(a.status)}</span></td>
-            <td style="max-width:240px;font-size:0.82rem;color:var(--text-secondary);">${escapeHtml(a.remarks || '—')}</td>
-            <td>
-              ${
-                isPending && canDecide
-                  ? `<div style="display:flex;gap:6px;">
-                      <button type="button" class="btn btn-sm btn-success" onclick="openDecision(${Number(a.id)}, 'approved')">Approve &amp; Mint PO</button>
-                      <button type="button" class="btn btn-sm btn-danger" onclick="openDecision(${Number(a.id)}, 'rejected')">Reject</button>
-                     </div>`
-                  : `<span style="font-size:0.78rem;color:var(--text-muted);">${isPending ? 'Manager/Admin role required' : 'Finalized'}</span>`
-              }
-            </td>
-          </tr>`;
-        })
-        .join('');
-    }
-
-    window.openDecision = function (id, status) {
-      const app = allApprovals.find((a) => Number(a.id) === Number(id));
-      if (!app) return;
-      document.getElementById('decisionAppId').value = id;
-      document.getElementById('decisionTargetStatus').value = status;
-      document.getElementById('decisionTitle').textContent = status === 'approved' ? 'Approve Bid & Auto-Generate PO' : 'Reject Quotation';
-      document.getElementById('decisionPromptText').textContent = `${app.vendor_name} — ${app.rfq_title} (${CurrencyEngine.format(app.amount || 0, app.currency || 'USD')})`;
-      document.getElementById('decisionRemarks').value = status === 'approved' ? 'Approved under Q4 compliance budget.' : 'Pricing exceeds target SLA threshold.';
-      const confirmBtn = document.getElementById('confirmDecisionBtn');
-      confirmBtn.className = status === 'approved' ? 'btn btn-success' : 'btn btn-danger';
-      confirmBtn.textContent = status === 'approved' ? 'Approve & Issue PO' : 'Confirm Rejection';
-      document.getElementById('decisionModal').classList.add('open');
-    };
-
-    document.addEventListener('DOMContentLoaded', () => {
-      if (!Auth.requireAuth()) return;
-
-      document.querySelectorAll('#approvalFilters [data-status]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('#approvalFilters [data-status]').forEach((b) => b.classList.remove('active'));
-          btn.classList.add('active');
-          activeStatus = btn.getAttribute('data-status');
-          renderApprovals();
-        });
-      });
-
-      document.getElementById('approvalSearchInput').addEventListener('input', renderApprovals);
-      window.addEventListener('vb:currency-changed', renderApprovals);
-
-      const modal = document.getElementById('decisionModal');
-      const closeModal = () => modal.classList.remove('open');
-      document.getElementById('closeDecisionModal').addEventListener('click', closeModal);
-      document.getElementById('cancelDecisionBtn').addEventListener('click', closeModal);
-
-      document.getElementById('decisionForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const id = document.getElementById('decisionAppId').value;
-        const status = document.getElementById('decisionTargetStatus').value;
-        const remarks = document.getElementById('decisionRemarks').value.trim();
-        try {
-          const res = await API.updateApproval(id, { status, remarks });
-          closeModal();
-          if (status === 'approved' && res.po) {
-            showAlert(`Approved! Purchase Order ${res.po.po_number} minted automatically.`, 'success', 5000);
-          } else {
-            showAlert(`Approval #${id} marked as ${status}.`, 'info');
-          }
-          loadApprovals();
-        } catch (err) {
-          showAlert(err.message, 'error');
-        }
-      });
-
-      loadApprovals();
-    });
-  </script>
+  <script src="/js/pages/approval.js"></script>
 </body>
 </html>
