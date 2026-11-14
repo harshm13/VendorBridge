@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
-
-const JWT_SECRET = process.env.JWT_SECRET || 'vendorbridge-jwt-super-secret-key-2026-production';
+const { getJwtSecret } = require('../config/jwt');
 
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -11,7 +10,8 @@ const authenticateToken = (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
+        const secret = getJwtSecret();
+        const decoded = jwt.verify(token, secret);
         req.user = decoded; // { id, email, role, name }
         next();
     } catch (error) {

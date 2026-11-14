@@ -349,6 +349,12 @@ class DBStore {
             return [filtered];
         }
 
+        if (upper.includes('FROM QUOTATIONS WHERE ID = ?')) {
+            const id = parseInt(params[0], 10);
+            const quote = this.data.quotations.find(q => q.id === id);
+            return [quote ? [quote] : []];
+        }
+
         if (upper.includes('FROM QUOTATIONS')) {
             const sorted = [...this.data.quotations].sort((a, b) => b.id - a.id);
             return [sorted];
@@ -411,7 +417,9 @@ class DBStore {
         }
 
         if (upper.startsWith('INSERT INTO PURCHASE_ORDERS')) {
-            const [po_number, quotation_id, vendor_name, rfq_ref, total_amount, currency, status] = params;
+            const [po_number, quotation_id, vendor_name, rfq_ref, total_amount, currency, statusParam] = params;
+            const isApprovedLiteral = upper.includes('"APPROVED"') || upper.includes("'APPROVED'");
+            const status = statusParam || (isApprovedLiteral ? 'approved' : 'pending');
             const newPo = {
                 id: this.nextId(this.data.purchase_orders),
                 po_number,

@@ -41,8 +41,8 @@ const Approval = {
                 const poNumber = `PO-${year}-${String(nextId).padStart(6, '0')}`;
 
                 const [poRes] = await connection.query(
-                    'INSERT INTO purchase_orders (po_number, quotation_id, vendor_name, rfq_ref, total_amount, currency, status) VALUES (?, ?, ?, ?, ?, ?, "approved")',
-                    [poNumber, approval.quotation_id, approval.vendor_name, approval.rfq_title, approval.amount, 'USD']
+                    'INSERT INTO purchase_orders (po_number, quotation_id, vendor_name, rfq_ref, total_amount, currency, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    [poNumber, approval.quotation_id, approval.vendor_name, approval.rfq_title, approval.amount, 'USD', 'approved']
                 );
                 createdPo = { id: poRes.insertId, po_number: poNumber };
 

@@ -1,8 +1,10 @@
 const User = require('../models/userModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { getJwtSecret } = require('../config/jwt');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'vendorbridge-jwt-super-secret-key-2026-production';
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const VALID_ROLES = ['admin', 'manager', 'procurement_officer', 'vendor'];
 
 exports.login = async (req, res, next) => {
     try {
@@ -11,7 +13,15 @@ exports.login = async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'Email and password are required' });
         }
 
-        const cleanEmail = email.toLowerCase().trim();
+        const cleanEmail = String(email).toLowerCase().trim();
+        if (!EMAIL_REGEX.test(cleanEmail)) {
+            return res.status(400).json({ success: false, message: 'Invalid email address format' });
+        }
+
+        if (typeof password !== 'string' || password.length === 0) {
+            return res.status(400).json({ success: false, message: 'Password must be a non-empty string' });
+        }
+
         const user = await User.findByEmail(cleanEmail);
         if (!user) {
             return res.status(401).json({ success: false, message: 'Invalid credentials. User not found.' });
@@ -29,7 +39,7 @@ exports.login = async (req, res, next) => {
         }
 
         if (role) {
-            const requestedRole = role.toLowerCase().trim();
+            const requestedRole = String(role).toLowerCase().trim();
             const userRole = (user.role || '').toLowerCase().trim();
             if (userRole !== requestedRole) {
                 return res.status(401).json({
@@ -41,7 +51,7 @@ exports.login = async (req, res, next) => {
 
         const token = jwt.sign(
             { id: user.id, email: user.email, role: user.role, name: user.name },
-            JWT_SECRET,
+            getJwtSecret(),
             { expiresIn: '7d' }
         );
 
@@ -68,7 +78,20 @@ exports.register = async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'Email and password are required' });
         }
 
-        const cleanEmail = email.toLowerCase().trim();
+        const cleanEmail = String(email).toLowerCase().trim();
+        if (!EMAIL_REGEX.test(cleanEmail)) {
+            return res.status(400).json({ success: false, message: 'Invalid email address format' });
+        }
+
+        if (typeof password !== 'string' || password.length < 6) {
+            return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long' });
+        }
+
+        const cleanName = name ? String(name).trim() : cleanEmail.split('@')[0];
+        if (cleanName.length < 2 || cleanName.length > 100) {
+            return res.status(400).json({ success: false, message: 'Name must be between 2 and 100 characters' });
+        }
+
         const existingUser = await User.findByEmail(cleanEmail);
         if (existingUser) {
             return res.status(400).json({ success: false, message: 'User with this email already exists' });
@@ -76,17 +99,23 @@ exports.register = async (req, res, next) => {
 
         let dbRole = 'vendor';
         if (role) {
-            const roleLower = role.toLowerCase();
-            if (roleLower.includes('admin')) dbRole = 'admin';
-            else if (roleLower.includes('manager') || roleLower.includes('approver')) dbRole = 'manager';
-            else if (roleLower.includes('procurement')) dbRole = 'procurement_officer';
-            else if (roleLower.includes('vendor')) dbRole = 'vendor';
+            const roleLower = String(role).toLowerCase().trim();
+            if (VALID_ROLES.includes(roleLower)) {
+                dbRole = roleLower;
+            } else if (roleLower === 'approver') {
+                dbRole = 'manager';
+            } else {
+                return res.status(400).json({
+                    success: false,
+                    message: `Invalid role specified: '${role}'. Allowed roles: ${VALID_ROLES.join(', ')}`
+                });
+            }
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const userId = await User.create({
-            name: name ? name.trim() : cleanEmail.split('@')[0],
+            name: cleanName,
             email: cleanEmail,
             password: hashedPassword,
             role: dbRole
@@ -95,15 +124,15 @@ exports.register = async (req, res, next) => {
         if (dbRole === 'vendor') {
             const Vendor = require('../models/vendorModel');
             await Vendor.create({
-                name: name ? name.trim() : cleanEmail.split('@')[0],
+                name: cleanName,
                 email: cleanEmail,
-                phone: req.body.phone || '',
-                company: req.body.company || (name ? name.trim() : cleanEmail.split('@')[0]),
-                gst_number: req.body.gst_number || '',
-                address: req.body.address || '',
+                phone: req.body.phone ? String(req.body.phone).trim() : '',
+                company: req.body.company ? String(req.body.company).trim() : cleanName,
+                gst_number: req.body.gst_number ? String(req.body.gst_number).trim() : '',
+                address: req.body.address ? String(req.body.address).trim() : '',
                 tier: 'verified',
-                country: req.body.country || 'Global',
-                currency: req.body.currency || 'USD',
+                country: req.body.country ? String(req.body.country).trim() : 'Global',
+                currency: req.body.currency ? String(req.body.currency).trim().toUpperCase() : 'USD',
                 user_id: userId
             });
         }
@@ -111,7 +140,7 @@ exports.register = async (req, res, next) => {
         res.status(201).json({
             success: true,
             message: 'User registered successfully',
-            user: { id: userId, email: cleanEmail, name: name ? name.trim() : cleanEmail.split('@')[0], role: dbRole }
+            user: { id: userId, email: cleanEmail, name: cleanName, role: dbRole }
         });
     } catch (error) {
         next(error);
@@ -151,16 +180,22 @@ exports.updateProfile = async (req, res, next) => {
         }
 
         const { name } = req.body;
+        if (!name || typeof name !== 'string' || !name.trim()) {
+            return res.status(400).json({ success: false, message: 'Name must be a non-empty string' });
+        }
+
+        const cleanName = name.trim();
+        if (cleanName.length < 2 || cleanName.length > 100) {
+            return res.status(400).json({ success: false, message: 'Name must be between 2 and 100 characters' });
+        }
+
         const user = await User.findByEmail(req.user.email);
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
 
-        if (name && name.trim()) {
-            const cleanName = name.trim();
-            await User.updateName(user.id, cleanName);
-            user.name = cleanName;
-        }
+        await User.updateName(user.id, cleanName);
+        user.name = cleanName;
 
         res.status(200).json({
             success: true,

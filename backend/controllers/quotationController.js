@@ -15,47 +15,75 @@ exports.getQuotations = async (req, res, next) => {
 exports.createQuotation = async (req, res, next) => {
     try {
         const { rfq_id, amount, currency, delivery_days, notes } = req.body;
-        if (!amount || !delivery_days) {
+        if (amount === undefined || amount === null || delivery_days === undefined || delivery_days === null) {
             return res.status(400).json({ success: false, message: 'Amount and delivery days are required' });
         }
 
+        const numAmount = parseFloat(amount);
+        if (isNaN(numAmount) || numAmount <= 0) {
+            return res.status(400).json({ success: false, message: 'Quotation amount must be a positive number' });
+        }
+
+        const numDeliveryDays = parseInt(delivery_days, 10);
+        if (isNaN(numDeliveryDays) || numDeliveryDays <= 0) {
+            return res.status(400).json({ success: false, message: 'Delivery lead time must be a positive integer' });
+        }
+
+        let parsedRfqId = null;
+        let rfqCurrency = null;
+        if (rfq_id !== undefined && rfq_id !== null && rfq_id !== '') {
+            parsedRfqId = parseInt(rfq_id, 10);
+            if (isNaN(parsedRfqId) || parsedRfqId <= 0) {
+                return res.status(400).json({ success: false, message: 'Invalid RFQ ID format' });
+            }
+
+            const [rfqRows] = await db.query('SELECT * FROM rfqs WHERE id = ?', [parsedRfqId]);
+            if (!rfqRows || rfqRows.length === 0) {
+                return res.status(404).json({ success: false, message: 'Referenced RFQ tender not found' });
+            }
+
+            const rfq = rfqRows[0];
+            if (rfq.status !== 'open') {
+                return res.status(400).json({
+                    success: false,
+                    message: `Cannot submit quotation for RFQ with status '${rfq.status}'. Only OPEN RFQs accept bids.`
+                });
+            }
+            rfqCurrency = rfq.currency;
+        }
+
         let vendor_id = null;
-        let vendor_name = req.body.vendor_name || 'Vendor Partner';
+        let vendor_name = req.body.vendor_name ? String(req.body.vendor_name).trim() : 'Vendor Partner';
 
         if (req.user && req.user.id) {
             const vendor = await Vendor.getByUserId(req.user.id);
             if (vendor) {
                 vendor_id = vendor.id;
-                vendor_name = req.body.vendor_name || vendor.company_name || req.user.name;
+                vendor_name = req.body.vendor_name ? String(req.body.vendor_name).trim() : (vendor.company_name || req.user.name);
             } else if (req.user.role === 'vendor') {
                 try {
                     vendor_id = await Vendor.create({
                         name: req.user.name || 'Vendor Partner',
                         email: req.user.email,
                         phone: '',
-                        company: req.body.vendor_name || req.user.name || 'Vendor Partner',
+                        company: req.body.vendor_name ? String(req.body.vendor_name).trim() : (req.user.name || 'Vendor Partner'),
                         user_id: req.user.id
                     });
-                    vendor_name = req.body.vendor_name || req.user.name || 'Vendor Partner';
+                    vendor_name = req.body.vendor_name ? String(req.body.vendor_name).trim() : (req.user.name || 'Vendor Partner');
                 } catch (e) {}
             }
         }
 
-        if (rfq_id) {
-            const [rfqRows] = await db.query('SELECT * FROM rfqs WHERE id = ?', [rfq_id]);
-            if (rfqRows && rfqRows.length > 0 && rfqRows[0].status === 'closed') {
-                return res.status(400).json({ success: false, message: 'Cannot submit quotation for a closed RFQ' });
-            }
-        }
+        const cleanCurrency = currency && typeof currency === 'string' ? currency.trim().toUpperCase() : (rfqCurrency || 'USD');
 
         const quoteId = await Quotation.create({
-            rfq_id: rfq_id ? parseInt(rfq_id, 10) : null,
+            rfq_id: parsedRfqId,
             vendor_id,
             vendor_name,
-            amount: parseFloat(amount),
-            currency: currency || 'USD',
-            delivery_days: parseInt(delivery_days, 10),
-            notes: notes || '',
+            amount: numAmount,
+            currency: cleanCurrency,
+            delivery_days: numDeliveryDays,
+            notes: notes ? String(notes).trim() : '',
             items: Array.isArray(req.body.items) ? req.body.items : []
         });
 
@@ -63,7 +91,7 @@ exports.createQuotation = async (req, res, next) => {
             user_id: req.user?.id || null,
             title: `Quotation #${quoteId} Submitted by ${vendor_name}`,
             category: 'quotation',
-            action: `Submitted bid of ${parseFloat(amount).toLocaleString()} (${delivery_days}d SLA) for RFQ#${rfq_id || 'General'}.`
+            action: `Submitted bid of ${numAmount.toLocaleString()} (${numDeliveryDays}d SLA) for RFQ#${parsedRfqId || 'General'}.`
         });
 
         res.status(201).json({

@@ -2,8 +2,19 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
+const { getJwtSecret } = require('./config/jwt');
 const db = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
+
+// Early security verification: ensure JWT secret is configured
+try {
+    getJwtSecret();
+} catch (err) {
+    console.error(err.message);
+    if (process.env.NODE_ENV === 'production') {
+        process.exit(1);
+    }
+}
 
 const authRoutes = require('./routes/authRoutes');
 const vendorRoutes = require('./routes/vendorRoutes');
@@ -19,7 +30,44 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
+// Configurable CORS restriction via environment variables
+const parseAllowedOrigins = () => {
+    const raw = process.env.CORS_ORIGIN || process.env.FRONTEND_URL || process.env.ALLOWED_ORIGINS;
+    if (!raw) {
+        if (process.env.NODE_ENV === 'production') {
+            console.warn('SECURITY WARNING: No CORS_ORIGIN or FRONTEND_URL set in production. Defaulting to same-origin only.');
+            return [];
+        }
+        return ['http://localhost:5000', 'http://127.0.0.1:5000', 'http://localhost:3000'];
+    }
+    if (raw === '*') {
+        if (process.env.NODE_ENV === 'production') {
+            console.warn('SECURITY WARNING: Wildcard CORS origin (*) configured in production environment.');
+        }
+        return '*';
+    }
+    return raw.split(',').map(o => o.trim()).filter(Boolean);
+};
+
+const allowedOrigins = parseAllowedOrigins();
+
+const corsOptions = {
+    origin: (origin, callback) => {
+        // Allow requests with no origin (e.g. mobile apps, curl, automated test suites, same-origin)
+        if (!origin || allowedOrigins === '*') {
+            return callback(null, true);
+        }
+        if (Array.isArray(allowedOrigins) && allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        return callback(null, false);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

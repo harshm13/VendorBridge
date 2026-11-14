@@ -12,14 +12,18 @@ exports.getApprovals = async (req, res, next) => {
 
 exports.updateApproval = async (req, res, next) => {
     try {
-        const { id } = req.params;
+        const id = parseInt(req.params.id, 10);
+        if (isNaN(id) || id <= 0) {
+            return res.status(400).json({ success: false, message: 'Valid positive approval ID is required' });
+        }
+
         const { status, remarks } = req.body;
         if (!status || !['approved', 'rejected'].includes(status)) {
             return res.status(400).json({ success: false, message: 'Valid status ("approved" or "rejected") is required' });
         }
 
         const approved_by = req.user ? req.user.id : 1;
-        const result = await Approval.updateStatus(id, status, remarks, approved_by);
+        const result = await Approval.updateStatus(id, status, remarks ? String(remarks).trim() : '', approved_by);
         if (!result || !result.updated) {
             return res.status(404).json({ success: false, message: 'Approval record not found' });
         }
