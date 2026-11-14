@@ -36,7 +36,7 @@ VendorBridge synthesizes the visual excellence of **MotionSites AI** and **Three
   * **Manager Approval Desk**: Authorization workflows with audit remarks and auto-provisioning of downstream POs.
   * **Automated Purchase Orders**: Instant generation of official POs with printable preview modals.
   * **Tax Compliant GST Billing**: Live auto-calculating 18% GST tax invoices linked to purchase orders.
-* **Dual-Mode Hybrid Storage Engine**: Automatically connects to live MySQL databases when available, or seamlessly operates on high-speed JSON disk persistence (`database/data.json`) with zero setup.
+* **Dual-Mode Hybrid Storage Engine**: Automatically connects to live MySQL databases when available, or seamlessly operates on high-speed JSON disk persistence (`database/data.json` bootstrapped from `database/data.seed.json`) with zero setup.
 
 ---
 
@@ -57,10 +57,12 @@ VendorBridge/
 │   ├── config/
 │   │   └── db.js                 # Dual-mode database pool & JSON store router
 │   ├── controllers/
+│   │   ├── aiController.js       # AI analysis, budget estimation & prompt parser
 │   │   ├── approvalController.js # Manager authorizations & PO provisioning
 │   │   ├── authController.js     # User registration, login, profile & JWT
 │   │   ├── dashboardController.js# Real-time analytics & telemetry stats
 │   │   ├── invoiceController.js  # Tax billing & 18% GST calculation
+│   │   ├── notificationController.js # Activity notifications & audit logs
 │   │   ├── poController.js       # Purchase order issuance & tracking
 │   │   ├── quotationController.js# Vendor bid submissions & comparisons
 │   │   ├── rfqController.js      # Requisition creation & broadcasting
@@ -69,8 +71,10 @@ VendorBridge/
 │   │   ├── auth.js               # JWT verification & role authorization
 │   │   └── errorHandler.js       # Centralized error handler
 │   ├── models/
+│   │   ├── activityModel.js      # Activity logging & audit stream
 │   │   ├── approvalModel.js      # Approvals schema & transaction processing
 │   │   ├── invoiceModel.js       # Invoices schema & numbering sequence
+│   │   ├── notificationModel.js  # Dedicated notifications data access
 │   │   ├── poModel.js            # Purchase orders schema & sequence
 │   │   ├── quotationModel.js     # Quotations schema & RFQ relations
 │   │   ├── rfqModel.js           # RFQ schema & status tracking
@@ -82,6 +86,7 @@ VendorBridge/
 │   │   ├── authRoutes.js         # Authentication & profile endpoints
 │   │   ├── dashboardRoutes.js    # Telemetry metrics endpoints
 │   │   ├── invoiceRoutes.js      # Invoice endpoints
+│   │   ├── notificationRoutes.js # Notifications & audit stream endpoints
 │   │   ├── poRoutes.js           # Purchase order endpoints
 │   │   ├── quotationRoutes.js    # Quotation endpoints
 │   │   ├── rfqRoutes.js          # RFQ endpoints
@@ -97,7 +102,7 @@ VendorBridge/
 │   ├── seed.js                   # Database migration & seed utility
 │   └── server.js                 # Express server & static route handlers
 ├── database/
-│   ├── data.json                 # Seed and persistent storage data store
+│   ├── data.seed.json            # Base seed template for runtime JSON store
 │   └── schema.sql                # Production MySQL relational schema
 ├── frontend/
 │   ├── css/
@@ -147,7 +152,7 @@ The application will launch immediately at:
 * **Web Interface**: `http://localhost:5000/`
 * **API Health Check**: `http://localhost:5000/api/health`
 
-*(Note: If MySQL is installed and running, set DB credentials in `backend/.env`. If MySQL is not running, VendorBridge runs automatically via its high-speed hybrid store in `database/data.json` with zero errors!)*
+*(Note: If MySQL is installed and running, set DB credentials in `backend/.env`. If MySQL is not running, VendorBridge runs automatically via its high-speed hybrid store generating `database/data.json` from `database/data.seed.json` with zero errors!)*
 
 ---
 

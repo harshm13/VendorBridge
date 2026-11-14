@@ -6,6 +6,7 @@ const app = require('../server');
 const dbStore = require('../services/dbStore');
 
 const DATA_FILE = path.join(__dirname, '../../database/data.json');
+const SEED_FILE = path.join(__dirname, '../../database/data.seed.json');
 
 function makeRequest(port, reqPath, method = 'GET', data = null, token = null) {
     return new Promise((resolve, reject) => {
@@ -40,7 +41,10 @@ async function runE2ETests() {
     console.log(' VENDORBRIDGE ERP - FULL END-TO-END AUTOMATED TEST ');
     console.log('====================================================\n');
 
-    const backup = fs.existsSync(DATA_FILE) ? fs.readFileSync(DATA_FILE, 'utf8') : null;
+    if (!fs.existsSync(DATA_FILE) && fs.existsSync(SEED_FILE)) {
+        fs.copyFileSync(SEED_FILE, DATA_FILE);
+    }
+    const backup = fs.existsSync(DATA_FILE) ? fs.readFileSync(DATA_FILE, 'utf8') : (fs.existsSync(SEED_FILE) ? fs.readFileSync(SEED_FILE, 'utf8') : null);
     const server = await new Promise((resolve) => {
         const s = app.listen(0, '127.0.0.1', () => resolve(s));
     });

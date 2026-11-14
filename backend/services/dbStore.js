@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const DATA_FILE = path.join(__dirname, '../../database/data.json');
+const SEED_FILE = path.join(__dirname, '../../database/data.seed.json');
 
 class DBStore {
     constructor() {
@@ -26,6 +27,11 @@ class DBStore {
                 const raw = fs.readFileSync(DATA_FILE, 'utf8');
                 const parsed = JSON.parse(raw);
                 this.data = { ...this.data, ...parsed };
+            } else if (fs.existsSync(SEED_FILE)) {
+                const raw = fs.readFileSync(SEED_FILE, 'utf8');
+                const parsed = JSON.parse(raw);
+                this.data = { ...this.data, ...parsed };
+                this.save();
             } else {
                 this.initDefaults();
                 this.save();
@@ -33,7 +39,7 @@ class DBStore {
             this.ensureDefaultUsers();
             this.initialized = true;
         } catch (err) {
-            console.error('Failed to load data.json in DBStore:', err.message);
+            console.error('Failed to load data in DBStore:', err.message);
             this.initDefaults();
         }
     }

@@ -6,54 +6,66 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 async function runSeed() {
     console.log('Starting database seed...');
-    
+
+    // 1. Generate runtime database/data.json from database/data.seed.json
+    const seedPath = path.join(__dirname, '../database/data.seed.json');
+    const runtimePath = path.join(__dirname, '../database/data.json');
+
+    try {
+        if (fs.existsSync(seedPath)) {
+            fs.copyFileSync(seedPath, runtimePath);
+            console.log('Successfully generated runtime database/data.json from database/data.seed.json');
+        } else {
+            console.warn('Warning: database/data.seed.json not found.');
+        }
+    } catch (err) {
+        console.error('Failed to copy seed file:', err.message);
+    }
+
+    // 2. Attempt MySQL schema & user provisioning if MySQL server is available
     let connection;
     try {
-        // We first connect without specifying the database to create it if it doesn't exist
         connection = await mysql.createConnection({
             host: process.env.DB_HOST || 'localhost',
-            port: process.env.DB_PORT || 3306,
+            port: parseInt(process.env.DB_PORT, 10) || 3306,
             user: process.env.DB_USER || 'root',
-            password: process.env.DB_PASSWORD || ''
+            password: process.env.DB_PASSWORD || '',
+            connectTimeout: 2000
         });
 
         const dbName = process.env.DB_NAME || 'vendorbridge';
         await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
         await connection.query(`USE \`${dbName}\``);
-        console.log(`Using database: ${dbName}`);
+        console.log(`Using MySQL database: ${dbName}`);
 
         // Read schema file
         const schemaPath = path.join(__dirname, '../database/schema.sql');
-        const schema = fs.readFileSync(schemaPath, 'utf8');
+        if (fs.existsSync(schemaPath)) {
+            const schema = fs.readFileSync(schemaPath, 'utf8');
 
-        // Execute schema queries
-        // Split by semicolon, but this simple split might fail if there are semicolons inside strings.
-        // For schema.sql, assuming standard statements separated by ;\n
-        const statements = schema
-            .replace(/--.*?(\n|$)/g, '') // Remove single-line comments
-            .split(/;\s*$/m)
-            .filter(stmt => stmt.trim().length > 0);
+            const statements = schema
+                .replace(/--.*?(\n|$)/g, '')
+                .split(/;\s*$/m)
+                .filter(stmt => stmt.trim().length > 0);
 
-        for (let stmt of statements) {
-            // Check if this is one of the INSERT statements for users to hash passwords
-            if (stmt.trim().toUpperCase().startsWith('INSERT IGNORE INTO USERS')) {
-                // We will handle user seeding manually to ensure password hashing
-                continue;
+            for (let stmt of statements) {
+                if (stmt.trim().toUpperCase().startsWith('INSERT IGNORE INTO USERS')) {
+                    continue;
+                }
+                if (stmt.trim().toUpperCase().startsWith('CREATE DATABASE') || stmt.trim().toUpperCase().startsWith('USE ')) {
+                    continue;
+                }
+                try {
+                    await connection.query(stmt);
+                } catch (err) {
+                    console.error(`Error executing statement: ${stmt.substring(0, 50)}...`, err.message);
+                }
             }
-            if (stmt.trim().toUpperCase().startsWith('CREATE DATABASE') || stmt.trim().toUpperCase().startsWith('USE ')) {
-                continue; // Already handled
-            }
-            try {
-                await connection.query(stmt);
-            } catch (err) {
-                console.error(`Error executing statement: ${stmt.substring(0, 50)}...`, err.message);
-            }
+            console.log('MySQL schema created successfully.');
         }
 
-        console.log('Schema created successfully.');
-
         // Seed users with hashed passwords
-        console.log('Seeding users...');
+        console.log('Seeding MySQL users...');
         const users = [
             { id: 1, name: 'Admin User', email: 'admin@vendorbridge.com', password: 'admin123', role: 'admin' },
             { id: 2, name: 'Manager Approver', email: 'manager@vendorbridge.com', password: 'manager123', role: 'manager' },
@@ -68,17 +80,23 @@ async function runSeed() {
                 [user.id, user.name, user.email, hashedPassword, user.role]
             );
         }
-        console.log('Users seeded successfully.');
-
-        console.log('Seed completed successfully!');
+        console.log('MySQL users seeded successfully.');
+        console.log('MySQL seed completed successfully!');
     } catch (error) {
-        console.error('Seeding failed:', error);
+        console.log(`MySQL server not active or unreachable (${error.message}). Hybrid JSON Store initialized at database/data.json.`);
     } finally {
         if (connection) {
             await connection.end();
         }
-        process.exit();
+        console.log('Database seeding finished.');
     }
 }
 
-runSeed();
+if (require.main === module) {
+    runSeed().then(() => process.exit(0)).catch((err) => {
+        console.error(err);
+        process.exit(1);
+    });
+}
+
+module.exports = runSeed;

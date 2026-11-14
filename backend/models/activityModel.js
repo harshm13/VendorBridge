@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const Notification = require('./notificationModel');
 
 const Activity = {
     log: async ({ user_id = null, title, category = 'system', action = '' }) => {
@@ -7,25 +8,29 @@ const Activity = {
                 'INSERT INTO activity_logs (user_id, title, category, action) VALUES (?, ?, ?, ?)',
                 [user_id, title, category, action]
             );
-            await db.query(
-                'INSERT INTO notifications (user_id, title, message, category) VALUES (?, ?, ?, ?)',
-                [user_id, title, action, category]
-            );
+            await Notification.create({
+                user_id,
+                title,
+                message: action,
+                category
+            });
         } catch (err) {
             console.warn('Activity log non-fatal warning:', err.message);
         }
     },
+
     getLogs: async () => {
         const [rows] = await db.query('SELECT * FROM activity_logs ORDER BY id DESC LIMIT 25');
         return rows;
     },
+
+    // Retained for backward compatibility
     getNotifications: async () => {
-        const [rows] = await db.query('SELECT * FROM notifications ORDER BY id DESC LIMIT 25');
-        return rows;
+        return Notification.getAll();
     },
+
     markAllRead: async () => {
-        await db.query('UPDATE notifications SET is_read = TRUE');
-        return true;
+        return Notification.markAllRead();
     }
 };
 

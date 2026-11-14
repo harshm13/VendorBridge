@@ -1,9 +1,10 @@
+const Notification = require('../models/notificationModel');
 const Activity = require('../models/activityModel');
 
 exports.getNotifications = async (req, res, next) => {
     try {
         const [notifications, logs] = await Promise.all([
-            Activity.getNotifications(),
+            Notification.getAll(),
             Activity.getLogs()
         ]);
         const unreadCount = notifications.filter(n => !n.is_read).length;
@@ -20,7 +21,7 @@ exports.getNotifications = async (req, res, next) => {
 
 exports.markAllRead = async (req, res, next) => {
     try {
-        await Activity.markAllRead();
+        await Notification.markAllRead();
         res.status(200).json({ success: true, message: 'All notifications marked as read.' });
     } catch (error) {
         next(error);
